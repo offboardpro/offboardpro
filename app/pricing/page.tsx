@@ -77,7 +77,7 @@ export default function PricingPage() {
       const res = await fetch("/api/razorpay", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        // UPDATED: Sending full paise to API to ensure no precision loss
+        // CLEANED: Sending pure amountInPaise. No hardcoded logic here.
         body: JSON.stringify({ amount: amountInPaise, userId: user.uid }), 
       });
       
@@ -89,7 +89,7 @@ export default function PricingPage() {
       }
 
       const options = {
-        // UPDATED: Using Env variable for security instead of hardcoded string
+        // SECURE: Only using the environment variable. NO hardcoded "rzp_test" or "rzp_live" strings.
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID, 
         amount: order.amount,
         currency: "INR",
@@ -283,7 +283,7 @@ export default function PricingPage() {
               <li className="flex items-center gap-3 text-slate-700 font-bold text-sm"><span className="text-[#9BCB3B] font-black">✓</span> Sharable Client Portals</li>
             </ul>
 
-            {/* THE FIX: Button logic checks isPro state explicitly */}
+            {/* Button logic checks isPro state explicitly */}
             {isPro ? (
               <button onClick={() => router.push('/dashboard')} style={{ backgroundColor: '#243F74' }} className="w-full py-5 rounded-2xl text-white font-black text-xs uppercase tracking-widest transition-all hover:scale-105 active:scale-95">
                 Go to Dashboard
