@@ -77,8 +77,8 @@ export default function PricingPage() {
       const res = await fetch("/api/razorpay", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        // PASSING amount and userId to API
-        body: JSON.stringify({ amount: amountInPaise / 100, userId: user.uid }), 
+        // UPDATED: Sending full paise to API to ensure no precision loss
+        body: JSON.stringify({ amount: amountInPaise, userId: user.uid }), 
       });
       
       const order = await res.json();
@@ -89,8 +89,8 @@ export default function PricingPage() {
       }
 
       const options = {
-        // HARDCODED API KEY AS REQUESTED
-        key: "rzp_test_SBZ0uR3770xoBn", 
+        // UPDATED: Using Env variable for security instead of hardcoded string
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID, 
         amount: order.amount,
         currency: "INR",
         name: "OffboardPro",
