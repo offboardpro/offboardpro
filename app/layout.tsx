@@ -19,8 +19,12 @@ export const metadata: Metadata = {
   title: "OffboardPro | Secure Freelance Offboarding",
   description: "Track client access and exit every project cleanly without storing passwords. Professionalize your freelance exit.",
   icons: {
-    icon: "/icon.png", // UPDATED: Now points to your icon.png in the public folder
-    apple: "/icon.png",
+    icon: [
+      { url: "/icon.png", href: "/icon.png" },
+    ],
+    apple: [
+      { url: "/icon.png", href: "/icon.png" },
+    ],
   },
 };
 
