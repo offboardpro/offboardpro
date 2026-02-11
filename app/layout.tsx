@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Script from "next/script"; // 1. Added Razorpay Script support
+import { SpeedInsights } from "@vercel/speed-insights/next"; // 3. Added Speed Insights
 import "./globals.css";
 
 const geistSans = Geist({
@@ -18,7 +19,8 @@ export const metadata: Metadata = {
   title: "OffboardPro | Secure Freelance Offboarding",
   description: "Track client access and exit every project cleanly without storing passwords. Professionalize your freelance exit.",
   icons: {
-    icon: "/logo.png",
+    icon: "/icon.png", // UPDATED: Now points to your icon.png in the public folder
+    apple: "/icon.png",
   },
 };
 
@@ -48,6 +50,9 @@ export default function RootLayout({
           src="https://checkout.razorpay.com/v1/checkout.js"
           strategy="lazyOnload"
         />
+
+        {/* 4. Vercel Speed Insights Component */}
+        <SpeedInsights />
       </body>
     </html>
   );
