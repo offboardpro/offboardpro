@@ -21,7 +21,7 @@ function Reveal({ children }: { children: React.ReactNode }) {
           observer.unobserve(entry.target);
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.05 } // Triggered slightly earlier for better flow
     );
     if (ref.current) observer.observe(ref.current);
     return () => observer.disconnect();
@@ -30,8 +30,10 @@ function Reveal({ children }: { children: React.ReactNode }) {
   return (
     <div
       ref={ref}
-      className={`transition-all duration-1000 ease-out ${
-        isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+      className={`transition-all duration-[1200ms] delay-100 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+        isVisible 
+          ? "opacity-100 translate-y-0" 
+          : "opacity-0 -translate-y-4" // Starts slightly above and fades down
       }`}
     >
       {children}
@@ -262,8 +264,8 @@ export default function Home() {
             style={{ 
               color: '#9BCB3B',
               opacity: isVisible ? 1 : 0,
-              transform: isVisible ? 'translateY(0)' : 'translateY(50px)',
-              transition: 'all 1s cubic-bezier(0.22, 1, 0.36, 1)' 
+              transform: isVisible ? 'translateY(0)' : 'translateY(-20px)', // Subtle top-down load
+              transition: 'all 1.2s cubic-bezier(0.22, 1, 0.36, 1)' 
             }}
             className="text-4xl md:text-7xl font-black tracking-tight leading-tight md:leading-[1.05] mb-6 md:mb-8"
           >
@@ -273,8 +275,8 @@ export default function Home() {
           <p 
             style={{ 
               opacity: isVisible ? 1 : 0,
-              transform: isVisible ? 'translateY(0)' : 'translateY(20px)',
-              transition: 'all 1s cubic-bezier(0.22, 1, 0.36, 1) 0.3s' 
+              transform: isVisible ? 'translateY(0)' : 'translateY(-10px)', // Subtle top-down load
+              transition: 'all 1.2s cubic-bezier(0.22, 1, 0.36, 1) 0.3s' 
             }}
             className="text-slate-500 text-lg md:text-2xl max-w-3xl mx-auto leading-relaxed font-medium mb-10 md:mb-12 px-2"
           >
@@ -284,7 +286,7 @@ export default function Home() {
           <div 
             style={{ 
               opacity: isVisible ? 1 : 0,
-              transform: isVisible ? 'scale(1)' : 'scale(0.95)',
+              transform: isVisible ? 'scale(1)' : 'scale(0.98)',
               transition: 'all 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.6s' 
             }}
             className="mt-6 md:mt-12 mb-16 md:mb-32 flex flex-col items-center gap-4"
