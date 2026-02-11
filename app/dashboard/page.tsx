@@ -63,9 +63,9 @@ export default function DashboardPage() {
     });
   }, [clients]);
 
-  // --- DYNAMIC HEALTH SCORE CALCULATION ---
-  const healthMetrics = useMemo(() => {
-    if (clients.length === 0) return { score: "A+", color: "#9BCB3B" };
+  // --- UPDATED: DYNAMIC SECURITY RATING CALCULATION ---
+  const securityMetrics = useMemo(() => {
+    if (clients.length === 0) return { score: "OPTIMAL", color: "#9BCB3B" };
     
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -75,9 +75,9 @@ export default function DashboardPage() {
       return projectDate < today && c.status !== "completed";
     });
 
-    if (overdueRisks.length === 0) return { score: "A+", color: "#9BCB3B" };
-    if (overdueRisks.length === 1) return { score: "B", color: "#facc15" };
-    return { score: "DANGER", color: "#ef4444" };
+    if (overdueRisks.length === 0) return { score: "SECURED", color: "#9BCB3B" };
+    if (overdueRisks.length === 1) return { score: "WARNING", color: "#facc15" };
+    return { score: "AT RISK", color: "#ef4444" };
   }, [clients]);
 
   useEffect(() => {
@@ -440,9 +440,10 @@ export default function DashboardPage() {
               <span className={`text-2xl md:text-3xl font-black italic ${isDarkMode ? 'text-white' : 'text-[#243F74]'}`}>{clients.length}</span>
             </div>
             
-            <div className={`p-6 md:p-8 rounded-[2rem] border-2 text-center border-b-8 transition-colors ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'}`} style={{ borderBottomColor: healthMetrics.color }}>
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">Health Score</span>
-              <span style={{ color: healthMetrics.color }} className="text-2xl md:text-3xl font-black italic">{healthMetrics.score}</span>
+            {/* UPDATED: SECURITY RATING CARD */}
+            <div className={`p-6 md:p-8 rounded-[2rem] border-2 text-center border-b-8 transition-colors ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'}`} style={{ borderBottomColor: securityMetrics.color }}>
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">Security Rating</span>
+              <span style={{ color: securityMetrics.color }} className="text-2xl md:text-3xl font-black italic">{securityMetrics.score}</span>
             </div>
 
             <div className={`p-6 md:p-8 rounded-[2rem] border-2 text-center transition-colors ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'}`}>
