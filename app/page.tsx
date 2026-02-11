@@ -45,6 +45,7 @@ function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [user, setUser] = useState<any>(null); 
   const [isPro, setIsPro] = useState(false); 
+  const [authLoading, setAuthLoading] = useState(true); // Track auth state
   const router = useRouter();
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
@@ -52,6 +53,7 @@ function Header() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
+      setAuthLoading(false); // Auth check complete
       if (currentUser) {
         const userRef = doc(db, "users", currentUser.uid);
         const unsubPro = onSnapshot(userRef, (docSnap) => {
@@ -106,49 +108,52 @@ function Header() {
             </Link>
           ))}
           
-          {user ? (
-            <div className="flex items-center gap-6">
-              <Link 
-                href="/dashboard" 
-                style={{ backgroundColor: '#9BCB3B' }}
-                className="text-white px-8 py-3.5 rounded-full font-bold shadow-lg shadow-[#9BCB3B]/20 hover:scale-105 active:scale-95 transition-all"
-              >
-                Go to Dashboard
-              </Link>
-              <div className="flex items-center gap-3 pl-6 border-l border-slate-100 group relative cursor-pointer">
-                <div className="text-right hidden sm:block text-slate-600">
-                    <p style={{ color: isPro ? '#9BCB3B' : '#243F74' }} className="text-[10px] font-black uppercase tracking-widest leading-none mb-1">
-                        {isPro ? "Pro Member" : "Free Plan"}
-                    </p>
-                    <p className="text-slate-400 text-xs font-bold leading-tight">Hi, {user.displayName?.split(' ')[0] || "User"}</p>
-                </div>
-                {user.photoURL ? (
-                  <img src={user.photoURL} alt="User" className="w-9 h-9 rounded-full border-2 border-[#9BCB3B] object-cover" />
-                ) : (
-                  <div className="w-9 h-9 rounded-full bg-[#243F74] text-white flex items-center justify-center font-black text-xs italic border-2 border-[#9BCB3B]">
-                    {user.email?.charAt(0).toUpperCase()}
-                  </div>
-                )}
-                
-                <button 
-                  onClick={handleLogout}
-                  className="absolute -bottom-12 right-0 bg-white border border-slate-100 py-2 px-4 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all text-red-500 text-xs font-black uppercase tracking-widest"
+          {/* Prevent Start Free button from showing for logged-in users during load */}
+          {!authLoading && (
+            user ? (
+              <div className="flex items-center gap-6 animate-in fade-in duration-500">
+                <Link 
+                  href="/dashboard" 
+                  style={{ backgroundColor: '#9BCB3B' }}
+                  className="text-white px-8 py-3.5 rounded-full font-bold shadow-lg shadow-[#9BCB3B]/20 hover:scale-105 active:scale-95 transition-all"
                 >
-                  Logout
-                </button>
+                  Go to Dashboard
+                </Link>
+                <div className="flex items-center gap-3 pl-6 border-l border-slate-100 group relative cursor-pointer">
+                  <div className="text-right hidden sm:block text-slate-600">
+                      <p style={{ color: isPro ? '#9BCB3B' : '#243F74' }} className="text-[10px] font-black uppercase tracking-widest leading-none mb-1">
+                          {isPro ? "Pro Member" : "Free Plan"}
+                      </p>
+                      <p className="text-slate-400 text-xs font-bold leading-tight">Hi, {user.displayName?.split(' ')[0] || "User"}</p>
+                  </div>
+                  {user.photoURL ? (
+                    <img src={user.photoURL} alt="User" className="w-9 h-9 rounded-full border-2 border-[#9BCB3B] object-cover" />
+                  ) : (
+                    <div className="w-9 h-9 rounded-full bg-[#243F74] text-white flex items-center justify-center font-black text-xs italic border-2 border-[#9BCB3B]">
+                      {user.email?.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  
+                  <button 
+                    onClick={handleLogout}
+                    className="absolute -bottom-12 right-0 bg-white border border-slate-100 py-2 px-4 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all text-red-500 text-xs font-black uppercase tracking-widest"
+                  >
+                    Logout
+                  </button>
+                </div>
               </div>
-            </div>
-          ) : (
-            <>
-              <Link href="/login" className="hover:text-[#243F74] transition-colors">Login</Link>
-              <Link 
-                href="/signup" 
-                style={{ backgroundColor: '#243F74' }}
-                className="text-white px-8 py-3.5 rounded-full font-bold shadow-lg shadow-[#243F74]/20 hover:scale-105 active:scale-95 transition-all"
-              >
-                Get started
-              </Link>
-            </>
+            ) : (
+              <div className="flex items-center gap-10 animate-in fade-in duration-500">
+                <Link href="/login" className="hover:text-[#243F74] transition-colors">Login</Link>
+                <Link 
+                  href="/signup" 
+                  style={{ backgroundColor: '#243F74' }}
+                  className="text-white px-8 py-3.5 rounded-full font-bold shadow-lg shadow-[#243F74]/20 hover:scale-105 active:scale-95 transition-all"
+                >
+                  Get started
+                </Link>
+              </div>
+            )
           )}
         </nav>
 
@@ -174,22 +179,24 @@ function Header() {
             ))}
           </div>
           <div className="h-px bg-slate-100 w-full my-1" />
-          {user ? (
-            <div className="flex flex-col gap-3">
-              <Link 
-                onClick={toggleMenu} 
-                href="/dashboard" 
-                className="w-full text-center py-4 rounded-xl bg-[#9BCB3B] text-white font-black shadow-lg shadow-[#9BCB3B]/20"
-              >
-                Dashboard
-              </Link>
-              <button onClick={handleLogout} className="text-red-500 font-black uppercase tracking-widest text-[10px] text-center">Logout Account</button>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-2">
-              <Link onClick={toggleMenu} href="/signup" className="w-full text-center py-4 rounded-xl bg-[#243F74] text-white font-black shadow-lg shadow-[#243F74]/20">Get Started</Link>
-              <Link onClick={toggleMenu} href="/login" className="w-full text-center py-4 rounded-xl border-2 border-slate-50 text-[#243F74] font-black">Login</Link>
-            </div>
+          {!authLoading && (
+            user ? (
+              <div className="flex flex-col gap-3">
+                <Link 
+                  onClick={toggleMenu} 
+                  href="/dashboard" 
+                  className="w-full text-center py-4 rounded-xl bg-[#9BCB3B] text-white font-black shadow-lg shadow-[#9BCB3B]/20"
+                >
+                  Dashboard
+                </Link>
+                <button onClick={handleLogout} className="text-red-500 font-black uppercase tracking-widest text-[10px] text-center">Logout Account</button>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2">
+                <Link onClick={toggleMenu} href="/signup" className="w-full text-center py-4 rounded-xl bg-[#243F74] text-white font-black shadow-lg shadow-[#243F74]/20">Get Started</Link>
+                <Link onClick={toggleMenu} href="/login" className="w-full text-center py-4 rounded-xl border-2 border-slate-50 text-[#243F74] font-black">Login</Link>
+              </div>
+            )
           )}
         </div>
       </div>
@@ -219,6 +226,7 @@ export default function Home() {
   const [isVisible, setIsVisible] = useState(false);
   const [showScrollBtn, setShowScrollBtn] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
     setIsVisible(true);
@@ -226,6 +234,7 @@ export default function Home() {
 
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
+      setAuthLoading(false);
     });
 
     window.addEventListener("scroll", handleScroll);
@@ -258,13 +267,13 @@ export default function Home() {
       </button>
       
       <main className="overflow-x-clip">
-        {/* HERO SECTION */}
+        {/* HERO SECTION - Instant Load with fixed entrance animation */}
         <section className="max-w-6xl mx-auto text-center pt-8 md:pt-24 pb-8 md:pb-20 px-6">
           <h1 
             style={{ 
               color: '#9BCB3B',
               opacity: isVisible ? 1 : 0,
-              transform: isVisible ? 'translateY(0)' : 'translateY(-20px)', // Subtle top-down load
+              transform: isVisible ? 'translateY(0)' : 'translateY(-20px)', 
               transition: 'all 1.2s cubic-bezier(0.22, 1, 0.36, 1)' 
             }}
             className="text-4xl md:text-7xl font-black tracking-tight leading-tight md:leading-[1.05] mb-6 md:mb-8"
@@ -275,7 +284,7 @@ export default function Home() {
           <p 
             style={{ 
               opacity: isVisible ? 1 : 0,
-              transform: isVisible ? 'translateY(0)' : 'translateY(-10px)', // Subtle top-down load
+              transform: isVisible ? 'translateY(0)' : 'translateY(-10px)',
               transition: 'all 1.2s cubic-bezier(0.22, 1, 0.36, 1) 0.3s' 
             }}
             className="text-slate-500 text-lg md:text-2xl max-w-3xl mx-auto leading-relaxed font-medium mb-10 md:mb-12 px-2"
@@ -284,26 +293,26 @@ export default function Home() {
           </p>
 
           <div 
-            style={{ 
-              opacity: isVisible ? 1 : 0,
-              transform: isVisible ? 'scale(1)' : 'scale(0.98)',
-              transition: 'all 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.6s' 
-            }}
-            className="mt-6 md:mt-12 mb-16 md:mb-32 flex flex-col items-center gap-4"
+            className="mt-6 md:mt-12 mb-16 md:mb-32 flex flex-col items-center gap-4 min-h-[80px]" 
           >
-            <Link href={user ? "/dashboard" : "/signup"}>
-              <button 
-                style={{ backgroundColor: '#243F74' }} 
-                className="text-white px-10 md:px-16 py-4 md:py-5 rounded-full text-lg md:text-xl font-bold hover:scale-105 transition-all shadow-xl shadow-[#243F74]/20 active:scale-95 group overflow-hidden relative"
-              >
-                <span className="relative z-10">{user ? "Go to Dashboard" : "Start for free"}</span>
-                <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
-              </button>
-            </Link>
-            {!user && (
-              <p className="text-slate-400 text-sm font-semibold italic tracking-wide animate-pulse">
-                No credit card required
-              </p>
+            {/* Instant-Load Button Logic */}
+            {!authLoading && (
+              <div className="animate-in fade-in zoom-in-95 duration-700">
+                <Link href={user ? "/dashboard" : "/signup"}>
+                  <button 
+                    style={{ backgroundColor: '#243F74' }} 
+                    className="text-white px-10 md:px-16 py-4 md:py-5 rounded-full text-lg md:text-xl font-bold hover:scale-105 transition-all shadow-xl shadow-[#243F74]/20 active:scale-95 group overflow-hidden relative"
+                  >
+                    <span className="relative z-10">{user ? "Go to Dashboard" : "Start for free"}</span>
+                    <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                  </button>
+                </Link>
+                {!user && (
+                  <p className="text-slate-400 text-sm font-semibold italic tracking-wide animate-pulse mt-4">
+                    No credit card required
+                  </p>
+                )}
+              </div>
             )}
           </div>
 
@@ -376,9 +385,13 @@ export default function Home() {
                     <li className="flex items-center justify-center gap-2"><svg className="w-4 h-4 text-[#9BCB3B]" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg> Dashboard tracking</li>
                     <li className="flex items-center justify-center gap-2"><svg className="w-4 h-4 text-[#9BCB3B]" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg> Tool tracking access</li>
                   </ul>
-                  <Link href={user ? "/dashboard" : "/signup"} className="block w-full py-5 rounded-2xl border-2 border-slate-100 text-slate-400 font-black hover:bg-slate-50 transition-all text-center uppercase text-xs tracking-[0.2em]">
-                    {user ? "View Dashboard" : "Stay Free"}
-                  </Link>
+                  {!authLoading && (
+                    <div className="animate-in fade-in duration-700">
+                      <Link href={user ? "/dashboard" : "/signup"} className="block w-full py-5 rounded-2xl border-2 border-slate-100 text-slate-400 font-black hover:bg-slate-50 transition-all text-center uppercase text-xs tracking-[0.2em]">
+                        {user ? "View Dashboard" : "Stay Free"}
+                      </Link>
+                    </div>
+                  )}
                 </div>
                 
                 <div style={{ borderColor: '#9BCB3B' }} className="bg-white border-2 p-10 md:p-12 rounded-[2.5rem] md:rounded-[3.5rem] relative shadow-2xl shadow-[#9BCB3B]/10 text-center hover:scale-[1.02] transition-transform duration-500">
@@ -408,14 +421,18 @@ export default function Home() {
             <h2 className="text-3xl md:text-5xl font-black mb-8 md:mb-10 italic tracking-tight leading-snug">
               Professionalize your <br className="hidden md:block" /> freelance exit.
             </h2>
-            <Link href={user ? "/dashboard" : "/signup"}>
-              <button 
-                style={{ backgroundColor: '#9BCB3B' }} 
-                className="w-full sm:w-auto text-white px-10 md:px-20 py-4 md:py-6 rounded-full text-lg md:text-2xl font-black hover:scale-105 transition-all shadow-2xl shadow-[#9BCB3B]/30 active:scale-95"
-              >
-                {user ? "Go to Dashboard" : "Get Started for Free"}
-              </button>
-            </Link>
+            {!authLoading && (
+              <div className="animate-in fade-in zoom-in-95 duration-700">
+                <Link href={user ? "/dashboard" : "/signup"}>
+                  <button 
+                    style={{ backgroundColor: '#9BCB3B' }} 
+                    className="w-full sm:w-auto text-white px-10 md:px-20 py-4 md:py-6 rounded-full text-lg md:text-2xl font-black hover:scale-105 transition-all shadow-2xl shadow-[#9BCB3B]/30 active:scale-95"
+                  >
+                    {user ? "Go to Dashboard" : "Get Started for Free"}
+                  </button>
+                </Link>
+              </div>
+            )}
           </section>
           </Reveal>
         </section>
