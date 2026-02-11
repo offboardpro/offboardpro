@@ -91,6 +91,7 @@ function Header() {
               width={140}  
               height={140} 
               priority
+              unoptimized
               className="object-contain scale-[1.1] md:scale-[1.8] transition-transform" 
             />
           </Link>
@@ -401,7 +402,7 @@ export default function Home() {
           </Reveal>
 
           <Reveal>
-          <section style={{ backgroundColor: '#243F74' }} className="py-16 md:py-24 text-center text-white px-6 rounded-[3rem] md:rounded-[4rem] mt-12 md:mt-24 mb-12 md:mb-20 shadow-2xl shadow-[#243F74]/40 mx-4">
+          <section id="cta" style={{ backgroundColor: '#243F74' }} className="py-16 md:py-24 text-center text-white px-6 rounded-[3rem] md:rounded-[4rem] mt-12 md:mt-24 mb-12 md:mb-20 shadow-2xl shadow-[#243F74]/40 mx-4">
             <h2 className="text-3xl md:text-5xl font-black mb-8 md:mb-10 italic tracking-tight leading-snug">
               Professionalize your <br className="hidden md:block" /> freelance exit.
             </h2>
@@ -422,7 +423,14 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-10">
           <div className="grid md:grid-cols-3 gap-12 md:gap-16 mb-16 md:mb-20 text-left">
             <div className="flex flex-col gap-6 md:gap-8">
-              <Image src="/logo.png" alt="OffboardPro" width={160} height={40} className="object-contain" />
+              <Image 
+                src="/logo.png" 
+                alt="OffboardPro" 
+                width={160} 
+                height={40} 
+                unoptimized
+                className="object-contain" 
+              />
               <p className="text-slate-400 text-sm font-bold leading-relaxed max-w-xs uppercase tracking-tight">
                 The security-first offboarding layer for modern freelancers and agencies.
               </p>
