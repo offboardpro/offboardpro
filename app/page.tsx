@@ -45,7 +45,6 @@ function Header() {
   const [isPro, setIsPro] = useState(false); 
   const router = useRouter();
 
-  // Sleek Toggle: Doesn't lock body scroll to keep the "small menu" feel
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
   useEffect(() => {
@@ -150,7 +149,6 @@ function Header() {
           )}
         </nav>
 
-        {/* COMPACT HAMBURGER BUTTON */}
         <button onClick={toggleMenu} className="lg:hidden flex flex-col gap-1.5 p-3 rounded-2xl bg-slate-50 border border-slate-100 relative z-[110]">
           <div className={`w-5 h-0.5 bg-[#243F74] transition-all duration-300 ${isMenuOpen ? "rotate-45 translate-y-2" : ""}`}></div>
           <div className={`w-5 h-0.5 bg-[#243F74] transition-all duration-300 ${isMenuOpen ? "opacity-0" : ""}`}></div>
@@ -158,7 +156,6 @@ function Header() {
         </button>
       </div>
 
-      {/* SLEEK SMALL DROPDOWN MENU - Preserved NavLinks and Logic */}
       <div className={`absolute top-[95%] left-6 right-6 lg:hidden transition-all duration-300 ease-out origin-top ${isMenuOpen ? "scale-y-100 opacity-100" : "scale-y-0 opacity-0 pointer-events-none"}`}>
         <div className="bg-white border border-slate-100 rounded-[2.5rem] shadow-2xl shadow-slate-200/60 p-5 flex flex-col gap-4">
           <div className="flex flex-col gap-1">
@@ -219,7 +216,6 @@ export default function Home() {
   const [isVisible, setIsVisible] = useState(false);
   const [showScrollBtn, setShowScrollBtn] = useState(false);
   const [user, setUser] = useState<any>(null);
-  const [authChecking, setAuthChecking] = useState(true);
 
   useEffect(() => {
     setIsVisible(true);
@@ -227,7 +223,6 @@ export default function Home() {
 
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
-      setAuthChecking(false);
     });
 
     window.addEventListener("scroll", handleScroll);
@@ -239,14 +234,6 @@ export default function Home() {
 
   const goToPricing = () => router.push("/pricing");
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
-
-  if (authChecking) {
-    return (
-        <div className="min-h-screen flex items-center justify-center bg-white">
-            <div className="w-12 h-12 border-4 border-slate-100 border-t-[#243F74] rounded-full animate-spin"></div>
-        </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-white scroll-smooth relative font-sans selection:bg-[#9BCB3B] selection:text-white">

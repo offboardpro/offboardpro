@@ -94,8 +94,20 @@ export default function DashboardPage() {
         const userRef = doc(db, "users", currentUser.uid);
         const unsubscribeUser = onSnapshot(userRef, (docSnap) => {
           if (docSnap.exists()) {
-            const firestoreIsPro = docSnap.data().isPro || false;
-            setIsPro(firestoreIsPro);
+            const data = docSnap.data();
+            const firestoreIsPro = data.isPro || false;
+            
+            // --- NEW: SUBSCRIPTION EXPIRY LOGIC ---
+            const expiryDate = data.expiresAt?.toDate(); // Convert Firestore timestamp to JS Date
+            const today = new Date();
+
+            if (firestoreIsPro && expiryDate && today > expiryDate) {
+              // Plan expired! Auto-downgrade the user
+              setIsPro(false);
+              updateDoc(userRef, { isPro: false });
+            } else {
+              setIsPro(firestoreIsPro);
+            }
           } else {
             setIsPro(false);
           }
@@ -204,11 +216,9 @@ export default function DashboardPage() {
       try {
         setLoading(true);
 
-        // --- STEP 1: Re-authenticate to fix 'auth/requires-recent-login' ---
         const provider = new GoogleAuthProvider();
         await reauthenticateWithPopup(user, provider);
         
-        // --- STEP 2: Wipe Firestore Data ---
         const q = query(collection(db, "clients"), where("userId", "==", user.uid));
         const querySnapshot = await getDocs(q);
         const batch = writeBatch(db);
@@ -217,7 +227,6 @@ export default function DashboardPage() {
         batch.delete(doc(db, "users", user.uid));
         await batch.commit();
 
-        // --- STEP 3: Delete Auth Account ---
         await deleteUser(user);
         router.push("/");
       } catch (error: any) {
@@ -241,9 +250,17 @@ export default function DashboardPage() {
     }
   };
 
-  const copySharedLink = (id: string) => {
-    navigator.clipboard.writeText(`${window.location.origin}/shared/${id}`);
-    alert("Client Portal Link Copies!");
+  // --- UPDATED: VIEW PORTAL (PRO ONLY) ---
+  const viewPortal = (id: string) => {
+    if (!isPro) return;
+    const portalUrl = `${window.location.origin}/shared/${id}`;
+    
+    // Open the portal in a new tab
+    window.open(portalUrl, "_blank");
+    
+    // Also copy to clipboard for sharing
+    navigator.clipboard.writeText(portalUrl);
+    alert("Client Portal link copied to clipboard!");
   };
 
   const handleLogout = async () => {
@@ -384,7 +401,6 @@ export default function DashboardPage() {
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-10 text-center lg:text-left">
           <div>
             <h1 className={`text-3xl md:text-5xl font-black tracking-tight italic mb-2 transition-colors ${isDarkMode ? 'text-white' : 'text-[#243F74]'}`}>
-              {/* UPDATED: Displays Full Name + Hi Emoji */}
               Welcome, <span style={{ color: '#9BCB3B' }}>{user?.displayName || "Freelancer"} 👋</span>
             </h1>
             <p className="text-slate-400 font-bold text-xs uppercase tracking-widest italic">
@@ -473,7 +489,7 @@ export default function DashboardPage() {
                     </td>
                     <td className="px-8 py-6 text-right whitespace-nowrap">
                       {isPro && (
-                        <button onClick={() => copySharedLink(client.id)} className="text-[#9BCB3B] font-black text-[10px] uppercase tracking-widest mr-5">Copy Link</button>
+                        <button onClick={() => viewPortal(client.id)} className="text-[#9BCB3B] font-black text-[10px] uppercase tracking-widest mr-5 hover:underline decoration-2">View Portal</button>
                       )}
                       <button onClick={() => handleDelete(client.id)} className="text-slate-500 hover:text-red-400 font-black text-[10px] uppercase transition-colors">Remove</button>
                     </td>
@@ -503,7 +519,7 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between pt-4 border-t-2 border-slate-100 dark:border-slate-800">
                 <span className="text-slate-400 font-black text-sm">{client.date}</span>
                 <div className="flex gap-4">
-                  {isPro && <button onClick={() => copySharedLink(client.id)} className="text-[#9BCB3B] font-black text-xs uppercase tracking-widest">Link</button>}
+                  {isPro && <button onClick={() => viewPortal(client.id)} className="text-[#9BCB3B] font-black text-xs uppercase tracking-widest">Portal</button>}
                   <button onClick={() => handleDelete(client.id)} className="text-red-400 font-black text-xs uppercase tracking-widest">Delete</button>
                 </div>
               </div>

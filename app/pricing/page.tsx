@@ -115,7 +115,7 @@ export default function PricingPage() {
     }
   };
 
-  // --- UPDATED: ROBUST FINALIZE FUNCTION ---
+  // --- UPDATED: ROBUST FINALIZE FUNCTION WITH EXPIRY LOGIC ---
   const finalizeCloudUpgrade = async () => {
     setIsUpgrading(true);
 
@@ -136,12 +136,22 @@ export default function PricingPage() {
     try {
         const userRef = doc(db, "users", user.uid);
         
+        // --- NEW: EXPIRY CALCULATION ---
+        const now = new Date();
+        const expiryDate = new Date();
+        if (billingCycle === 'monthly') {
+          expiryDate.setMonth(now.getMonth() + 1);
+        } else {
+          expiryDate.setFullYear(now.getFullYear() + 1);
+        }
+        
         // Update Firestore directly
         await setDoc(userRef, { 
           isPro: true,
           plan: "Professional",
           billingCycle: billingCycle,
-          upgradedAt: serverTimestamp()
+          upgradedAt: serverTimestamp(),
+          expiresAt: expiryDate // Now saving the end date!
         }, { merge: true });
 
         // Update local status for dashboard
