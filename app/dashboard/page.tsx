@@ -440,10 +440,12 @@ export default function DashboardPage() {
               <span className={`text-2xl md:text-3xl font-black italic ${isDarkMode ? 'text-white' : 'text-[#243F74]'}`}>{clients.length}</span>
             </div>
             
-            {/* UPDATED: SECURITY RATING CARD */}
+            {/* UPDATED: SLEEK SECURITY RATING CARD */}
             <div className={`p-6 md:p-8 rounded-[2rem] border-2 text-center border-b-8 transition-colors ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'}`} style={{ borderBottomColor: securityMetrics.color }}>
               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">Security Rating</span>
-              <span style={{ color: securityMetrics.color }} className="text-2xl md:text-3xl font-black italic">{securityMetrics.score}</span>
+              <span style={{ color: securityMetrics.color }} className="text-sm md:text-lg font-black uppercase tracking-[0.15em] italic block mt-2">
+                {securityMetrics.score}
+              </span>
             </div>
 
             <div className={`p-6 md:p-8 rounded-[2rem] border-2 text-center transition-colors ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'}`}>
