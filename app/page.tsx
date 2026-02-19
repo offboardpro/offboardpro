@@ -21,7 +21,7 @@ function Reveal({ children }: { children: React.ReactNode }) {
           observer.unobserve(entry.target);
         }
       },
-      { threshold: 0.05 } // Triggered slightly earlier for better flow
+      { threshold: 0.05 } 
     );
     if (ref.current) observer.observe(ref.current);
     return () => observer.disconnect();
@@ -33,7 +33,7 @@ function Reveal({ children }: { children: React.ReactNode }) {
       className={`transition-all duration-[1200ms] delay-100 ease-[cubic-bezier(0.22,1,0.36,1)] ${
         isVisible 
           ? "opacity-100 translate-y-0" 
-          : "opacity-0 -translate-y-4" // Starts slightly above and fades down
+          : "opacity-0 -translate-y-4"
       }`}
     >
       {children}
@@ -45,7 +45,7 @@ function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [user, setUser] = useState<any>(null); 
   const [isPro, setIsPro] = useState(false); 
-  const [authLoading, setAuthLoading] = useState(true); // Track auth state
+  const [authLoading, setAuthLoading] = useState(true);
   const router = useRouter();
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
@@ -53,7 +53,7 @@ function Header() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
-      setAuthLoading(false); // Auth check complete
+      setAuthLoading(false);
       if (currentUser) {
         const userRef = doc(db, "users", currentUser.uid);
         const unsubPro = onSnapshot(userRef, (docSnap) => {
@@ -332,16 +332,16 @@ export default function Home() {
 
         {/* TRUSTED BY MARQUEE SECTION */}
         <div className="pb-16 md:pb-32 overflow-hidden">
-          <p className="text-center text-slate-300 text-[10px] md:text-xs font-black uppercase tracking-[0.3em] mb-8 md:mb-12 italic">
+          <p className="text-center text-slate-400 text-[10px] md:text-xs font-black uppercase tracking-[0.3em] mb-8 md:mb-12 italic">
             Trusted by modern professionals
           </p>
           <div className="relative flex items-center overflow-hidden [mask-image:linear-gradient(to_right,transparent,white_15%,white_85%,transparent)]">
             <div className="animate-marquee whitespace-nowrap flex items-center gap-12 md:gap-24">
-              {/* Repeats items to fill width and ensure seamless loop */}
+              {/* Repeats items for infinite loop with updated darker contrast color */}
               {[...marqueeItems, ...marqueeItems, ...marqueeItems, ...marqueeItems].map((item, i) => (
                 <span 
                   key={i} 
-                  className="text-slate-100 text-4xl md:text-7xl font-black italic tracking-tighter transition-colors cursor-default hover:text-[#9BCB3B]/20"
+                  className="text-[#243F74]/15 text-4xl md:text-7xl font-black italic tracking-tighter transition-colors cursor-default hover:text-[#9BCB3B]/30"
                 >
                   {item}
                 </span>
