@@ -108,7 +108,6 @@ function Header() {
             </Link>
           ))}
           
-          {/* Prevent Start Free button from showing for logged-in users during load */}
           {!authLoading && (
             user ? (
               <div className="flex items-center gap-6 animate-in fade-in duration-500">
@@ -247,10 +246,25 @@ export default function Home() {
   const goToPricing = () => router.push("/pricing");
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
+  const marqueeItems = ["Freelancers", "Consultants", "Agencies"];
+
   return (
     <div className="min-h-screen bg-white scroll-smooth relative font-sans selection:bg-[#9BCB3B] selection:text-white">
       <Header />
       
+      {/* SEAMLESS MARQUEE ANIMATION */}
+      <style jsx global>{`
+        @keyframes marquee {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+        .animate-marquee {
+          display: flex;
+          width: fit-content;
+          animation: marquee 20s linear infinite;
+        }
+      `}</style>
+
       <button 
         onClick={scrollToTop}
         style={{ 
@@ -268,7 +282,7 @@ export default function Home() {
       
       <main className="overflow-x-clip">
         {/* HERO SECTION */}
-        <section className="max-w-6xl mx-auto text-center pt-8 md:pt-24 pb-8 md:pb-20 px-6">
+        <section className="max-w-6xl mx-auto text-center pt-8 md:pt-24 pb-8 md:pb-12 px-6">
           <h1 
             style={{ 
               color: '#9BCB3B',
@@ -293,7 +307,7 @@ export default function Home() {
           </p>
 
           <div 
-            className="mt-6 md:mt-12 mb-16 md:mb-32 flex flex-col items-center gap-4 min-h-[80px]" 
+            className="mt-6 md:mt-12 mb-16 md:mb-24 flex flex-col items-center gap-4 min-h-[80px]" 
           >
             {!authLoading && (
               <div className="animate-in fade-in zoom-in-95 duration-700">
@@ -314,222 +328,242 @@ export default function Home() {
               </div>
             )}
           </div>
+        </section>
 
-          {/* SECTION: How OffboardPro Works */}
-          <Reveal>
-          <div id="how-it-works" className="py-12 md:py-24 border-t border-slate-50 scroll-mt-24 text-left">
-            <div className="max-w-6xl mx-auto px-6">
-              <h2 style={{ color: '#243F74' }} className="text-3xl md:text-4xl font-black tracking-tight mb-10 md:mb-20 text-center italic">How OffboardPro Works</h2>
-              <div className="grid md:grid-cols-3 gap-6 md:gap-8">
-                {[
-                  { n: 1, t: "Track Client Access", d: "Keep a record of every tool, platform, and account you use during a project." },
-                  { n: 2, t: "Set Exit Reminder", d: "Choose when access should be reviewed or removed after the project ends." },
-                  { n: 3, t: "Get Smart Alerts", d: "OffboardPro reminds you what to remove — so nothing gets forgotten." }
-                ].map((step) => (
-                  <div 
-                    key={step.n} 
-                    className="bg-white p-8 md:p-10 rounded-[2.5rem] md:rounded-[3rem] border border-slate-50 hover:border-[#9BCB3B]/30 hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 group"
-                  >
-                    <span style={{ backgroundColor: '#9BCB3B' }} className="text-white w-10 h-10 md:w-12 md:h-12 flex items-center justify-center rounded-2xl font-black mb-6 md:mb-8 italic shadow-lg shadow-[#9BCB3B]/20 group-hover:rotate-12 transition-transform">{step.n}</span>
-                    <h3 style={{ color: '#243F74' }} className="text-xl md:text-2xl font-black mb-4">{step.t}</h3>
-                    <p className="text-slate-500 text-sm leading-relaxed font-medium">{step.d}</p>
-                  </div>
-                ))}
-              </div>
+        {/* TRUSTED BY MARQUEE SECTION */}
+        <div className="pb-16 md:pb-32 overflow-hidden">
+          <p className="text-center text-slate-300 text-[10px] md:text-xs font-black uppercase tracking-[0.3em] mb-8 md:mb-12 italic">
+            Trusted by modern professionals
+          </p>
+          <div className="relative flex items-center overflow-hidden [mask-image:linear-gradient(to_right,transparent,white_15%,white_85%,transparent)]">
+            <div className="animate-marquee whitespace-nowrap flex items-center gap-12 md:gap-24">
+              {/* Repeats items to fill width and ensure seamless loop */}
+              {[...marqueeItems, ...marqueeItems, ...marqueeItems, ...marqueeItems].map((item, i) => (
+                <span 
+                  key={i} 
+                  className="text-slate-100 text-4xl md:text-7xl font-black italic tracking-tighter transition-colors cursor-default hover:text-[#9BCB3B]/20"
+                >
+                  {item}
+                </span>
+              ))}
             </div>
           </div>
-          </Reveal>
+        </div>
 
-          <Reveal>
-          <div id="security" className="py-16 md:py-32 bg-slate-50/50 rounded-[3rem] md:rounded-[4rem] scroll-mt-24 text-left px-6 mx-4">
-            <div className="max-w-4xl mx-auto">
-              <h2 style={{ color: '#243F74' }} className="text-3xl md:text-4xl font-black tracking-tight mb-12 md:mb-16 text-center italic">Security is our priority</h2>
-              <div className="grid md:grid-cols-2 gap-8 md:gap-12 text-left">
-                <div className="bg-white p-10 md:p-12 rounded-[2.5rem] shadow-sm hover:shadow-xl transition-shadow duration-500">
-                  <h4 style={{ color: '#243F74' }} className="font-black mb-4 uppercase text-xs tracking-widest">Zero-Password Policy</h4>
-                  <p className="text-slate-500 text-sm leading-relaxed">We never ask for credentials. We simply act as a tracking layer for your offboarding process.</p>
-                </div>
-                <div className="bg-white p-10 md:p-12 rounded-[2.5rem] shadow-sm hover:shadow-xl transition-shadow duration-500">
-                  <h4 style={{ color: '#243F74' }} className="font-black mb-4 uppercase text-xs tracking-widest">End-to-End Tracking</h4>
-                  <p className="text-slate-500 text-sm leading-relaxed">Every removal action is logged, providing a clean audit trail to show your clients.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-          </Reveal>
-
-          {/* SECTION: Why Forgotten Access Can Be a Problem */}
-          <Reveal>
-          <div className="py-16 md:py-32 text-left px-6 max-w-5xl mx-auto">
-             <div className="bg-slate-900 text-white p-10 md:p-20 rounded-[3rem] md:rounded-[4rem] shadow-2xl relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-[#9BCB3B]/10 blur-[100px] -translate-y-1/2 translate-x-1/2"></div>
-                
-                <h2 className="text-[#9BCB3B] text-3xl md:text-4xl font-black mb-8 italic text-center md:text-left">Why Forgotten Access Can Be a Problem</h2>
-                
-                <p className="text-slate-300 text-lg md:text-xl font-bold mb-10 leading-relaxed text-center md:text-left">
-                  Many freelancers don’t notice this… <br />
-                  <span className="text-white italic">until an awkward moment happens.</span>
-                </p>
-
-                <div className="space-y-6 mb-12">
-                  <p className="text-slate-400 font-medium text-center md:text-left">You finish a project. Everyone is happy.</p>
-                  <p className="text-slate-400 font-medium text-center md:text-left">Then weeks or months later…</p>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {[
-                      "“Oh no… I still have access to the client’s account.”",
-                      "“Wait… does the client still have my login?”",
-                      "“Which accounts did I use for that client?”",
-                      "“Did I remove everything properly?”"
-                    ].map((q, i) => (
-                      <div key={i} className="flex gap-3 items-start bg-white/5 p-4 rounded-2xl border border-white/10">
-                        <span className="text-lg">🚨</span>
-                        <p className="text-sm font-bold italic text-slate-200 leading-snug">{q}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="h-px bg-white/10 w-full mb-10" />
-
-                <p className="text-slate-400 text-sm font-medium mb-8 text-center md:text-left">After a project ends, old logins and permissions often stay active. This can lead to:</p>
-                
-                <ul className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8 mb-12">
-                  {[
-                    "You still having access to client tools",
-                    "Clients still having access to your tools",
-                    "Security or privacy concerns",
-                    "Confusing or uncomfortable situations later"
-                  ].map((item, i) => (
-                    <li key={i} className="flex items-center gap-3 text-slate-200 text-sm font-bold">
-                      <div className="w-1.5 h-1.5 rounded-full bg-[#9BCB3B]" />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-
-                <div className="bg-[#9BCB3B]/10 border border-[#9BCB3B]/20 p-6 md:p-8 rounded-3xl">
-                  <p className="text-white text-lg font-black mb-4 italic leading-snug text-center md:text-left">Ending a project cleanly protects both you and your client.</p>
-                  <p className="text-slate-300 text-sm font-medium leading-relaxed text-center md:text-left">
-                    That’s why professional freelancers follow a clean offboarding process. <br className="hidden md:block" />
-                    <strong>OffboardPro helps you keep track of what to remove — so nothing gets forgotten.</strong>
-                  </p>
-                </div>
-             </div>
-          </div>
-          </Reveal>
-
-          {/* SECTION: Who is OffboardPro for? */}
-          <Reveal>
-          <div className="py-16 md:py-32 text-left px-6 max-w-5xl mx-auto scroll-mt-24">
-            <h2 style={{ color: '#243F74' }} className="text-3xl md:text-5xl font-black tracking-tight mb-12 md:mb-16 text-center italic">Who is OffboardPro for?</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-16">
+        {/* SECTION: How OffboardPro Works */}
+        <Reveal>
+        <div id="how-it-works" className="py-12 md:py-24 border-t border-slate-50 scroll-mt-24 text-left">
+          <div className="max-w-6xl mx-auto px-6">
+            <h2 style={{ color: '#243F74' }} className="text-3xl md:text-4xl font-black tracking-tight mb-10 md:mb-20 text-center italic">How OffboardPro Works</h2>
+            <div className="grid md:grid-cols-3 gap-6 md:gap-8">
               {[
-                "Freelancers managing multiple clients",
-                "Web developers & designers",
-                "Marketers & SEO specialists",
-                "Consultants & independent professionals",
-                "Agencies"
-              ].map((role, i) => (
-                <div key={i} className="bg-slate-50 border border-slate-100 p-6 rounded-[2rem] flex items-center gap-4 hover:border-[#9BCB3B]/30 hover:bg-white hover:shadow-xl transition-all duration-300 group">
-                  <div className="w-8 h-8 rounded-full bg-[#243F74] text-white flex items-center justify-center shrink-0 group-hover:bg-[#9BCB3B] transition-colors">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg>
-                  </div>
-                  <span className="text-[#243F74] font-bold text-sm leading-tight">{role}</span>
+                { n: 1, t: "Track Client Access", d: "Keep a record of every tool, platform, and account you use during a project." },
+                { n: 2, t: "Set Exit Reminder", d: "Choose when access should be reviewed or removed after the project ends." },
+                { n: 3, t: "Get Smart Alerts", d: "OffboardPro reminds you what to remove — so nothing gets forgotten." }
+              ].map((step) => (
+                <div 
+                  key={step.n} 
+                  className="bg-white p-8 md:p-10 rounded-[2.5rem] md:rounded-[3rem] border border-slate-50 hover:border-[#9BCB3B]/30 hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 group"
+                >
+                  <span style={{ backgroundColor: '#9BCB3B' }} className="text-white w-10 h-10 md:w-12 md:h-12 flex items-center justify-center rounded-2xl font-black mb-6 md:mb-8 italic shadow-lg shadow-[#9BCB3B]/20 group-hover:rotate-12 transition-transform">{step.n}</span>
+                  <h3 style={{ color: '#243F74' }} className="text-xl md:text-2xl font-black mb-4">{step.t}</h3>
+                  <p className="text-slate-500 text-sm leading-relaxed font-medium">{step.d}</p>
                 </div>
               ))}
             </div>
-            
-            <div className="text-center bg-[#243F74] p-10 md:p-14 rounded-[3rem] md:rounded-[4rem] shadow-xl">
-              <p className="text-white text-xl md:text-2xl font-bold mb-0 leading-relaxed italic">
-                If you access client tools or accounts, <br className="hidden md:block" />
-                <span className="text-[#9BCB3B]">OffboardPro helps you stay organized and exit projects cleanly.</span>
+          </div>
+        </div>
+        </Reveal>
+
+        <Reveal>
+        <div id="security" className="py-16 md:py-32 bg-slate-50/50 rounded-[3rem] md:rounded-[4rem] scroll-mt-24 text-left px-6 mx-4">
+          <div className="max-w-4xl mx-auto">
+            <h2 style={{ color: '#243F74' }} className="text-3xl md:text-4xl font-black tracking-tight mb-12 md:mb-16 text-center italic">Security is our priority</h2>
+            <div className="grid md:grid-cols-2 gap-8 md:gap-12 text-left">
+              <div className="bg-white p-10 md:p-12 rounded-[2.5rem] shadow-sm hover:shadow-xl transition-shadow duration-500">
+                <h4 style={{ color: '#243F74' }} className="font-black mb-4 uppercase text-xs tracking-widest">Zero-Password Policy</h4>
+                <p className="text-slate-500 text-sm leading-relaxed">We never ask for credentials. We simply act as a tracking layer for your offboarding process.</p>
+              </div>
+              <div className="bg-white p-10 md:p-12 rounded-[2.5rem] shadow-sm hover:shadow-xl transition-shadow duration-500">
+                <h4 style={{ color: '#243F74' }} className="font-black mb-4 uppercase text-xs tracking-widest">End-to-End Tracking</h4>
+                <p className="text-slate-500 text-sm leading-relaxed">Every removal action is logged, providing a clean audit trail to show your clients.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        </Reveal>
+
+        {/* SECTION: Why Forgotten Access Can Be a Problem */}
+        <Reveal>
+        <div className="py-16 md:py-32 text-left px-6 max-w-5xl mx-auto">
+           <div className="bg-slate-900 text-white p-10 md:p-20 rounded-[3rem] md:rounded-[4rem] shadow-2xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-[#9BCB3B]/10 blur-[100px] -translate-y-1/2 translate-x-1/2"></div>
+              
+              <h2 className="text-[#9BCB3B] text-3xl md:text-4xl font-black mb-8 italic text-center md:text-left">Why Forgotten Access Can Be a Problem</h2>
+              
+              <p className="text-slate-300 text-lg md:text-xl font-bold mb-10 leading-relaxed text-center md:text-left">
+                Many freelancers don’t notice this… <br />
+                <span className="text-white italic">until an awkward moment happens.</span>
               </p>
-            </div>
-          </div>
-          </Reveal>
 
-          {/* SECTION: FAQ */}
-          <Reveal>
-          <section id="faq" className="py-16 md:py-32 scroll-mt-24 text-left px-6">
-            <div className="max-w-3xl mx-auto">
-              <h2 style={{ color: '#243F74' }} className="text-3xl md:text-4xl font-black tracking-tight mb-10 md:mb-16 text-center italic">Common Questions</h2>
-              <div className="space-y-1">
-                <FAQItem question="Do you store my client's passwords?" answer="No. We never ask for or store passwords. We track tool names and dates for manual removal." />
-                <FAQItem question="What are Smart Dashboard Alerts?" answer="Pro users see real-time visual warnings on their dashboard when an offboarding task is approaching or overdue." />
-                <FAQItem question="Can I export my data?" answer="Yes! Pro users can export professional PDF reports as a record of security compliance." />
-                <FAQItem question="Can I manage multiple projects at once?" answer="Absolutely. The dashboard is designed to help you track as many active offboardings as you need." />
-              </div>
-            </div>
-          </section>
-          </Reveal>
-
-          {/* SECTION: Pricing */}
-          <Reveal>
-          <div id="pricing" className="py-16 md:py-32 border-t border-slate-50 bg-slate-50/30 text-left px-6 scroll-mt-24 rounded-[3rem] md:rounded-[4rem]">
-            <div className="max-w-5xl mx-auto">
-              <h2 style={{ color: '#243F74' }} className="text-3xl md:text-4xl font-black tracking-tight mb-12 md:mb-20 text-center italic">Simple Pricing</h2>
-              <div className="grid md:grid-cols-2 gap-8 md:gap-10">
-                <div className="bg-white p-10 md:p-12 rounded-[2.5rem] md:rounded-[3.5rem] text-center shadow-sm border border-slate-100 hover:scale-[1.02] transition-transform duration-500">
-                  <h3 className="text-slate-400 font-bold uppercase text-xs mb-6 tracking-widest">Starter</h3>
-                  <div style={{ color: '#243F74' }} className="text-5xl md:text-6xl font-black mb-8 italic">₹0</div>
-                  <ul className="space-y-4 md:space-y-5 mb-10 md:mb-12 text-slate-500 text-sm font-bold">
-                    <li className="flex items-center justify-center gap-2"><svg className="w-4 h-4 text-[#9BCB3B]" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg> Up to 3 active clients</li>
-                    <li className="flex items-center justify-center gap-2"><svg className="w-4 h-4 text-[#9BCB3B]" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg> Dashboard tracking</li>
-                    <li className="flex items-center justify-center gap-2"><svg className="w-4 h-4 text-[#9BCB3B]" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg> Tool tracking access</li>
-                  </ul>
-                  {!authLoading && (
-                    <div className="animate-in fade-in duration-700">
-                      <Link href={user ? "/dashboard" : "/signup"} className="block w-full py-5 rounded-2xl border-2 border-slate-100 text-slate-400 font-black hover:bg-slate-50 transition-all text-center uppercase text-xs tracking-[0.2em]">
-                        {user ? "View Dashboard" : "Stay Free"}
-                      </Link>
-                    </div>
-                  )}
-                </div>
+              <div className="space-y-6 mb-12">
+                <p className="text-slate-400 font-medium text-center md:text-left">You finish a project. Everyone is happy.</p>
+                <p className="text-slate-400 font-medium text-center md:text-left">Then weeks or months later…</p>
                 
-                <div style={{ borderColor: '#9BCB3B' }} className="bg-white border-2 p-10 md:p-12 rounded-[2.5rem] md:rounded-[3.5rem] relative shadow-2xl shadow-[#9BCB3B]/10 text-center hover:scale-[1.02] transition-transform duration-500">
-                  <div style={{ backgroundColor: '#9BCB3B' }} className="absolute -top-4 left-1/2 -translate-x-1/2 px-6 py-1.5 text-white text-[10px] font-black uppercase rounded-full tracking-widest">Most Popular</div>
-                  <h3 className="text-slate-400 font-bold uppercase text-xs mb-6 tracking-widest">Pro</h3>
-                  <div style={{ color: '#243F74' }} className="text-5xl md:text-6xl font-black mb-8 italic">₹199</div>
-                  <ul className="space-y-4 md:space-y-5 mb-10 md:mb-12 text-slate-500 text-sm font-bold">
-                    <li className="flex items-center justify-center gap-2"><svg className="w-4 h-4 text-[#9BCB3B]" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg> Unlimited clients</li>
-                    <li className="flex items-center justify-center gap-2"><svg className="w-4 h-4 text-[#9BCB3B]" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg> PDF Export & Audit Notes</li>
-                    <li className="flex items-center justify-center gap-2"><svg className="w-4 h-4 text-[#9BCB3B]" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg> Smart Dashboard Alerts</li>
-                  </ul>
-                  <button 
-                    onClick={goToPricing}
-                    style={{ backgroundColor: '#243F74' }} 
-                    className="w-full py-5 rounded-2xl font-black text-white shadow-xl shadow-[#243F74]/20 hover:scale-[1.02] active:scale-95 transition-all text-center uppercase text-xs tracking-[0.2em]"
-                  >
-                    View Pro Plan
-                  </button>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {[
+                    "“Oh no… I still have access to the client’s account.”",
+                    "“Wait… does the client still have my login?”",
+                    "“Which accounts did I use for that client?”",
+                    "“Did I remove everything properly?”"
+                  ].map((q, i) => (
+                    <div key={i} className="flex gap-3 items-start bg-white/5 p-4 rounded-2xl border border-white/10">
+                      <span className="text-lg">🚨</span>
+                      <p className="text-sm font-bold italic text-slate-200 leading-snug">{q}</p>
+                    </div>
+                  ))}
                 </div>
+              </div>
+
+              <div className="h-px bg-white/10 w-full mb-10" />
+
+              <p className="text-slate-400 text-sm font-medium mb-8 text-center md:text-left">After a project ends, old logins and permissions often stay active. This can lead to:</p>
+              
+              <ul className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8 mb-12">
+                {[
+                  "You still having access to client tools",
+                  "Clients still having access to your tools",
+                  "Security or privacy concerns",
+                  "Confusing or uncomfortable situations later"
+                ].map((item, i) => (
+                  <li key={i} className="flex items-center gap-3 text-slate-200 text-sm font-bold">
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#9BCB3B]" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+
+              <div className="bg-[#9BCB3B]/10 border border-[#9BCB3B]/20 p-6 md:p-8 rounded-3xl">
+                <p className="text-white text-lg font-black mb-4 italic leading-snug text-center md:text-left">Ending a project cleanly protects both you and your client.</p>
+                <p className="text-slate-300 text-sm font-medium leading-relaxed text-center md:text-left">
+                  That’s why professional freelancers follow a clean offboarding process. <br className="hidden md:block" />
+                  <strong>OffboardPro helps you keep track of what to remove — so nothing gets forgotten.</strong>
+                </p>
+              </div>
+           </div>
+        </div>
+        </Reveal>
+
+        {/* SECTION: Who is OffboardPro for? */}
+        <Reveal>
+        <div className="py-16 md:py-32 text-left px-6 max-w-5xl mx-auto scroll-mt-24">
+          <h2 style={{ color: '#243F74' }} className="text-3xl md:text-5xl font-black tracking-tight mb-12 md:mb-16 text-center italic">Who is OffboardPro for?</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-16">
+            {[
+              "Freelancers managing multiple clients",
+              "Web developers & designers",
+              "Marketers & SEO specialists",
+              "Consultants & independent professionals",
+              "Agencies"
+            ].map((role, i) => (
+              <div key={i} className="bg-slate-50 border border-slate-100 p-6 rounded-[2rem] flex items-center gap-4 hover:border-[#9BCB3B]/30 hover:bg-white hover:shadow-xl transition-all duration-300 group">
+                <div className="w-8 h-8 rounded-full bg-[#243F74] text-white flex items-center justify-center shrink-0 group-hover:bg-[#9BCB3B] transition-colors">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg>
+                </div>
+                <span className="text-[#243F74] font-bold text-sm leading-tight">{role}</span>
+              </div>
+            ))}
+          </div>
+          
+          <div className="text-center bg-[#243F74] p-10 md:p-14 rounded-[3rem] md:rounded-[4rem] shadow-xl">
+            <p className="text-white text-xl md:text-2xl font-bold mb-0 leading-relaxed italic">
+              If you access client tools or accounts, <br className="hidden md:block" />
+              <span className="text-[#9BCB3B]">OffboardPro helps you stay organized and exit projects cleanly.</span>
+            </p>
+          </div>
+        </div>
+        </Reveal>
+
+        {/* SECTION: FAQ */}
+        <Reveal>
+        <section id="faq" className="py-16 md:py-32 scroll-mt-24 text-left px-6">
+          <div className="max-w-3xl mx-auto">
+            <h2 style={{ color: '#243F74' }} className="text-3xl md:text-4xl font-black tracking-tight mb-10 md:mb-16 text-center italic">Common Questions</h2>
+            <div className="space-y-1">
+              <FAQItem question="Do you store my client's passwords?" answer="No. We never ask for or store passwords. We track tool names and dates for manual removal." />
+              <FAQItem question="What are Smart Dashboard Alerts?" answer="Pro users see real-time visual warnings on their dashboard when an offboarding task is approaching or overdue." />
+              <FAQItem question="Can I export my data?" answer="Yes! Pro users can export professional PDF reports as a record of security compliance." />
+              <FAQItem question="Can I manage multiple projects at once?" answer="Absolutely. The dashboard is designed to help you track as many active offboardings as you need." />
+            </div>
+          </div>
+        </section>
+        </Reveal>
+
+        {/* SECTION: Pricing */}
+        <Reveal>
+        <div id="pricing" className="py-16 md:py-32 border-t border-slate-50 bg-slate-50/30 text-left px-6 scroll-mt-24 rounded-[3rem] md:rounded-[4rem]">
+          <div className="max-w-5xl mx-auto">
+            <h2 style={{ color: '#243F74' }} className="text-3xl md:text-4xl font-black tracking-tight mb-12 md:mb-20 text-center italic">Simple Pricing</h2>
+            <div className="grid md:grid-cols-2 gap-8 md:gap-10">
+              <div className="bg-white p-10 md:p-12 rounded-[2.5rem] md:rounded-[3.5rem] text-center shadow-sm border border-slate-100 hover:scale-[1.02] transition-transform duration-500">
+                <h3 className="text-slate-400 font-bold uppercase text-xs mb-6 tracking-widest">Starter</h3>
+                <div style={{ color: '#243F74' }} className="text-5xl md:text-6xl font-black mb-8 italic">₹0</div>
+                <ul className="space-y-4 md:space-y-5 mb-10 md:mb-12 text-slate-500 text-sm font-bold">
+                  <li className="flex items-center justify-center gap-2"><svg className="w-4 h-4 text-[#9BCB3B]" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg> Up to 3 active clients</li>
+                  <li className="flex items-center justify-center gap-2"><svg className="w-4 h-4 text-[#9BCB3B]" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg> Dashboard tracking</li>
+                  <li className="flex items-center justify-center gap-2"><svg className="w-4 h-4 text-[#9BCB3B]" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg> Tool tracking access</li>
+                </ul>
+                {!authLoading && (
+                  <div className="animate-in fade-in duration-700">
+                    <Link href={user ? "/dashboard" : "/signup"} className="block w-full py-5 rounded-2xl border-2 border-slate-100 text-slate-400 font-black hover:bg-slate-50 transition-all text-center uppercase text-xs tracking-[0.2em]">
+                      {user ? "View Dashboard" : "Stay Free"}
+                    </Link>
+                  </div>
+                )}
+              </div>
+              
+              <div style={{ borderColor: '#9BCB3B' }} className="bg-white border-2 p-10 md:p-12 rounded-[2.5rem] md:rounded-[3.5rem] relative shadow-2xl shadow-[#9BCB3B]/10 text-center hover:scale-[1.02] transition-transform duration-500">
+                <div style={{ backgroundColor: '#9BCB3B' }} className="absolute -top-4 left-1/2 -translate-x-1/2 px-6 py-1.5 text-white text-[10px] font-black uppercase rounded-full tracking-widest">Most Popular</div>
+                <h3 className="text-slate-400 font-bold uppercase text-xs mb-6 tracking-widest">Pro</h3>
+                <div style={{ color: '#243F74' }} className="text-5xl md:text-6xl font-black mb-8 italic">₹199</div>
+                <ul className="space-y-4 md:space-y-5 mb-10 md:mb-12 text-slate-500 text-sm font-bold">
+                  <li className="flex items-center justify-center gap-2"><svg className="w-4 h-4 text-[#9BCB3B]" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg> Unlimited clients</li>
+                  <li className="flex items-center justify-center gap-2"><svg className="w-4 h-4 text-[#9BCB3B]" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg> PDF Export & Audit Notes</li>
+                  <li className="flex items-center justify-center gap-2"><svg className="w-4 h-4 text-[#9BCB3B]" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg> Smart Dashboard Alerts</li>
+                </ul>
+                <button 
+                  onClick={goToPricing}
+                  style={{ backgroundColor: '#243F74' }} 
+                  className="w-full py-5 rounded-2xl font-black text-white shadow-xl shadow-[#243F74]/20 hover:scale-[1.02] active:scale-95 transition-all text-center uppercase text-xs tracking-[0.2em]"
+                >
+                  View Pro Plan
+                </button>
               </div>
             </div>
           </div>
-          </Reveal>
+        </div>
+        </Reveal>
 
-          {/* SECTION: CTA */}
-          <Reveal>
-          <section id="cta" style={{ backgroundColor: '#243F74' }} className="py-16 md:py-24 text-center text-white px-6 rounded-[3rem] md:rounded-[4rem] mt-12 md:mt-24 mb-12 md:mb-20 shadow-2xl shadow-[#243F74]/40 mx-4">
-            <h2 className="text-3xl md:text-5xl font-black mb-8 md:mb-10 italic tracking-tight leading-snug">
-              Professionalize your <br className="hidden md:block" /> freelance exit.
-            </h2>
-            {!authLoading && (
-              <div className="animate-in fade-in zoom-in-95 duration-700">
-                <Link href={user ? "/dashboard" : "/signup"}>
-                  <button 
-                    style={{ backgroundColor: '#9BCB3B' }} 
-                    className="w-full sm:w-auto text-white px-10 md:px-20 py-4 md:py-6 rounded-full text-lg md:text-2xl font-black hover:scale-105 transition-all shadow-2xl shadow-[#9BCB3B]/30 active:scale-95"
-                  >
-                    {user ? "Go to Dashboard" : "Get Started for Free"}
-                  </button>
-                </Link>
-              </div>
-            )}
-          </section>
-          </Reveal>
+        {/* SECTION: CTA */}
+        <Reveal>
+        <section id="cta" style={{ backgroundColor: '#243F74' }} className="py-16 md:py-24 text-center text-white px-6 rounded-[3rem] md:rounded-[4rem] mt-12 md:mt-24 mb-12 md:mb-20 shadow-2xl shadow-[#243F74]/40 mx-4">
+          <h2 className="text-3xl md:text-5xl font-black mb-8 md:mb-10 italic tracking-tight leading-snug">
+            Professionalize your <br className="hidden md:block" /> freelance exit.
+          </h2>
+          {!authLoading && (
+            <div className="animate-in fade-in zoom-in-95 duration-700">
+              <Link href={user ? "/dashboard" : "/signup"}>
+                <button 
+                  style={{ backgroundColor: '#9BCB3B' }} 
+                  className="w-full sm:w-auto text-white px-10 md:px-20 py-4 md:py-6 rounded-full text-lg md:text-2xl font-black hover:scale-105 transition-all shadow-2xl shadow-[#9BCB3B]/30 active:scale-95"
+                >
+                  {user ? "Go to Dashboard" : "Get Started for Free"}
+                </button>
+              </Link>
+            </div>
+          )}
         </section>
+        </Reveal>
       </main>
 
       <footer className="bg-white border-t border-slate-100 pt-16 md:pt-24 pb-12">
