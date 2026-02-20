@@ -542,7 +542,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* --- ADD PROJECT MODAL (UPDATED LABELS) --- */}
+      {/* --- ADD PROJECT MODAL (FIXED PC SPACING) --- */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xl flex items-center justify-center z-[100] px-4">
             <div className={`w-full max-w-[480px] rounded-[2.5rem] p-8 md:p-10 shadow-2xl border-t-[10px] transition-all animate-in zoom-in duration-300 ${isDarkMode ? 'bg-slate-900 border-[#9BCB3B]' : 'bg-white border-[#9BCB3B]'}`}>
@@ -577,7 +577,7 @@ export default function DashboardPage() {
                     type="date" 
                     value={offboardDate} 
                     onChange={(e) => setOffboardDate(e.target.value)} 
-                    className={`w-full border-2 rounded-2xl pl-28 pr-5 py-3.5 font-black outline-none text-sm ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white focus:border-[#9BCB3B]' : 'bg-white border-slate-100 focus:border-[#9BCB3B]'}`} 
+                    className={`w-full border-2 rounded-2xl pl-32 md:pl-40 pr-5 py-3.5 font-black outline-none text-sm ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white focus:border-[#9BCB3B]' : 'bg-white border-slate-100 focus:border-[#9BCB3B]'}`} 
                   />
                 </div>
                 
