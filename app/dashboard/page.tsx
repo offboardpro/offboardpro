@@ -49,7 +49,7 @@ export default function DashboardPage() {
   
   const [clients, setClients] = useState<any[]>([]);
 
-  // --- NEW: SMART ALERTS CALCULATION (INTERNAL ONLY) ---
+  // --- SMART ALERTS CALCULATION ---
   const activeAlerts = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -58,14 +58,12 @@ export default function DashboardPage() {
       const pDate = new Date(c.date);
       const diffTime = pDate.getTime() - today.getTime();
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      // Alert if project is overdue OR due within the next 48 hours
       return c.status !== "completed" && diffDays <= 2;
     });
   }, [clients]);
 
-  // --- UPDATED: DYNAMIC SECURITY RATING CALCULATION (Empty Logic Added) ---
+  // --- DYNAMIC SECURITY RATING CALCULATION ---
   const securityMetrics = useMemo(() => {
-    // If no clients, show "NOT RATED" instead of Optimal
     if (clients.length === 0) return { score: "NOT RATED", color: "#94a3b8" }; 
     
     const today = new Date();
@@ -97,7 +95,6 @@ export default function DashboardPage() {
           if (docSnap.exists()) {
             const data = docSnap.data();
             const firestoreIsPro = data.isPro || false;
-            
             const expiryDate = data.expiresAt?.toDate(); 
             const today = new Date();
 
@@ -210,7 +207,6 @@ export default function DashboardPage() {
     if (confirmDelete) {
       try {
         setLoading(true);
-
         const provider = new GoogleAuthProvider();
         await reauthenticateWithPopup(user, provider);
         
@@ -263,18 +259,15 @@ export default function DashboardPage() {
 
   const handleSave = async () => {
     if (!user) return;
-    
     if (!isPro && clients.length >= 3) {
       alert("Starter plan is limited to 3 clients.");
       router.push("/pricing");
       return;
     }
-    
     if (clientName.trim() === "" || offboardDate === "") {
         alert("Please provide a client name and offboarding date.");
         return;
     }
-    
     setIsSaving(true);
     try {
       await addDoc(collection(db, "clients"), {
@@ -286,16 +279,9 @@ export default function DashboardPage() {
         status: "pending",
         createdAt: serverTimestamp()
       });
-
-      setClientName(""); 
-      setTools(""); 
-      setOffboardDate(""); 
-      setNotes(""); 
-      setIsModalOpen(false);
-      
+      setClientName(""); setTools(""); setOffboardDate(""); setNotes(""); setIsModalOpen(false);
       setShowToast(true);
       setTimeout(() => setShowToast(false), 3000);
-      
     } catch (error) {
       console.error("Save Error:", error);
       alert("Failed to save project.");
@@ -364,7 +350,6 @@ export default function DashboardPage() {
       {/* MAIN CONTENT */}
       <main className="flex-grow w-full max-w-7xl mx-auto pt-40 md:pt-48 pb-16 px-4 md:px-8">
         
-        {/* DASHBOARD ALERTS (PRO ONLY) */}
         {isPro && activeAlerts.length > 0 && (
           <div className="mb-10 animate-in fade-in slide-in-from-top-4 duration-500">
              <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-red-500 mb-3 flex items-center gap-2">
@@ -401,17 +386,28 @@ export default function DashboardPage() {
           <div className="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
             <input type="text" placeholder="Search..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className={`w-full sm:w-64 border-2 rounded-2xl px-4 py-3 text-sm font-bold outline-none transition-all ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white focus:border-[#9BCB3B]' : 'bg-white border-slate-100 focus:border-[#9BCB3B]'}`} />
             
-            {/* --- ENHANCED HERO ADD PROJECT BUTTON --- */}
-            <button 
-              onClick={() => setIsModalOpen(true)} 
-              style={{ backgroundColor: '#243F74' }} 
-              className="group w-full sm:w-auto text-white px-8 py-3.5 rounded-2xl font-black text-sm uppercase shadow-xl shadow-[#243F74]/20 hover:scale-[1.05] active:scale-95 transition-all flex items-center justify-center gap-3"
-            >
-              <span className="bg-[#9BCB3B] rounded-lg p-0.5 group-hover:rotate-90 transition-transform duration-300">
-                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M12 4v16m8-8H4" /></svg>
-              </span>
-              Add Project
-            </button>
+            {/* BUTTON GROUP */}
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              {!isPro && (
+                <Link 
+                  href="/pricing"
+                  className="flex-1 sm:flex-none bg-[#9BCB3B] text-white px-6 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-[#9BCB3B]/20 hover:scale-[1.05] active:scale-95 transition-all text-center flex items-center justify-center gap-2"
+                >
+                  🚀 Upgrade
+                </Link>
+              )}
+              
+              <button 
+                onClick={() => setIsModalOpen(true)} 
+                style={{ backgroundColor: '#243F74' }} 
+                className="group flex-1 sm:flex-none text-white px-8 py-3.5 rounded-2xl font-black text-sm uppercase shadow-xl shadow-[#243F74]/20 hover:scale-[1.05] active:scale-95 transition-all flex items-center justify-center gap-3"
+              >
+                <span className="bg-[#9BCB3B] rounded-lg p-0.5 group-hover:rotate-90 transition-transform duration-300">
+                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M12 4v16m8-8H4" /></svg>
+                </span>
+                Add Project
+              </button>
+            </div>
           </div>
         </div>
 
@@ -419,15 +415,9 @@ export default function DashboardPage() {
         {isPro && (
           <div className="flex flex-wrap items-center gap-4 mb-8 p-5 rounded-[2rem] border-2 bg-slate-500/5 border-slate-500/10 transition-all">
             <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 mr-2">Admin Tools:</span>
-            <button onClick={generatePDF} className="bg-[#243F74] text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg shadow-[#243F74]/20">
-              📄 Export PDF
-            </button>
-            <button onClick={exportCSV} className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all border-2 ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-100 text-[#243F74]'}`}>
-              📊 Export CSV
-            </button>
-            <button onClick={handleBulkDelete} className="bg-red-50 text-red-500 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest ml-auto hover:bg-red-500 hover:text-white transition-all border-2 border-red-100">
-              🗑 Clear All
-            </button>
+            <button onClick={generatePDF} className="bg-[#243F74] text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg shadow-[#243F74]/20">📄 Export PDF</button>
+            <button onClick={exportCSV} className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all border-2 ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-100 text-[#243F74]'}`}>📊 Export CSV</button>
+            <button onClick={handleBulkDelete} className="bg-red-50 text-red-500 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest ml-auto hover:bg-red-500 hover:text-white transition-all border-2 border-red-100">🗑 Clear All</button>
           </div>
         )}
 
@@ -436,53 +426,35 @@ export default function DashboardPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-10">
             <div className={`p-6 md:p-8 rounded-[2rem] border-2 text-center transition-colors ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'}`}>
               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">Total Assets</span>
-              <span className={`text-2xl md:text-3xl font-black italic ${isDarkMode ? 'text-white' : 'text-[#243F74]'}`}>
-                {clients.length === 0 ? "0" : clients.length}
-              </span>
+              <span className={`text-2xl md:text-3xl font-black italic ${isDarkMode ? 'text-white' : 'text-[#243F74]'}`}>{clients.length === 0 ? "0" : clients.length}</span>
             </div>
-            
             <div className={`p-6 md:p-8 rounded-[2rem] border-2 text-center border-b-8 transition-colors ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'}`} style={{ borderBottomColor: securityMetrics.color }}>
               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">Security Rating</span>
-              <span style={{ color: securityMetrics.color }} className="text-sm md:text-lg font-black uppercase tracking-[0.15em] italic block mt-2">
-                {securityMetrics.score}
-              </span>
+              <span style={{ color: securityMetrics.color }} className="text-sm md:text-lg font-black uppercase tracking-[0.15em] italic block mt-2">{securityMetrics.score}</span>
             </div>
-
             <div className={`p-6 md:p-8 rounded-[2rem] border-2 text-center transition-colors ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'}`}>
               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">Smart Alerts</span>
-              <span className={`text-2xl md:text-3xl font-black italic ${activeAlerts.length > 0 ? 'text-red-500' : 'text-[#9BCB3B]'}`}>
-                {activeAlerts.length === 0 ? "ALL CLEAR" : activeAlerts.length}
-              </span>
+              <span className={`text-2xl md:text-3xl font-black italic ${activeAlerts.length > 0 ? 'text-red-500' : 'text-[#9BCB3B]'}`}>{activeAlerts.length === 0 ? "ALL CLEAR" : activeAlerts.length}</span>
             </div>
-
             <div className={`p-6 md:p-8 rounded-[2rem] border-2 text-center transition-colors ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'}`}>
               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">Next Exit</span>
-              <span className={`text-xs font-black uppercase truncate block px-2 ${isDarkMode ? 'text-slate-200' : 'text-[#243F74]'}`}>
-                {clients.length > 0 ? clients[0].date : "NONE"}
-              </span>
+              <span className={`text-xs font-black uppercase truncate block px-2 ${isDarkMode ? 'text-slate-200' : 'text-[#243F74]'}`}>{clients.length > 0 ? clients[0].date : "NONE"}</span>
             </div>
           </div>
         )}
 
-        {/* --- DYNAMIC EMPTY STATE VS TABLE --- */}
+        {/* DYNAMIC EMPTY STATE VS TABLE */}
         {clients.length === 0 ? (
           <div className={`flex flex-col items-center justify-center py-24 px-6 rounded-[3rem] border-2 border-dashed transition-colors text-center ${isDarkMode ? 'bg-slate-900/50 border-slate-800' : 'bg-slate-50/50 border-slate-200'}`}>
             <div className={`w-20 h-20 rounded-full flex items-center justify-center shadow-sm mb-6 ${isDarkMode ? 'bg-slate-800' : 'bg-white'}`}>
-              <svg className="w-10 h-10 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-              </svg>
+              <svg className="w-10 h-10 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
             </div>
             <h3 className={`text-2xl font-black italic mb-3 ${isDarkMode ? 'text-white' : 'text-[#243F74]'}`}>Your workspace is clean.</h3>
-            <p className="text-slate-400 max-w-sm font-bold leading-relaxed mb-8 uppercase text-[10px] tracking-widest">
-              No projects yet. Start by adding your first client project to begin tracking access.
-            </p>
-            <button onClick={() => setIsModalOpen(true)} className="text-[#243F74] dark:text-[#9BCB3B] font-black uppercase text-xs tracking-widest border-b-2 border-[#9BCB3B] pb-1 hover:opacity-70 transition-all">
-              Add First Project &rarr;
-            </button>
+            <p className="text-slate-400 max-w-sm font-bold leading-relaxed mb-8 uppercase text-[10px] tracking-widest">No projects yet. Start by adding your first client project to begin tracking access.</p>
+            <button onClick={() => setIsModalOpen(true)} className="text-[#243F74] dark:text-[#9BCB3B] font-black uppercase text-xs tracking-widest border-b-2 border-[#9BCB3B] pb-1 hover:opacity-70 transition-all">Add First Project &rarr;</button>
           </div>
         ) : (
           <>
-            {/* PROJECTS TABLE */}
             <div className={`hidden md:block rounded-[2.5rem] border-2 shadow-2xl overflow-hidden transition-colors ${isDarkMode ? 'bg-slate-900 border-slate-800 shadow-none' : 'bg-white border-slate-100'}`}>
               <div className="overflow-x-auto">
                 <table className="w-full text-left min-w-[800px]">
@@ -503,17 +475,10 @@ export default function DashboardPage() {
                         </td>
                         <td className={`px-8 py-6 text-center font-black text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{client.date}</td>
                         <td className="px-8 py-6 text-center">
-                          <button 
-                            onClick={() => toggleStatus(client.id, client.status)}
-                            className={`px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${client.status === 'completed' ? 'bg-[#9BCB3B] text-white' : 'bg-slate-100 text-slate-400'}`}
-                          >
-                            {client.status === 'completed' ? '✓ Completed' : '○ Pending'}
-                          </button>
+                          <button onClick={() => toggleStatus(client.id, client.status)} className={`px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${client.status === 'completed' ? 'bg-[#9BCB3B] text-white' : 'bg-slate-100 text-slate-400'}`}>{client.status === 'completed' ? '✓ Completed' : '○ Pending'}</button>
                         </td>
                         <td className="px-8 py-6 text-right whitespace-nowrap">
-                          {isPro && (
-                            <button onClick={() => viewPortal(client.id)} className="text-[#9BCB3B] font-black text-[10px] uppercase tracking-widest mr-5 hover:underline decoration-2">View Portal</button>
-                          )}
+                          {isPro && <button onClick={() => viewPortal(client.id)} className="text-[#9BCB3B] font-black text-[10px] uppercase tracking-widest mr-5 hover:underline decoration-2">View Portal</button>}
                           <button onClick={() => handleDelete(client.id)} className="text-slate-500 hover:text-red-400 font-black text-[10px] uppercase transition-colors">Remove</button>
                         </td>
                       </tr>
@@ -523,7 +488,6 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* MOBILE VIEW */}
             <div className="md:hidden space-y-4">
               {filteredClients.map((client) => (
                 <div key={client.id} className={`p-6 rounded-[2rem] border-2 transition-all ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100 shadow-xl'}`}>
@@ -532,12 +496,7 @@ export default function DashboardPage() {
                       <h3 className={`font-black italic text-xl leading-tight ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>{client.name}</h3>
                       <p style={{ color: '#9BCB3B' }} className="text-[10px] font-black uppercase tracking-widest mt-1">{client.tools}</p>
                     </div>
-                    <button 
-                      onClick={() => toggleStatus(client.id, client.status)}
-                      className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${client.status === 'completed' ? 'bg-[#9BCB3B] text-white shadow-lg shadow-[#9BCB3B]/40' : 'bg-slate-100 text-slate-400'}`}
-                    >
-                      {client.status === 'completed' ? <span className="font-black">✓</span> : <span className="font-black">○</span>}
-                    </button>
+                    <button onClick={() => toggleStatus(client.id, client.status)} className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${client.status === 'completed' ? 'bg-[#9BCB3B] text-white shadow-lg shadow-[#9BCB3B]/40' : 'bg-slate-100 text-slate-400'}`}>{client.status === 'completed' ? '✓' : '○'}</button>
                   </div>
                   <div className="flex items-center justify-between pt-4 border-t-2 border-slate-100 dark:border-slate-800">
                     <span className="text-slate-400 font-black text-sm">{client.date}</span>
@@ -583,17 +542,54 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* ADD PROJECT MODAL */}
+      {/* --- ADD PROJECT MODAL (UPDATED LABELS) --- */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xl flex items-center justify-center z-[100] px-4">
             <div className={`w-full max-w-[480px] rounded-[2.5rem] p-8 md:p-10 shadow-2xl border-t-[10px] transition-all animate-in zoom-in duration-300 ${isDarkMode ? 'bg-slate-900 border-[#9BCB3B]' : 'bg-white border-[#9BCB3B]'}`}>
-              <h2 className={`text-3xl font-black italic mb-6 ${isDarkMode ? 'text-white' : 'text-[#243F74]'}`}>New Entry</h2>
+              
+              <h2 className={`text-3xl font-black italic mb-6 ${isDarkMode ? 'text-white' : 'text-[#243F74]'}`}>Add New Project</h2>
+              
               <div className="space-y-4">
-                <input type="text" value={clientName} onChange={(e) => setClientName(e.target.value)} placeholder="Client Name" className={`w-full border-2 rounded-2xl px-5 py-3.5 font-black outline-none text-sm ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white focus:border-[#9BCB3B]' : 'bg-slate-50 border-slate-100 focus:border-[#9BCB3B]'}`} />
-                <input type="text" value={tools} onChange={(e) => setTools(e.target.value)} placeholder="Tools (Slack, AWS...)" className={`w-full border-2 rounded-2xl px-5 py-3.5 font-black outline-none text-sm ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white focus:border-[#9BCB3B]' : 'bg-slate-50 border-slate-100 focus:border-[#9BCB3B]'}`} />
-                <input type="date" value={offboardDate} onChange={(e) => setOffboardDate(e.target.value)} className={`w-full border-2 rounded-2xl px-5 py-3.5 font-black outline-none text-sm ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white focus:border-[#9BCB3B]' : 'bg-white border-slate-100 focus:border-[#9BCB3B]'}`} />
+                <input 
+                  type="text" 
+                  value={clientName} 
+                  onChange={(e) => setClientName(e.target.value)} 
+                  placeholder="Enter client name" 
+                  className={`w-full border-2 rounded-2xl px-5 py-3.5 font-black outline-none text-sm ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white focus:border-[#9BCB3B]' : 'bg-slate-50 border-slate-100 focus:border-[#9BCB3B]'}`} 
+                />
+
+                <input 
+                  type="text" 
+                  value={tools} 
+                  onChange={(e) => setTools(e.target.value)} 
+                  placeholder="Tools / Platforms (e.g. Slack, AWS, GA4)" 
+                  className={`w-full border-2 rounded-2xl px-5 py-3.5 font-black outline-none text-sm ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white focus:border-[#9BCB3B]' : 'bg-slate-50 border-slate-100 focus:border-[#9BCB3B]'}`} 
+                />
+
+                <div className="relative">
+                  <div className="absolute left-5 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none">
+                    <svg className="w-4 h-4 text-[#9BCB3B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Exit Date:</span>
+                  </div>
+                  <input 
+                    type="date" 
+                    value={offboardDate} 
+                    onChange={(e) => setOffboardDate(e.target.value)} 
+                    className={`w-full border-2 rounded-2xl pl-28 pr-5 py-3.5 font-black outline-none text-sm ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white focus:border-[#9BCB3B]' : 'bg-white border-slate-100 focus:border-[#9BCB3B]'}`} 
+                  />
+                </div>
                 
-                <textarea disabled={!isPro} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={isPro ? "Notes..." : "Pro required for notes"} rows={3} className={`w-full border-2 rounded-2xl px-5 py-3.5 font-black outline-none resize-none text-sm ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white focus:border-[#9BCB3B]' : 'bg-white border-slate-100 focus:border-[#9BCB3B]'}`} />
+                <textarea 
+                  disabled={!isPro} 
+                  value={notes} 
+                  onChange={(e) => setNotes(e.target.value)} 
+                  placeholder={isPro ? "Optional notes..." : "Pro required for notes"} 
+                  rows={3} 
+                  className={`w-full border-2 rounded-2xl px-5 py-3.5 font-black outline-none resize-none text-sm ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white focus:border-[#9BCB3B]' : 'bg-white border-slate-100 focus:border-[#9BCB3B]'}`} 
+                />
+
                 <div className="flex gap-4 pt-4">
                   <button onClick={() => setIsModalOpen(false)} className={`flex-1 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-colors ${isDarkMode ? 'bg-slate-800 text-slate-400 hover:bg-slate-700' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}>Cancel</button>
                   <button onClick={handleSave} disabled={isSaving} className="flex-1 py-4 bg-[#243F74] text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-[#243F74]/30 active:scale-95 transition-all">{isSaving ? "Saving..." : "Save Project"}</button>
