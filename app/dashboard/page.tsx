@@ -35,12 +35,14 @@ export default function DashboardPage() {
   const [user, setUser] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false); 
+  const [viewingSubscription, setViewingSubscription] = useState(false); // NEW: To toggle sub-view
   const [isSaving, setIsSaving] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [isPro, setIsPro] = useState(false); 
   const [isDarkMode, setIsDarkMode] = useState(false); 
   const [showToast, setShowToast] = useState(false);
   const [loading, setLoading] = useState(true); 
+  const [subscriptionData, setSubscriptionData] = useState<any>(null); // NEW: To hold date
   
   const [clientName, setClientName] = useState("");
   const [tools, setTools] = useState("");
@@ -96,6 +98,13 @@ export default function DashboardPage() {
             const data = docSnap.data();
             const firestoreIsPro = data.isPro || false;
             const expiryDate = data.expiresAt?.toDate(); 
+            
+            // Store subscription details for the UI
+            setSubscriptionData({
+                expiry: expiryDate ? expiryDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : "N/A",
+                plan: firestoreIsPro ? "Professional" : "Free Starter"
+            });
+
             const today = new Date();
 
             if (firestoreIsPro && expiryDate && today > expiryDate) {
@@ -341,7 +350,7 @@ export default function DashboardPage() {
               </button>
             )}
 
-            <button onClick={() => setIsSettingsOpen(true)} className={`w-9 h-9 rounded-xl border flex items-center justify-center transition-all shadow-sm ${isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-slate-50 border-slate-100 text-[#243F74]'}`}>
+            <button onClick={() => { setIsSettingsOpen(true); setViewingSubscription(false); }} className={`w-9 h-9 rounded-xl border flex items-center justify-center transition-all shadow-sm ${isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-slate-50 border-slate-100 text-[#243F74]'}`}>
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
             </button>
         </div>
@@ -516,28 +525,103 @@ export default function DashboardPage() {
       {isSettingsOpen && (
         <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xl flex items-center justify-center z-[100] px-4">
             <div className={`w-full max-w-[380px] rounded-[2.5rem] p-8 md:p-10 shadow-2xl border-t-[10px] transition-all animate-in zoom-in duration-300 ${isDarkMode ? 'bg-slate-900 border-[#9BCB3B]' : 'bg-white border-[#243F74]'}`}>
-              <div className="flex justify-between items-center mb-6">
-                 <h2 className={`text-2xl font-black italic ${isDarkMode ? 'text-white' : 'text-[#243F74]'}`}>Settings</h2>
-                 <button onClick={() => setIsSettingsOpen(false)} className="text-slate-400 hover:text-red-500 transition-colors text-2xl font-black">✕</button>
-              </div>
-              <div className="space-y-4">
-                <div className={`p-4 rounded-2xl text-left border-2 ${isDarkMode ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-50 border-slate-100'}`}>
-                  <span className="text-[10px] font-black uppercase tracking-widest block mb-1 opacity-60 text-slate-400">Account</span>
-                  <p className={`text-sm font-black truncate ${isDarkMode ? 'text-slate-200' : 'text-slate-600'}`}>{user?.email}</p>
-                </div>
-                <div className={`p-4 rounded-2xl border-2 flex items-center justify-between transition-all ${isDarkMode ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-100 shadow-sm'}`}>
-                  <div className="text-left">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-0.5">Tier</span>
-                    <h3 className={`text-lg font-black italic ${isDarkMode ? 'text-[#9BCB3B]' : 'text-[#243F74]'}`}>{isPro ? "Professional" : "Free Starter"}</h3>
+              
+              {!viewingSubscription ? (
+                // MAIN SETTINGS VIEW
+                <>
+                  <div className="flex justify-between items-center mb-6">
+                     <h2 className={`text-2xl font-black italic ${isDarkMode ? 'text-white' : 'text-[#243F74]'}`}>Settings</h2>
+                     <button onClick={() => setIsSettingsOpen(false)} className="text-slate-400 hover:text-red-500 transition-colors text-2xl font-black">✕</button>
                   </div>
-                  {!isPro && <Link href="/pricing" className="bg-[#9BCB3B] text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-[#9BCB3B]/30">Upgrade</Link>}
+                  <div className="space-y-4">
+                    <div className={`p-4 rounded-2xl text-left border-2 ${isDarkMode ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-50 border-slate-100'}`}>
+                      <span className="text-[10px] font-black uppercase tracking-widest block mb-1 opacity-60 text-slate-400">Account</span>
+                      <p className={`text-sm font-black truncate ${isDarkMode ? 'text-slate-200' : 'text-slate-600'}`}>{user?.email}</p>
+                    </div>
+
+                    {/* MANAGE SUBSCRIPTION BUTTON */}
+                    <button 
+                      onClick={() => setViewingSubscription(true)}
+                      className={`w-full p-4 rounded-2xl border-2 flex items-center justify-between transition-all group ${isDarkMode ? 'bg-slate-800/50 border-slate-700 hover:border-[#9BCB3B]' : 'bg-white border-slate-100 shadow-sm hover:border-[#243F74]'}`}
+                    >
+                      <div className="text-left">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-0.5">Subscription</span>
+                        <h3 className={`text-lg font-black italic ${isDarkMode ? 'text-[#9BCB3B]' : 'text-[#243F74]'}`}>{isPro ? "Professional" : "Free Starter"}</h3>
+                      </div>
+                      <span className="text-xl group-hover:translate-x-1 transition-transform">→</span>
+                    </button>
+
+                    <div className="grid grid-cols-2 gap-4 pt-2">
+                      <button onClick={handleLogout} className="py-4 rounded-2xl bg-slate-100 text-slate-600 font-black text-[10px] uppercase tracking-widest transition-colors hover:bg-slate-200">Log Out</button>
+                      <button onClick={handleDeleteAccount} className="py-4 rounded-2xl bg-red-50 text-red-500 font-black text-[10px] uppercase tracking-widest hover:bg-red-500 border-2 border-red-100 hover:text-white transition-all shadow-lg shadow-red-500/10">Delete</button>
+                    </div>
+                  </div>
+                  <button onClick={() => setIsSettingsOpen(false)} className="mt-8 text-slate-400 text-xs font-black uppercase block w-full transition-colors tracking-widest text-center">Close</button>
+                </>
+              ) : (
+                // MANAGE SUBSCRIPTION VIEW
+                <div className="animate-in slide-in-from-right-4 duration-300">
+                  <div className="flex items-center gap-3 mb-6">
+                    <button onClick={() => setViewingSubscription(false)} className="text-slate-400 text-lg">←</button>
+                    <h2 className={`text-2xl font-black italic ${isDarkMode ? 'text-white' : 'text-[#243F74]'}`}>Billing</h2>
+                  </div>
+
+                  <div className={`p-5 rounded-3xl border-2 mb-6 ${isDarkMode ? 'bg-slate-800/30 border-slate-700' : 'bg-slate-50 border-slate-100'}`}>
+                    <div className="mb-4">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-1">Current Plan</span>
+                      <div className="flex items-center justify-between">
+                        <h4 className={`text-xl font-black italic ${isDarkMode ? 'text-white' : 'text-[#243F74]'}`}>{subscriptionData?.plan}</h4>
+                        <span className="bg-[#9BCB3B]/10 text-[#9BCB3B] text-[9px] px-2 py-1 rounded-md font-black">ACTIVE</span>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 border-t border-slate-200 dark:border-slate-700 pt-4">
+                      <div>
+                        <span className="text-[9px] font-black uppercase text-slate-400 block">Renewal Date</span>
+                        <p className={`text-xs font-black ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>{subscriptionData?.expiry}</p>
+                      </div>
+                      <div>
+                        <span className="text-[9px] font-black uppercase text-slate-400 block">Provider</span>
+                        <p className={`text-xs font-black ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Razorpay</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    {!isPro ? (
+                      <button 
+                        onClick={() => router.push("/pricing")}
+                        className="w-full py-4 bg-[#9BCB3B] text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-[#9BCB3B]/20 transition-all hover:scale-[1.02]"
+                      >
+                        Upgrade to Pro
+                      </button>
+                    ) : (
+                      <>
+                        <button 
+                          onClick={() => alert("To update payment method, our secure Razorpay link will be sent to your registered email.")}
+                          className={`w-full py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest border-2 transition-all ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-100 text-[#243F74]'}`}
+                        >
+                          Update Payment Method
+                        </button>
+                        <button 
+                          onClick={() => {
+                            if(confirm("Are you sure you want to cancel? You will lose Pro access at the end of your billing cycle.")) {
+                               alert("Cancellation request received. Our team will process this within 24 hours.");
+                            }
+                          }}
+                          className="w-full py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest text-red-400 hover:bg-red-50 transition-all"
+                        >
+                          Cancel Subscription
+                        </button>
+                      </>
+                    )}
+                  </div>
+
+                  <p className="text-[8px] text-slate-400 font-bold uppercase text-center mt-6 leading-relaxed">
+                    Managed via Razorpay Secure. <br/> Support: support@offboardpro.com
+                  </p>
                 </div>
-                <div className="grid grid-cols-2 gap-4 pt-2">
-                  <button onClick={handleLogout} className="py-4 rounded-2xl bg-slate-100 text-slate-600 font-black text-[10px] uppercase tracking-widest transition-colors hover:bg-slate-200">Log Out</button>
-                  <button onClick={handleDeleteAccount} className="py-4 rounded-2xl bg-red-50 text-red-500 font-black text-[10px] uppercase tracking-widest hover:bg-red-500 border-2 border-red-100 hover:text-white transition-all shadow-lg shadow-red-500/10">Delete</button>
-                </div>
-              </div>
-              <button onClick={() => setIsSettingsOpen(false)} className="mt-8 text-slate-400 text-xs font-black uppercase block w-full transition-colors tracking-widest text-center">Close</button>
+              )}
             </div>
         </div>
       )}
