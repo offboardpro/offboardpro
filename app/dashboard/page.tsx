@@ -35,14 +35,14 @@ export default function DashboardPage() {
   const [user, setUser] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false); 
-  const [viewingSubscription, setViewingSubscription] = useState(false); // NEW: To toggle sub-view
+  const [viewingSubscription, setViewingSubscription] = useState(false); 
   const [isSaving, setIsSaving] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [isPro, setIsPro] = useState(false); 
   const [isDarkMode, setIsDarkMode] = useState(false); 
   const [showToast, setShowToast] = useState(false);
   const [loading, setLoading] = useState(true); 
-  const [subscriptionData, setSubscriptionData] = useState<any>(null); // NEW: To hold date
+  const [subscriptionData, setSubscriptionData] = useState<any>(null); 
   
   const [clientName, setClientName] = useState("");
   const [tools, setTools] = useState("");
@@ -99,7 +99,6 @@ export default function DashboardPage() {
             const firestoreIsPro = data.isPro || false;
             const expiryDate = data.expiresAt?.toDate(); 
             
-            // Store subscription details for the UI
             setSubscriptionData({
                 expiry: expiryDate ? expiryDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : "N/A",
                 plan: firestoreIsPro ? "Professional" : "Free Starter"
@@ -395,7 +394,6 @@ export default function DashboardPage() {
           <div className="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
             <input type="text" placeholder="Search..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className={`w-full sm:w-64 border-2 rounded-2xl px-4 py-3 text-sm font-bold outline-none transition-all ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white focus:border-[#9BCB3B]' : 'bg-white border-slate-100 focus:border-[#9BCB3B]'}`} />
             
-            {/* BUTTON GROUP */}
             <div className="flex items-center gap-3 w-full sm:w-auto">
               {!isPro && (
                 <Link 
@@ -527,7 +525,6 @@ export default function DashboardPage() {
             <div className={`w-full max-w-[380px] rounded-[2.5rem] p-8 md:p-10 shadow-2xl border-t-[10px] transition-all animate-in zoom-in duration-300 ${isDarkMode ? 'bg-slate-900 border-[#9BCB3B]' : 'bg-white border-[#243F74]'}`}>
               
               {!viewingSubscription ? (
-                // MAIN SETTINGS VIEW
                 <>
                   <div className="flex justify-between items-center mb-6">
                      <h2 className={`text-2xl font-black italic ${isDarkMode ? 'text-white' : 'text-[#243F74]'}`}>Settings</h2>
@@ -539,7 +536,6 @@ export default function DashboardPage() {
                       <p className={`text-sm font-black truncate ${isDarkMode ? 'text-slate-200' : 'text-slate-600'}`}>{user?.email}</p>
                     </div>
 
-                    {/* MANAGE SUBSCRIPTION BUTTON */}
                     <button 
                       onClick={() => setViewingSubscription(true)}
                       className={`w-full p-4 rounded-2xl border-2 flex items-center justify-between transition-all group ${isDarkMode ? 'bg-slate-800/50 border-slate-700 hover:border-[#9BCB3B]' : 'bg-white border-slate-100 shadow-sm hover:border-[#243F74]'}`}
@@ -559,7 +555,6 @@ export default function DashboardPage() {
                   <button onClick={() => setIsSettingsOpen(false)} className="mt-8 text-slate-400 text-xs font-black uppercase block w-full transition-colors tracking-widest text-center">Close</button>
                 </>
               ) : (
-                // MANAGE SUBSCRIPTION VIEW
                 <div className="animate-in slide-in-from-right-4 duration-300">
                   <div className="flex items-center gap-3 mb-6">
                     <button onClick={() => setViewingSubscription(false)} className="text-slate-400 text-lg">←</button>
@@ -577,10 +572,6 @@ export default function DashboardPage() {
 
                     <div className="grid grid-cols-2 gap-4 border-t border-slate-200 dark:border-slate-700 pt-4">
                       <div>
-                        <span className="text-[9px] font-black uppercase text-slate-400 block">Renewal Date</span>
-                        <p className={`text-xs font-black ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>{subscriptionData?.expiry}</p>
-                      </div>
-                      <div>
                         <span className="text-[9px] font-black uppercase text-slate-400 block">Provider</span>
                         <p className={`text-xs font-black ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Razorpay</p>
                       </div>
@@ -596,24 +587,16 @@ export default function DashboardPage() {
                         Upgrade to Pro
                       </button>
                     ) : (
-                      <>
-                        <button 
-                          onClick={() => alert("To update payment method, our secure Razorpay link will be sent to your registered email.")}
-                          className={`w-full py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest border-2 transition-all ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-100 text-[#243F74]'}`}
-                        >
-                          Update Payment Method
-                        </button>
-                        <button 
-                          onClick={() => {
-                            if(confirm("Are you sure you want to cancel? You will lose Pro access at the end of your billing cycle.")) {
-                               alert("Cancellation request received. Our team will process this within 24 hours.");
-                            }
-                          }}
-                          className="w-full py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest text-red-400 hover:bg-red-50 transition-all"
-                        >
-                          Cancel Subscription
-                        </button>
-                      </>
+                      <button 
+                        onClick={() => {
+                          if(confirm("Are you sure you want to cancel? You will lose Pro access at the end of your billing cycle.")) {
+                             alert("Cancellation request received. Our team will process this within 24 hours.");
+                          }
+                        }}
+                        className="w-full py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest text-red-400 hover:bg-red-50 transition-all border-2 border-transparent hover:border-red-100"
+                      >
+                        Cancel Subscription
+                      </button>
                     )}
                   </div>
 
@@ -626,7 +609,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* --- ADD PROJECT MODAL (FIXED PC SPACING) --- */}
+      {/* ADD PROJECT MODAL */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xl flex items-center justify-center z-[100] px-4">
             <div className={`w-full max-w-[480px] rounded-[2.5rem] p-8 md:p-10 shadow-2xl border-t-[10px] transition-all animate-in zoom-in duration-300 ${isDarkMode ? 'bg-slate-900 border-[#9BCB3B]' : 'bg-white border-[#9BCB3B]'}`}>
