@@ -22,7 +22,7 @@ export default function PricingPage() {
 
   // Load Auth and Real-time Pro Status from Firestore
   useEffect(() => {
-    // Check cache initially for snappier UI, but don't let it lock the state
+    // Check cache initially for snappier UI
     const cachedStatus = localStorage.getItem("offboardpro_isPro");
     if (cachedStatus === "true") {
       setIsPro(true);
@@ -41,17 +41,17 @@ export default function PricingPage() {
             const expiryDate = data.expiresAt?.toDate();
             const today = new Date();
 
-            // --- FIXED LOGIC: Check if Pro AND if Not Expired ---
+            // Check if Pro AND if Not Expired
             if (status && expiryDate && today < expiryDate) {
               setIsPro(true);
               localStorage.setItem("offboardpro_isPro", "true");
             } else {
-              // If date passed or status is false, they need to see the Upgrade button again
               setIsPro(false);
               localStorage.setItem("offboardpro_isPro", "false");
             }
           } else {
             setIsPro(false);
+            localStorage.setItem("offboardpro_isPro", "false");
           }
           setLoading(false); 
         }, (error) => {
@@ -61,7 +61,7 @@ export default function PricingPage() {
 
         return () => unsubscribeDoc();
       } else {
-        setIsPro(false); // Reset if no user
+        setIsPro(false); 
         setLoading(false);
       }
     });
@@ -80,14 +80,13 @@ export default function PricingPage() {
       return;
     }
 
-    // Razorpay expects amount in paise (₹199 = 19900 paise)
+    // Amount in paise
     const amountInPaise = billingCycle === 'monthly' ? 19900 : 199000;
 
     try {
       const res = await fetch("/api/razorpay", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        // CLEANED: Sending pure amountInPaise. No hardcoded logic here.
         body: JSON.stringify({ amount: amountInPaise, userId: user.uid }), 
       });
       
@@ -99,7 +98,6 @@ export default function PricingPage() {
       }
 
       const options = {
-        // SECURE: Only using the environment variable. NO hardcoded "rzp_test" or "rzp_live" strings.
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID, 
         amount: order.amount,
         currency: "INR",
@@ -107,7 +105,6 @@ export default function PricingPage() {
         description: `${billingCycle.toUpperCase()} Pro Subscription`,
         order_id: order.id,
         handler: async function (response: any) {
-          // Trigger the robust finalize function
           await finalizeCloudUpgrade();
         },
         prefill: {
@@ -115,6 +112,11 @@ export default function PricingPage() {
           email: user.email || "",
         },
         theme: { color: "#243F74" },
+        modal: {
+          ondismiss: function() {
+            setIsUpgrading(false);
+          }
+        }
       };
 
       const rzp = new (window as any).Razorpay(options);
@@ -125,11 +127,9 @@ export default function PricingPage() {
     }
   };
 
-  // --- UPDATED: ROBUST FINALIZE FUNCTION WITH EXPIRY LOGIC ---
   const finalizeCloudUpgrade = async () => {
     setIsUpgrading(true);
 
-    // SAFETY LOCK: Prevent user from closing tab during sync
     const preventClose = (e: BeforeUnloadEvent) => {
       e.preventDefault();
       e.returnValue = "";
@@ -146,29 +146,27 @@ export default function PricingPage() {
     try {
         const userRef = doc(db, "users", user.uid);
         
-        // --- NEW: EXPIRY CALCULATION ---
         const now = new Date();
         const expiryDate = new Date();
+        
         if (billingCycle === 'monthly') {
           expiryDate.setMonth(now.getMonth() + 1);
         } else {
           expiryDate.setFullYear(now.getFullYear() + 1);
         }
         
-        // Update Firestore directly
         await setDoc(userRef, { 
           isPro: true,
           plan: "Professional",
           billingCycle: billingCycle,
           upgradedAt: serverTimestamp(),
-          expiresAt: expiryDate // Now saving the end date!
+          expiresAt: expiryDate 
         }, { merge: true });
 
-        // Update local status for dashboard
         localStorage.setItem("offboardpro_isPro", "true");
+        setIsPro(true);
         
         setTimeout(() => {
-          // Release lock and redirect
           window.removeEventListener("beforeunload", preventClose);
           setIsUpgrading(false); 
           router.push("/success");
@@ -190,7 +188,6 @@ export default function PricingPage() {
 
   return (
     <div className="min-h-screen bg-white relative font-sans selection:bg-[#9BCB3B]/20">
-      {/* SUCCESS ILLUSTRATION OVERLAY */}
       {isUpgrading && (
         <div className="fixed inset-0 z-[200] bg-white flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-500">
           <div className="relative w-48 h-48 mb-8">
@@ -205,16 +202,15 @@ export default function PricingPage() {
           <p className="text-slate-400 font-bold uppercase text-[10px] tracking-[0.3em] mb-8">Unlocking your premium features...</p>
           
           <button 
-            onClick={() => router.push("/success")}
+            disabled
             style={{ backgroundColor: '#243F74' }}
-            className="px-10 py-4 rounded-xl text-white font-black text-xs uppercase tracking-widest shadow-xl animate-pulse hover:scale-105 transition-all"
+            className="px-10 py-4 rounded-xl text-white font-black text-xs uppercase tracking-widest shadow-xl animate-pulse"
           >
             Finalizing your account...
           </button>
         </div>
       )}
 
-      {/* HEADER WITH PRO STATUS */}
       <nav className="px-6 md:px-10 py-8 max-w-7xl mx-auto flex justify-between items-center">
         <Link href="/" className="flex items-center transition-transform hover:scale-105">
           <Image src="/logo.png" alt="OffboardPro" width={140} height={45} className="object-contain" priority />
@@ -242,7 +238,6 @@ export default function PricingPage() {
             Choose the plan that fits your freelance scale. Upgrade or downgrade anytime.
           </p>
           
-          {/* BILLING TOGGLE */}
           <div className="flex items-center justify-center gap-4 mt-12 bg-slate-50 w-fit mx-auto p-2 rounded-full border border-slate-100">
             <button 
               onClick={() => setBillingCycle('monthly')}
@@ -262,7 +257,7 @@ export default function PricingPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
           {/* Free Plan */}
-          <div className={`border border-slate-100 p-8 md:p-12 rounded-[2.5rem] flex flex-col bg-slate-50/50 transition-all duration-500 hover:shadow-xl ${isPro ? 'opacity-40' : 'opacity-100 translate-y-0'}`}>
+          <div className={`border border-slate-100 p-8 md:p-12 rounded-[2.5rem] flex flex-col bg-slate-50/50 transition-all duration-500 hover:shadow-xl ${isPro ? 'opacity-40 scale-95' : 'opacity-100'}`}>
             <h3 className="text-slate-400 font-black uppercase text-xs tracking-[0.2em] mb-4">Starter</h3>
             <div className="flex items-baseline gap-1 mb-8">
               <span style={{ color: '#243F74' }} className="text-5xl md:text-6xl font-black italic">₹0</span>
@@ -303,7 +298,6 @@ export default function PricingPage() {
               <li className="flex items-center gap-3 text-slate-700 font-bold text-sm"><span className="text-[#9BCB3B] font-black">✓</span> Sharable Client Portals</li>
             </ul>
 
-            {/* Button logic checks isPro state explicitly */}
             {isPro ? (
               <button onClick={() => router.push('/dashboard')} style={{ backgroundColor: '#243F74' }} className="w-full py-5 rounded-2xl text-white font-black text-xs uppercase tracking-widest transition-all hover:scale-105 active:scale-95">
                 Go to Dashboard
@@ -318,7 +312,7 @@ export default function PricingPage() {
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                   </svg>
-                  {user ? "Renew Pro Subscription" : "Upgrade to Pro Now"}
+                  {user ? "Upgrade to Pro" : "Get Started Now"}
                 </button>
                 <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest text-center mt-4">
                   Secure Payment via Razorpay
