@@ -36,10 +36,20 @@ export default function PricingPage() {
         
         const unsubscribeDoc = onSnapshot(userRef, (docSnap) => {
           if (docSnap.exists()) {
-            const status = docSnap.data().isPro || false;
-            // Force set the actual database status
-            setIsPro(status);
-            localStorage.setItem("offboardpro_isPro", status.toString());
+            const data = docSnap.data();
+            const status = data.isPro || false;
+            const expiryDate = data.expiresAt?.toDate();
+            const today = new Date();
+
+            // --- FIXED LOGIC: Check if Pro AND if Not Expired ---
+            if (status && expiryDate && today < expiryDate) {
+              setIsPro(true);
+              localStorage.setItem("offboardpro_isPro", "true");
+            } else {
+              // If date passed or status is false, they need to see the Upgrade button again
+              setIsPro(false);
+              localStorage.setItem("offboardpro_isPro", "false");
+            }
           } else {
             setIsPro(false);
           }
@@ -308,7 +318,7 @@ export default function PricingPage() {
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                   </svg>
-                  Upgrade to Pro Now
+                  {user ? "Renew Pro Subscription" : "Upgrade to Pro Now"}
                 </button>
                 <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest text-center mt-4">
                   Secure Payment via Razorpay
