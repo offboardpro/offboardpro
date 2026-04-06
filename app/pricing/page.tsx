@@ -41,10 +41,16 @@ export default function PricingPage() {
             const expiryDate = data.expiresAt?.toDate();
             const today = new Date();
 
-            // Check if Pro AND if Not Expired
-            if (status && expiryDate && today < expiryDate) {
-              setIsPro(true);
-              localStorage.setItem("offboardpro_isPro", "true");
+            // --- IMPROVED LOGIC: Check if Pro status exists first ---
+            if (status) {
+              // Only revoke Pro if an expiry date specifically exists and has passed
+              if (expiryDate && today > expiryDate) {
+                setIsPro(false);
+                localStorage.setItem("offboardpro_isPro", "false");
+              } else {
+                setIsPro(true);
+                localStorage.setItem("offboardpro_isPro", "true");
+              }
             } else {
               setIsPro(false);
               localStorage.setItem("offboardpro_isPro", "false");
@@ -280,6 +286,14 @@ export default function PricingPage() {
                 Recommended
               </div>
             )}
+            
+            {/* Show "Active" badge if they are Pro */}
+            {isPro && (
+              <div style={{ backgroundColor: '#243F74' }} className="absolute top-0 right-0 px-6 py-2 text-white text-[10px] font-black uppercase rounded-bl-[1.5rem] tracking-widest">
+                Active Plan
+              </div>
+            )}
+
             <h3 className="text-slate-400 font-black uppercase text-xs tracking-[0.2em] mb-4">Professional</h3>
             <div className="flex items-baseline gap-1 mb-2">
               <span style={{ color: '#243F74' }} className="text-5xl md:text-6xl font-black italic">
@@ -298,27 +312,34 @@ export default function PricingPage() {
               <li className="flex items-center gap-3 text-slate-700 font-bold text-sm"><span className="text-[#9BCB3B] font-black">✓</span> Sharable Client Portals</li>
             </ul>
 
-            {isPro ? (
-              <button onClick={() => router.push('/dashboard')} style={{ backgroundColor: '#243F74' }} className="w-full py-5 rounded-2xl text-white font-black text-xs uppercase tracking-widest transition-all hover:scale-105 active:scale-95">
-                Go to Dashboard
+            <div className="space-y-3">
+              {/* Button always triggers handleUpgrade unless we want it to go to dashboard. 
+                  Changed to always allow Renewal/Upgrade for testing and longevity. */}
+              <button 
+                onClick={handleUpgrade} 
+                style={{ backgroundColor: '#243F74' }} 
+                className="w-full py-5 rounded-2xl text-white font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-[#243F74]/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+                {isPro ? "Renew or Extend Pro" : (user ? "Upgrade to Pro Now" : "Get Started Now")}
               </button>
-            ) : (
-              <div className="space-y-3">
-                <button 
-                  onClick={handleUpgrade} 
-                  style={{ backgroundColor: '#243F74' }} 
-                  className="w-full py-5 rounded-2xl text-white font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-[#243F74]/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
+
+              {/* Added a secondary dashboard link if they are already Pro */}
+              {isPro && (
+                <Link 
+                  href="/dashboard" 
+                  className="block text-center text-[10px] font-black text-[#9BCB3B] uppercase tracking-widest hover:underline mt-2"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                  </svg>
-                  {user ? "Upgrade to Pro" : "Get Started Now"}
-                </button>
-                <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest text-center mt-4">
-                  Secure Payment via Razorpay
-                </p>
-              </div>
-            )}
+                  Go to Dashboard →
+                </Link>
+              )}
+
+              <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest text-center mt-4">
+                Secure Payment via Razorpay
+              </p>
+            </div>
           </div>
         </div>
         
