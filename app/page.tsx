@@ -280,7 +280,7 @@ export default function Home() {
       </button>
       
       <main className="overflow-x-clip">
-        {/* HERO SECTION - REPLACED WITH NEW COPY */}
+        {/* HERO SECTION - REPLACED WITH UPDATED HEADLINE */}
         <section className="max-w-6xl mx-auto text-center pt-8 md:pt-24 pb-8 md:pb-12 px-6">
           <h1 
             style={{ 
@@ -289,9 +289,9 @@ export default function Home() {
               transform: isVisible ? 'translateY(0)' : 'translateY(-20px)', 
               transition: 'all 1.2s cubic-bezier(0.22, 1, 0.36, 1)' 
             }}
-            className="text-4xl md:text-7xl font-black tracking-tight leading-tight md:leading-[1.05] mb-6 md:mb-8"
+            className="text-4xl md:text-7xl font-black tracking-tight leading-tight md:leading-[1.05] mb-6 md:mb-8 italic"
           >
-            Client Offboarding Checklist <br /> for Freelancers & Agencies
+            Never forget to remove <br /> client access again.
           </h1>
           
           <p 
@@ -346,7 +346,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* SECTION: HOW IT WORKS - UPDATED WITH NEW LABELS */}
+        {/* SECTION: HOW IT WORKS */}
         <Reveal>
         <div id="how-it-works" className="py-12 md:py-24 border-t border-slate-50 scroll-mt-24 text-left">
           <div className="max-w-6xl mx-auto px-6">
@@ -389,7 +389,7 @@ export default function Home() {
         </div>
         </Reveal>
 
-        {/* SECTION: PROBLEM - REPLACED WITH NEW "PAINKILLER" COPY */}
+        {/* SECTION: PROBLEM - HIDDEN RISK */}
         <Reveal>
         <div className="py-16 md:py-32 text-left px-6 max-w-5xl mx-auto">
            <div className="bg-slate-900 text-white p-10 md:p-20 rounded-[3rem] md:rounded-[4rem] shadow-2xl relative overflow-hidden">
@@ -510,9 +510,9 @@ export default function Home() {
                   <li className="flex items-center justify-center gap-2"><svg className="w-4 h-4 text-[#9BCB3B]" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg> PDF Export & Audit Notes</li>
                   <li className="flex items-center justify-center gap-2"><svg className="w-4 h-4 text-[#9BCB3B]" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg> Smart Dashboard Alerts</li>
                 </ul>
-                <button 
+                <button 
                   onClick={goToPricing}
-                  style={{ backgroundColor: '#243F74' }} 
+                  style={{ backgroundColor: '#243F74' }} 
                   className="w-full py-5 rounded-2xl font-black text-white shadow-xl shadow-[#243F74]/20 hover:scale-[1.02] active:scale-95 transition-all text-center uppercase text-xs tracking-[0.2em]"
                 >
                   View Pro Plan
@@ -523,7 +523,7 @@ export default function Home() {
         </div>
         </Reveal>
 
-        {/* SECTION: FINAL CTA - REPLACED WITH NEW COPY */}
+        {/* SECTION: FINAL CTA */}
         <Reveal>
         <section id="cta" style={{ backgroundColor: '#243F74' }} className="py-16 md:py-24 text-center text-white px-6 rounded-[3rem] md:rounded-[4rem] mt-12 md:mt-24 mb-12 md:mb-20 shadow-2xl shadow-[#243F74]/40 mx-4">
           <h2 className="text-3xl md:text-5xl font-black mb-8 md:mb-10 italic tracking-tight leading-snug">
@@ -532,8 +532,8 @@ export default function Home() {
           {!authLoading && (
             <div className="animate-in fade-in zoom-in-95 duration-700">
               <Link href={user ? "/dashboard" : "/signup"}>
-                <button 
-                  style={{ backgroundColor: '#9BCB3B' }} 
+                <button 
+                  style={{ backgroundColor: '#9BCB3B' }} 
                   className="w-full sm:w-auto text-white px-10 md:px-20 py-4 md:py-6 rounded-full text-lg md:text-2xl font-black hover:scale-105 transition-all shadow-2xl shadow-[#9BCB3B]/30 active:scale-95"
                 >
                   {user ? "Go to Dashboard" : "Start tracking client access"}
@@ -549,16 +549,16 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-10">
           <div className="grid md:grid-cols-3 gap-12 md:gap-16 mb-16 md:mb-20 text-left">
             <div className="flex flex-col gap-6 md:gap-8">
-              <Image 
-                src="/logo.png" 
-                alt="OffboardPro" 
-                width={160} 
-                height={40} 
+              <Image 
+                src="/logo.png" 
+                alt="OffboardPro" 
+                width={160} 
+                height={40} 
                 unoptimized
-                className="object-contain" 
+                className="object-contain" 
               />
               <p className="text-slate-400 text-sm font-bold leading-relaxed max-w-xs uppercase tracking-tight">
-                The professional offboarding checklist for modern freelancers and agencies.
+                Client access tracking for modern freelancers and agencies.
               </p>
             </div>
             
