@@ -252,7 +252,6 @@ export default function Home() {
     <div className="min-h-screen bg-white scroll-smooth relative font-sans selection:bg-[#9BCB3B] selection:text-white">
       <Header />
       
-      {/* SEAMLESS MARQUEE ANIMATION */}
       <style jsx global>{`
         @keyframes marquee {
           0% { transform: translateX(0); }
@@ -281,7 +280,7 @@ export default function Home() {
       </button>
       
       <main className="overflow-x-clip">
-        {/* HERO SECTION */}
+        {/* HERO SECTION - REPLACED WITH NEW COPY */}
         <section className="max-w-6xl mx-auto text-center pt-8 md:pt-24 pb-8 md:pb-12 px-6">
           <h1 
             style={{ 
@@ -292,7 +291,7 @@ export default function Home() {
             }}
             className="text-4xl md:text-7xl font-black tracking-tight leading-tight md:leading-[1.05] mb-6 md:mb-8"
           >
-            Never forget to remove <br /> client access again.
+            Client Offboarding Checklist <br /> for Freelancers & Agencies
           </h1>
           
           <p 
@@ -303,28 +302,26 @@ export default function Home() {
             }}
             className="text-slate-500 text-lg md:text-2xl max-w-3xl mx-auto leading-relaxed font-medium mb-10 md:mb-12 px-2"
           >
-            OffboardPro helps freelancers track client access and exit every project cleanly — without storing passwords.
+            Track every client tool, permission, and access — so you never leave accounts exposed after a project ends.
           </p>
 
           <div 
             className="mt-6 md:mt-12 mb-16 md:mb-24 flex flex-col items-center gap-4 min-h-[80px]" 
           >
             {!authLoading && (
-              <div className="animate-in fade-in zoom-in-95 duration-700">
+              <div className="animate-in fade-in zoom-in-95 duration-700 flex flex-col items-center">
                 <Link href={user ? "/dashboard" : "/signup"}>
                   <button 
                     style={{ backgroundColor: '#243F74' }} 
                     className="text-white px-10 md:px-16 py-4 md:py-5 rounded-full text-lg md:text-xl font-bold hover:scale-105 transition-all shadow-xl shadow-[#243F74]/20 active:scale-95 group overflow-hidden relative"
                   >
-                    <span className="relative z-10">{user ? "Go to Dashboard" : "Start for free"}</span>
+                    <span className="relative z-10">{user ? "Go to Dashboard" : "Start Clean Offboarding"}</span>
                     <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
                   </button>
                 </Link>
-                {!user && (
-                  <p className="text-slate-400 text-sm font-semibold italic tracking-wide animate-pulse mt-4">
-                    No credit card required
-                  </p>
-                )}
+                <p className="text-slate-400 text-[10px] md:text-xs font-black uppercase tracking-widest mt-6 italic">
+                  Used by freelancers & agencies who want clean professional client handovers.
+                </p>
               </div>
             )}
           </div>
@@ -337,7 +334,6 @@ export default function Home() {
           </p>
           <div className="relative flex items-center overflow-hidden [mask-image:linear-gradient(to_right,transparent,white_15%,white_85%,transparent)]">
             <div className="animate-marquee whitespace-nowrap flex items-center gap-12 md:gap-24">
-              {/* Repeats items for infinite loop with updated darker contrast color */}
               {[...marqueeItems, ...marqueeItems, ...marqueeItems, ...marqueeItems].map((item, i) => (
                 <span 
                   key={i} 
@@ -350,16 +346,16 @@ export default function Home() {
           </div>
         </div>
 
-        {/* SECTION: How OffboardPro Works */}
+        {/* SECTION: HOW IT WORKS - UPDATED WITH NEW LABELS */}
         <Reveal>
         <div id="how-it-works" className="py-12 md:py-24 border-t border-slate-50 scroll-mt-24 text-left">
           <div className="max-w-6xl mx-auto px-6">
             <h2 style={{ color: '#243F74' }} className="text-3xl md:text-4xl font-black tracking-tight mb-10 md:mb-20 text-center italic">How OffboardPro Works</h2>
             <div className="grid md:grid-cols-3 gap-6 md:gap-8">
               {[
-                { n: 1, t: "Track Client Access", d: "Keep a record of every tool, platform, and account you use during a project." },
-                { n: 2, t: "Set Exit Reminder", d: "Choose when access should be reviewed or removed after the project ends." },
-                { n: 3, t: "Get Smart Alerts", d: "OffboardPro reminds you what to remove — so nothing gets forgotten." }
+                { n: 1, t: "Create Client Access Record", d: "Track every tool, permission, and folder used during your project lifecycle." },
+                { n: 2, t: "Schedule Access Review", d: "Choose a hard date to review or remove access once the final invoice is cleared." },
+                { n: 3, t: "Never Miss Access Removal", d: "Get precise reminders of what needs to be revoked so accounts stay secure." }
               ].map((step) => (
                 <div 
                   key={step.n} 
@@ -393,29 +389,28 @@ export default function Home() {
         </div>
         </Reveal>
 
-        {/* SECTION: Why Forgotten Access Can Be a Problem */}
+        {/* SECTION: PROBLEM - REPLACED WITH NEW "PAINKILLER" COPY */}
         <Reveal>
         <div className="py-16 md:py-32 text-left px-6 max-w-5xl mx-auto">
            <div className="bg-slate-900 text-white p-10 md:p-20 rounded-[3rem] md:rounded-[4rem] shadow-2xl relative overflow-hidden">
               <div className="absolute top-0 right-0 w-64 h-64 bg-[#9BCB3B]/10 blur-[100px] -translate-y-1/2 translate-x-1/2"></div>
               
-              <h2 className="text-[#9BCB3B] text-3xl md:text-4xl font-black mb-8 italic text-center md:text-left">Why Forgotten Access Can Be a Problem</h2>
+              <h2 className="text-[#9BCB3B] text-3xl md:text-4xl font-black mb-8 italic text-center md:text-left">Forgotten Client Access = Hidden Risk</h2>
               
               <p className="text-slate-300 text-lg md:text-xl font-bold mb-10 leading-relaxed text-center md:text-left">
-                Many freelancers don’t notice this… <br />
-                <span className="text-white italic">until an awkward moment happens.</span>
+                After a project ends, old logins and permissions often stay active.
               </p>
 
               <div className="space-y-6 mb-12">
-                <p className="text-slate-400 font-medium text-center md:text-left">You finish a project. Everyone is happy.</p>
-                <p className="text-slate-400 font-medium text-center md:text-left">Then weeks or months later…</p>
+                <p className="text-slate-400 font-medium text-center md:text-left">This can lead to:</p>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {[
-                    "“Oh no… I still have access to the client’s account.”",
-                    "“Wait… does the client still have my login?”",
-                    "“Which accounts did I use for that client?”",
-                    "“Did I remove everything properly?”"
+                    "Still having access to client tools",
+                    "Clients still having access to your tools",
+                    "Security or privacy concerns",
+                    "Awkward messages months later",
+                    "Looking unprofessional"
                   ].map((q, i) => (
                     <div key={i} className="flex gap-3 items-start bg-white/5 p-4 rounded-2xl border border-white/10">
                       <span className="text-lg">🚨</span>
@@ -427,27 +422,11 @@ export default function Home() {
 
               <div className="h-px bg-white/10 w-full mb-10" />
 
-              <p className="text-slate-400 text-sm font-medium mb-8 text-center md:text-left">After a project ends, old logins and permissions often stay active. This can lead to:</p>
-              
-              <ul className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8 mb-12">
-                {[
-                  "You still having access to client tools",
-                  "Clients still having access to your tools",
-                  "Security or privacy concerns",
-                  "Confusing or uncomfortable situations later"
-                ].map((item, i) => (
-                  <li key={i} className="flex items-center gap-3 text-slate-200 text-sm font-bold">
-                    <div className="w-1.5 h-1.5 rounded-full bg-[#9BCB3B]" />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-
               <div className="bg-[#9BCB3B]/10 border border-[#9BCB3B]/20 p-6 md:p-8 rounded-3xl">
-                <p className="text-white text-lg font-black mb-4 italic leading-snug text-center md:text-left">Ending a project cleanly protects both you and your client.</p>
+                <p className="text-white text-lg font-black mb-4 italic leading-snug text-center md:text-left">OffboardPro helps ensure every project ends cleanly and professionally.</p>
                 <p className="text-slate-300 text-sm font-medium leading-relaxed text-center md:text-left">
-                  That’s why professional freelancers follow a clean offboarding process. <br className="hidden md:block" />
-                  <strong>OffboardPro helps you keep track of what to remove — so nothing gets forgotten.</strong>
+                  Ending a project cleanly protects both you and your client. <br className="hidden md:block" />
+                  <strong>Our checklist system handles the oversight so you can focus on the next big project.</strong>
                 </p>
               </div>
            </div>
@@ -531,9 +510,9 @@ export default function Home() {
                   <li className="flex items-center justify-center gap-2"><svg className="w-4 h-4 text-[#9BCB3B]" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg> PDF Export & Audit Notes</li>
                   <li className="flex items-center justify-center gap-2"><svg className="w-4 h-4 text-[#9BCB3B]" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg> Smart Dashboard Alerts</li>
                 </ul>
-                <button 
+                <button 
                   onClick={goToPricing}
-                  style={{ backgroundColor: '#243F74' }} 
+                  style={{ backgroundColor: '#243F74' }} 
                   className="w-full py-5 rounded-2xl font-black text-white shadow-xl shadow-[#243F74]/20 hover:scale-[1.02] active:scale-95 transition-all text-center uppercase text-xs tracking-[0.2em]"
                 >
                   View Pro Plan
@@ -544,20 +523,20 @@ export default function Home() {
         </div>
         </Reveal>
 
-        {/* SECTION: CTA */}
+        {/* SECTION: FINAL CTA - REPLACED WITH NEW COPY */}
         <Reveal>
         <section id="cta" style={{ backgroundColor: '#243F74' }} className="py-16 md:py-24 text-center text-white px-6 rounded-[3rem] md:rounded-[4rem] mt-12 md:mt-24 mb-12 md:mb-20 shadow-2xl shadow-[#243F74]/40 mx-4">
           <h2 className="text-3xl md:text-5xl font-black mb-8 md:mb-10 italic tracking-tight leading-snug">
-            Professionalize your <br className="hidden md:block" /> freelance exit.
+            End every project with <br className="hidden md:block" /> clean access removal.
           </h2>
           {!authLoading && (
             <div className="animate-in fade-in zoom-in-95 duration-700">
               <Link href={user ? "/dashboard" : "/signup"}>
-                <button 
-                  style={{ backgroundColor: '#9BCB3B' }} 
+                <button 
+                  style={{ backgroundColor: '#9BCB3B' }} 
                   className="w-full sm:w-auto text-white px-10 md:px-20 py-4 md:py-6 rounded-full text-lg md:text-2xl font-black hover:scale-105 transition-all shadow-2xl shadow-[#9BCB3B]/30 active:scale-95"
                 >
-                  {user ? "Go to Dashboard" : "Get Started for Free"}
+                  {user ? "Go to Dashboard" : "Start tracking client access"}
                 </button>
               </Link>
             </div>
@@ -570,16 +549,16 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-10">
           <div className="grid md:grid-cols-3 gap-12 md:gap-16 mb-16 md:mb-20 text-left">
             <div className="flex flex-col gap-6 md:gap-8">
-              <Image 
-                src="/logo.png" 
-                alt="OffboardPro" 
-                width={160} 
-                height={40} 
+              <Image 
+                src="/logo.png" 
+                alt="OffboardPro" 
+                width={160} 
+                height={40} 
                 unoptimized
-                className="object-contain" 
+                className="object-contain" 
               />
               <p className="text-slate-400 text-sm font-bold leading-relaxed max-w-xs uppercase tracking-tight">
-                The security-first offboarding layer for modern freelancers and agencies.
+                The professional offboarding checklist for modern freelancers and agencies.
               </p>
             </div>
             
@@ -601,7 +580,7 @@ export default function Home() {
 
           <div className="pt-10 border-t border-slate-50 flex flex-col md:flex-row justify-between items-center gap-6 text-center">
             <p className="text-slate-300 text-[10px] font-black uppercase tracking-[0.3em] italic">
-              &copy; 2026 OffboardPro — Your Security Partner
+              &copy; 2026 OffboardPro — Clean Handovers, Zero Risk.
             </p>
             <div className="flex gap-10 text-[10px] font-black uppercase tracking-[0.3em] text-slate-300">
               <Link href="/privacy" className="hover:text-[#243F74] transition-colors">Privacy</Link>
