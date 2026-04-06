@@ -280,7 +280,7 @@ export default function Home() {
       </button>
       
       <main className="overflow-x-clip">
-        {/* HERO SECTION - REPLACED WITH UPDATED HEADLINE */}
+        {/* HERO SECTION - REPLACED WITH UPDATED HEADLINE AND UPDATED HERO CTA */}
         <section className="max-w-6xl mx-auto text-center pt-8 md:pt-24 pb-8 md:pb-12 px-6">
           <h1 
             style={{ 
@@ -315,7 +315,7 @@ export default function Home() {
                     style={{ backgroundColor: '#243F74' }} 
                     className="text-white px-10 md:px-16 py-4 md:py-5 rounded-full text-lg md:text-xl font-bold hover:scale-105 transition-all shadow-xl shadow-[#243F74]/20 active:scale-95 group overflow-hidden relative"
                   >
-                    <span className="relative z-10">{user ? "Go to Dashboard" : "Start Clean Offboarding"}</span>
+                    <span className="relative z-10">{user ? "Go to Dashboard" : "Start tracking access"}</span>
                     <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
                   </button>
                 </Link>
