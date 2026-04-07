@@ -638,13 +638,13 @@ export default function DashboardPage() {
                     <svg className="w-4 h-4 text-[#9BCB3B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v12a2 2 0 002 2z" />
                     </svg>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Access review date:</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 whitespace-nowrap">Access review date:</span>
                   </div>
                   <input 
                     type="date" 
                     value={offboardDate} 
                     onChange={(e) => setOffboardDate(e.target.value)} 
-                    className={`w-full border-2 rounded-2xl pl-36 md:pl-44 pr-5 py-3.5 font-black outline-none text-sm ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white focus:border-[#9BCB3B]' : 'bg-white border-slate-100 focus:border-[#9BCB3B]'}`} 
+                    className={`w-full border-2 rounded-2xl pl-48 md:pl-56 pr-5 py-3.5 font-black outline-none text-sm ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white focus:border-[#9BCB3B]' : 'bg-white border-slate-100 focus:border-[#9BCB3B]'}`} 
                   />
                 </div>
                 
