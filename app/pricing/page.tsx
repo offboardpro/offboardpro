@@ -271,8 +271,8 @@ export default function PricingPage() {
             </div>
             <ul className="space-y-5 mb-12 flex-grow">
               <li className="flex items-center gap-3 text-slate-500 font-bold text-sm"><span className="text-[#9BCB3B] font-black">✓</span> 3 Active Clients</li>
-              <li className="flex items-center gap-3 text-slate-300 font-bold text-sm line-through italic"><span className="text-slate-200">✗</span> Unlimited Projects</li>
-              <li className="flex items-center gap-3 text-slate-300 font-bold text-sm line-through italic"><span className="text-slate-200">✗</span> PDF Exporting</li>
+              <li className="flex items-center gap-3 text-slate-500 font-bold text-sm"><span className="text-[#9BCB3B] font-black">✓</span> Manual Status Tracking</li>
+              <li className="flex items-center gap-3 text-slate-300 font-bold text-sm line-through italic"><span className="text-slate-200">✗</span> Automated Email Reminders</li>
             </ul>
             <button disabled className="w-full py-5 rounded-2xl border-2 border-slate-100 text-slate-400 font-black text-xs uppercase tracking-widest text-center cursor-not-allowed">
               {isPro ? "Previous Plan" : "Current Plan"}
@@ -307,7 +307,10 @@ export default function PricingPage() {
 
             <ul className="space-y-5 mb-12 flex-grow mt-4">
               <li className="flex items-center gap-3 text-slate-700 font-bold text-sm"><span className="text-[#9BCB3B] font-black">✓</span> Unlimited Clients</li>
-              <li className="flex items-center gap-3 text-slate-700 font-bold text-sm"><span className="text-[#9BCB3B] font-black">✓</span> Priority Email Alerts</li>
+              <li className="flex items-center gap-3 text-[#243F74] font-black text-sm bg-blue-50/50 p-2 rounded-xl border border-blue-100">
+                <svg className="w-4 h-4 text-blue-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+                Automated Email Reminders
+              </li>
               <li className="flex items-center gap-3 text-slate-700 font-bold text-sm"><span className="text-[#9BCB3B] font-black">✓</span> PDF Export Reports</li>
               <li className="flex items-center gap-3 text-slate-700 font-bold text-sm"><span className="text-[#9BCB3B] font-black">✓</span> Sharable Client Portals</li>
             </ul>

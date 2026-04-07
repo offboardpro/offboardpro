@@ -355,7 +355,7 @@ export default function Home() {
               {[
                 { n: 1, t: "Create Client Access Record", d: "Save every tool, login, and permission used during the project." },
                 { n: 2, t: "Schedule Access Review", d: "Set a review date so access gets removed after project completion." },
-                { n: 3, t: "Never Miss Access Removal", d: "Get reminders so no client access is left active." }
+                { n: 3, t: "Automated Email Reminders", d: "Pro users get instant email alerts when a project is due for offboarding." }
               ].map((step) => (
                 <div 
                   key={step.n} 
@@ -381,8 +381,8 @@ export default function Home() {
                 <p className="text-slate-500 text-sm leading-relaxed">We never store passwords. We only track what access exists.</p>
               </div>
               <div className="bg-white p-10 md:p-12 rounded-[2.5rem] shadow-sm hover:shadow-xl transition-shadow duration-500">
-                <h4 style={{ color: '#243F74' }} className="font-black mb-4 uppercase text-xs tracking-widest">End-to-End Tracking</h4>
-                <p className="text-slate-500 text-sm leading-relaxed">Keep a simple record of what access was removed and when.</p>
+                <h4 style={{ color: '#243F74' }} className="font-black mb-4 uppercase text-xs tracking-widest">Smart Alerts</h4>
+                <p className="text-slate-500 text-sm leading-relaxed">Pro members get email notifications so they never have to manually check dates.</p>
               </div>
             </div>
           </div>
@@ -470,7 +470,7 @@ export default function Home() {
             <h2 style={{ color: '#243F74' }} className="text-3xl md:text-4xl font-black tracking-tight mb-10 md:mb-16 text-center italic">Common Questions</h2>
             <div className="space-y-1">
               <FAQItem question="Do you store my client's passwords?" answer="No. We never store passwords. We only track what access exists for manual removal." />
-              <FAQItem question="What are Smart Dashboard Alerts?" answer="Pro users see real-time visual warnings on their dashboard when an offboarding task is approaching or overdue." />
+              <FAQItem question="How do automated reminders work?" answer="Pro users get an automated email notification on the day a project is due for offboarding, based on the date set in the dashboard." />
               <FAQItem question="Can I export my data?" answer="Yes! Pro users can export a professional access checklist (PDF) as a record of security compliance." />
               <FAQItem question="Can I manage multiple projects at once?" answer="Absolutely. The dashboard is designed to help you track as many active offboardings as you need." />
             </div>
@@ -490,7 +490,7 @@ export default function Home() {
                 <ul className="space-y-4 md:space-y-5 mb-10 md:mb-12 text-slate-500 text-sm font-bold">
                   <li className="flex items-center justify-center gap-2"><svg className="w-4 h-4 text-[#9BCB3B]" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg> Up to 3 active clients</li>
                   <li className="flex items-center justify-center gap-2"><svg className="w-4 h-4 text-[#9BCB3B]" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg> Client access tracking</li>
-                  <li className="flex items-center justify-center gap-2"><svg className="w-4 h-4 text-[#9BCB3B]" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg> Tool tracking access</li>
+                  <li className="text-slate-300 flex items-center justify-center gap-2">❌ Automated Email Reminders</li>
                 </ul>
                 {!authLoading && (
                   <div className="animate-in fade-in duration-700">
@@ -507,15 +507,15 @@ export default function Home() {
                 <div style={{ color: '#243F74' }} className="text-5xl md:text-6xl font-black mb-8 italic">₹199</div>
                 <ul className="space-y-4 md:space-y-5 mb-10 md:mb-12 text-slate-500 text-sm font-bold">
                   <li className="flex items-center justify-center gap-2"><svg className="w-4 h-4 text-[#9BCB3B]" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg> Unlimited clients</li>
+                  <li className="flex items-center justify-center gap-2"><svg className="w-4 h-4 text-[#9BCB3B]" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg> Automated Email Reminders</li>
                   <li className="flex items-center justify-center gap-2"><svg className="w-4 h-4 text-[#9BCB3B]" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg> Export access checklist (PDF)</li>
-                  <li className="flex items-center justify-center gap-2"><svg className="w-4 h-4 text-[#9BCB3B]" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg> Access removal reminders</li>
                 </ul>
                 <button 
                   onClick={goToPricing}
                   style={{ backgroundColor: '#243F74' }} 
                   className="w-full py-5 rounded-2xl font-black text-white shadow-xl shadow-[#243F74]/20 hover:scale-[1.02] active:scale-95 transition-all text-center uppercase text-xs tracking-[0.2em]"
                 >
-                  View Pro Plan
+                  Get Pro Access
                 </button>
               </div>
             </div>
