@@ -358,6 +358,16 @@ export default function DashboardPage() {
       {/* MAIN CONTENT */}
       <main className="flex-grow w-full max-w-7xl mx-auto pt-40 md:pt-48 pb-16 px-4 md:px-8">
         
+        {/* PRO AUTOMATION BADGE */}
+        {isPro && (
+          <div className="flex items-center gap-2 mb-6 p-3 bg-blue-50/50 border border-blue-100 rounded-2xl w-fit animate-in fade-in slide-in-from-left-4 duration-700">
+            <div className="h-2 w-2 rounded-full bg-blue-500 animate-pulse"></div>
+            <span className="text-[10px] font-black uppercase tracking-widest text-blue-600">
+              Pro Automation: Daily 9:00 AM Scan Active
+            </span>
+          </div>
+        )}
+
         {isPro && activeAlerts.length > 0 && (
           <div className="mb-10 animate-in fade-in slide-in-from-top-4 duration-500">
              <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-red-500 mb-3 flex items-center gap-2">
@@ -656,6 +666,39 @@ export default function DashboardPage() {
                   rows={3} 
                   className={`w-full border-2 rounded-2xl px-5 py-3.5 font-black outline-none resize-none text-sm ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white focus:border-[#9BCB3B]' : 'bg-white border-slate-100 focus:border-[#9BCB3B]'}`} 
                 />
+
+                {/* EMAIL REMINDER PRO SECTION */}
+                {isPro ? (
+                  <div className="p-4 bg-blue-50/50 border border-blue-100 rounded-2xl flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-100 rounded-xl">
+                        <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-blue-700">Automation Active</p>
+                        <p className="text-[9px] font-bold text-blue-500 uppercase">Daily reminder at 9:00 AM</p>
+                      </div>
+                    </div>
+                    <div className="w-8 h-4 bg-blue-500 rounded-full relative">
+                      <div className="absolute right-1 top-1 w-2 h-2 bg-white rounded-full"></div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-4 bg-slate-50 border border-slate-100 border-dashed rounded-2xl flex items-center justify-between opacity-60">
+                    <div className="flex items-center gap-3">
+                      <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                      </svg>
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Email Alerts (Pro)</p>
+                        <p className="text-[8px] font-bold text-slate-400 uppercase">Upgrade to enable reminders</p>
+                      </div>
+                    </div>
+                    <button onClick={() => router.push("/pricing")} className="text-[8px] font-black bg-slate-200 text-slate-500 px-2 py-1 rounded-md uppercase tracking-widest hover:bg-[#9BCB3B] hover:text-white transition-all">Unlock</button>
+                  </div>
+                )}
 
                 <div className="flex gap-4 pt-4">
                   <button onClick={() => setIsModalOpen(false)} className={`flex-1 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-colors ${isDarkMode ? 'bg-slate-800 text-slate-400 hover:bg-slate-700' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}>Cancel</button>
