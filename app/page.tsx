@@ -280,7 +280,7 @@ export default function Home() {
       </button>
       
       <main className="overflow-x-clip">
-        {/* HERO SECTION - REPLACED WITH UPDATED HEADLINE AND UPDATED HERO CTA */}
+        {/* HERO SECTION */}
         <section className="max-w-6xl mx-auto text-center pt-8 md:pt-24 pb-8 md:pb-12 px-6">
           <h1 
             style={{ 
@@ -302,7 +302,7 @@ export default function Home() {
             }}
             className="text-slate-500 text-lg md:text-2xl max-w-3xl mx-auto leading-relaxed font-medium mb-10 md:mb-12 px-2"
           >
-            Track every client tool, permission, and access — so you never leave accounts exposed after a project ends.
+            Track every client tool, login, and permission in one place — so nothing gets forgotten when a project ends.
           </p>
 
           <div 
@@ -315,12 +315,12 @@ export default function Home() {
                     style={{ backgroundColor: '#243F74' }} 
                     className="text-white px-10 md:px-16 py-4 md:py-5 rounded-full text-lg md:text-xl font-bold hover:scale-105 transition-all shadow-xl shadow-[#243F74]/20 active:scale-95 group overflow-hidden relative"
                   >
-                    <span className="relative z-10">{user ? "Go to Dashboard" : "Start tracking access"}</span>
+                    <span className="relative z-10">{user ? "Go to Dashboard" : "Start tracking client access"}</span>
                     <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
                   </button>
                 </Link>
                 <p className="text-slate-400 text-[10px] md:text-xs font-black uppercase tracking-widest mt-6 italic">
-                  Used by freelancers & agencies who want clean professional client handovers.
+                  Used by freelancers and agencies who want secure & professional project handovers.
                 </p>
               </div>
             )}
@@ -353,9 +353,9 @@ export default function Home() {
             <h2 style={{ color: '#243F74' }} className="text-3xl md:text-4xl font-black tracking-tight mb-10 md:mb-20 text-center italic">How OffboardPro Works</h2>
             <div className="grid md:grid-cols-3 gap-6 md:gap-8">
               {[
-                { n: 1, t: "Create Client Access Record", d: "Track every tool, permission, and folder used during your project lifecycle." },
-                { n: 2, t: "Schedule Access Review", d: "Choose a hard date to review or remove access once the final invoice is cleared." },
-                { n: 3, t: "Never Miss Access Removal", d: "Get precise reminders of what needs to be revoked so accounts stay secure." }
+                { n: 1, t: "Create Client Access Record", d: "Save every tool, login, and permission used during the project." },
+                { n: 2, t: "Schedule Access Review", d: "Set a review date so access gets removed after project completion." },
+                { n: 3, t: "Never Miss Access Removal", d: "Get reminders so no client access is left active." }
               ].map((step) => (
                 <div 
                   key={step.n} 
@@ -374,15 +374,15 @@ export default function Home() {
         <Reveal>
         <div id="security" className="py-16 md:py-32 bg-slate-50/50 rounded-[3rem] md:rounded-[4rem] scroll-mt-24 text-left px-6 mx-4">
           <div className="max-w-4xl mx-auto">
-            <h2 style={{ color: '#243F74' }} className="text-3xl md:text-4xl font-black tracking-tight mb-12 md:mb-16 text-center italic">Security is our priority</h2>
+            <h2 style={{ color: '#243F74' }} className="text-3xl md:text-4xl font-black tracking-tight mb-12 md:mb-16 text-center italic">Built for secure client handovers</h2>
             <div className="grid md:grid-cols-2 gap-8 md:gap-12 text-left">
               <div className="bg-white p-10 md:p-12 rounded-[2.5rem] shadow-sm hover:shadow-xl transition-shadow duration-500">
                 <h4 style={{ color: '#243F74' }} className="font-black mb-4 uppercase text-xs tracking-widest">Zero-Password Policy</h4>
-                <p className="text-slate-500 text-sm leading-relaxed">We never ask for credentials. We simply act as a tracking layer for your offboarding process.</p>
+                <p className="text-slate-500 text-sm leading-relaxed">We never store passwords. We only track what access exists.</p>
               </div>
               <div className="bg-white p-10 md:p-12 rounded-[2.5rem] shadow-sm hover:shadow-xl transition-shadow duration-500">
                 <h4 style={{ color: '#243F74' }} className="font-black mb-4 uppercase text-xs tracking-widest">End-to-End Tracking</h4>
-                <p className="text-slate-500 text-sm leading-relaxed">Every removal action is logged, providing a clean audit trail to show your clients.</p>
+                <p className="text-slate-500 text-sm leading-relaxed">Keep a simple record of what access was removed and when.</p>
               </div>
             </div>
           </div>
@@ -423,7 +423,7 @@ export default function Home() {
               <div className="h-px bg-white/10 w-full mb-10" />
 
               <div className="bg-[#9BCB3B]/10 border border-[#9BCB3B]/20 p-6 md:p-8 rounded-3xl">
-                <p className="text-white text-lg font-black mb-4 italic leading-snug text-center md:text-left">OffboardPro helps ensure every project ends cleanly and professionally.</p>
+                <p className="text-white text-lg font-black mb-4 italic leading-snug text-center md:text-left">OffboardPro ensures no client access is forgotten after project completion.</p>
                 <p className="text-slate-300 text-sm font-medium leading-relaxed text-center md:text-left">
                   Ending a project cleanly protects both you and your client. <br className="hidden md:block" />
                   <strong>Our checklist system handles the oversight so you can focus on the next big project.</strong>
@@ -456,8 +456,8 @@ export default function Home() {
           
           <div className="text-center bg-[#243F74] p-10 md:p-14 rounded-[3rem] md:rounded-[4rem] shadow-xl">
             <p className="text-white text-xl md:text-2xl font-bold mb-0 leading-relaxed italic">
-              If you access client tools or accounts, <br className="hidden md:block" />
-              <span className="text-[#9BCB3B]">OffboardPro helps you stay organized and exit projects cleanly.</span>
+              If you work with client accounts, <br className="hidden md:block" />
+              <span className="text-[#9BCB3B]">you need a system to track and remove access safely.</span>
             </p>
           </div>
         </div>
@@ -469,9 +469,9 @@ export default function Home() {
           <div className="max-w-3xl mx-auto">
             <h2 style={{ color: '#243F74' }} className="text-3xl md:text-4xl font-black tracking-tight mb-10 md:mb-16 text-center italic">Common Questions</h2>
             <div className="space-y-1">
-              <FAQItem question="Do you store my client's passwords?" answer="No. We never ask for or store passwords. We track tool names and dates for manual removal." />
+              <FAQItem question="Do you store my client's passwords?" answer="No. We never store passwords. We only track what access exists for manual removal." />
               <FAQItem question="What are Smart Dashboard Alerts?" answer="Pro users see real-time visual warnings on their dashboard when an offboarding task is approaching or overdue." />
-              <FAQItem question="Can I export my data?" answer="Yes! Pro users can export professional PDF reports as a record of security compliance." />
+              <FAQItem question="Can I export my data?" answer="Yes! Pro users can export a professional access checklist (PDF) as a record of security compliance." />
               <FAQItem question="Can I manage multiple projects at once?" answer="Absolutely. The dashboard is designed to help you track as many active offboardings as you need." />
             </div>
           </div>
@@ -489,7 +489,7 @@ export default function Home() {
                 <div style={{ color: '#243F74' }} className="text-5xl md:text-6xl font-black mb-8 italic">₹0</div>
                 <ul className="space-y-4 md:space-y-5 mb-10 md:mb-12 text-slate-500 text-sm font-bold">
                   <li className="flex items-center justify-center gap-2"><svg className="w-4 h-4 text-[#9BCB3B]" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg> Up to 3 active clients</li>
-                  <li className="flex items-center justify-center gap-2"><svg className="w-4 h-4 text-[#9BCB3B]" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg> Dashboard tracking</li>
+                  <li className="flex items-center justify-center gap-2"><svg className="w-4 h-4 text-[#9BCB3B]" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg> Client access tracking</li>
                   <li className="flex items-center justify-center gap-2"><svg className="w-4 h-4 text-[#9BCB3B]" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg> Tool tracking access</li>
                 </ul>
                 {!authLoading && (
@@ -507,8 +507,8 @@ export default function Home() {
                 <div style={{ color: '#243F74' }} className="text-5xl md:text-6xl font-black mb-8 italic">₹199</div>
                 <ul className="space-y-4 md:space-y-5 mb-10 md:mb-12 text-slate-500 text-sm font-bold">
                   <li className="flex items-center justify-center gap-2"><svg className="w-4 h-4 text-[#9BCB3B]" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg> Unlimited clients</li>
-                  <li className="flex items-center justify-center gap-2"><svg className="w-4 h-4 text-[#9BCB3B]" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg> PDF Export & Audit Notes</li>
-                  <li className="flex items-center justify-center gap-2"><svg className="w-4 h-4 text-[#9BCB3B]" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg> Smart Dashboard Alerts</li>
+                  <li className="flex items-center justify-center gap-2"><svg className="w-4 h-4 text-[#9BCB3B]" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg> Export access checklist (PDF)</li>
+                  <li className="flex items-center justify-center gap-2"><svg className="w-4 h-4 text-[#9BCB3B]" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg> Access removal reminders</li>
                 </ul>
                 <button 
                   onClick={goToPricing}
@@ -527,7 +527,7 @@ export default function Home() {
         <Reveal>
         <section id="cta" style={{ backgroundColor: '#243F74' }} className="py-16 md:py-24 text-center text-white px-6 rounded-[3rem] md:rounded-[4rem] mt-12 md:mt-24 mb-12 md:mb-20 shadow-2xl shadow-[#243F74]/40 mx-4">
           <h2 className="text-3xl md:text-5xl font-black mb-8 md:mb-10 italic tracking-tight leading-snug">
-            End every project with <br className="hidden md:block" /> clean access removal.
+            Make sure no client access <br className="hidden md:block" /> is left behind.
           </h2>
           {!authLoading && (
             <div className="animate-in fade-in zoom-in-95 duration-700">
@@ -558,7 +558,7 @@ export default function Home() {
                 className="object-contain" 
               />
               <p className="text-slate-400 text-sm font-bold leading-relaxed max-w-xs uppercase tracking-tight">
-                Client access tracking for modern freelancers and agencies.
+                Client access checklist for freelancers and agencies who want secure project handovers.
               </p>
             </div>
             
