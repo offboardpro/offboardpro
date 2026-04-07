@@ -15,6 +15,24 @@ export default function SignUpPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // --- HELPER: Trigger Welcome Email ---
+  const triggerWelcomeEmail = async (userEmail: string | null, userName: string | null) => {
+    if (!userEmail) return;
+    
+    try {
+      fetch("/api/welcome", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          email: userEmail, 
+          name: userName || "Freelancer" 
+        }),
+      });
+    } catch (err) {
+      console.error("Failed to trigger welcome email:", err);
+    }
+  };
+
   // 2. Real Email/Password Sign Up
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,6 +46,9 @@ export default function SignUpPage() {
       await updateProfile(userCredential.user, {
         displayName: name
       });
+
+      // TRIGGER WELCOME EMAIL
+      triggerWelcomeEmail(userCredential.user.email, name);
 
       // UPDATED: Redirect to Home instead of Dashboard
       router.push("/");
@@ -43,7 +64,11 @@ export default function SignUpPage() {
   const handleGoogleSignUp = async () => {
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      
+      // TRIGGER WELCOME EMAIL FOR GOOGLE USER
+      triggerWelcomeEmail(result.user.email, result.user.displayName);
+
       // UPDATED: Redirect to Home instead of Dashboard
       router.push("/");
     } catch (error: any) {
