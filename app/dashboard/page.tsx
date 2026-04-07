@@ -49,6 +49,9 @@ export default function DashboardPage() {
   const [offboardDate, setOffboardDate] = useState("");
   const [notes, setNotes] = useState("");
   
+  // NEW: Toggle state for Email Reminders
+  const [emailEnabled, setEmailEnabled] = useState(true);
+
   const [clients, setClients] = useState<any[]>([]);
 
   // --- SMART ALERTS CALCULATION ---
@@ -285,9 +288,13 @@ export default function DashboardPage() {
         date: offboardDate,
         notes: isPro ? notes : "",
         status: "pending",
+        // SAVE TOGGLE STATE:
+        emailEnabled: isPro ? emailEnabled : false,
         createdAt: serverTimestamp()
       });
-      setClientName(""); setTools(""); setOffboardDate(""); setNotes(""); setIsModalOpen(false);
+      setClientName(""); setTools(""); setOffboardDate(""); setNotes(""); 
+      setEmailEnabled(true); // Reset toggle for next client
+      setIsModalOpen(false);
       setShowToast(true);
       setTimeout(() => setShowToast(false), 3000);
     } catch (error) {
@@ -667,7 +674,7 @@ export default function DashboardPage() {
                   className={`w-full border-2 rounded-2xl px-5 py-3.5 font-black outline-none resize-none text-sm ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white focus:border-[#9BCB3B]' : 'bg-white border-slate-100 focus:border-[#9BCB3B]'}`} 
                 />
 
-                {/* EMAIL REMINDER PRO SECTION */}
+                {/* EMAIL REMINDER PRO SECTION WITH FUNCTIONAL TOGGLE */}
                 {isPro ? (
                   <div className="p-4 bg-blue-50/50 border border-blue-100 rounded-2xl flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -677,13 +684,19 @@ export default function DashboardPage() {
                         </svg>
                       </div>
                       <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-blue-700">Automation Active</p>
-                        <p className="text-[9px] font-bold text-blue-500 uppercase">Daily reminder at 9:00 AM</p>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-blue-700">Email Alerts</p>
+                        <p className="text-[9px] font-bold text-blue-500 uppercase">
+                          {emailEnabled ? "Active at 9:00 AM" : "Reminders Muted"}
+                        </p>
                       </div>
                     </div>
-                    <div className="w-8 h-4 bg-blue-500 rounded-full relative">
-                      <div className="absolute right-1 top-1 w-2 h-2 bg-white rounded-full"></div>
-                    </div>
+                    {/* CLICKABLE TOGGLE BUTTON */}
+                    <button 
+                      onClick={() => setEmailEnabled(!emailEnabled)}
+                      className={`w-10 h-5 rounded-full relative transition-all duration-300 ${emailEnabled ? 'bg-blue-600' : 'bg-slate-300'}`}
+                    >
+                      <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all duration-300 ${emailEnabled ? 'right-1' : 'left-1'}`}></div>
+                    </button>
                   </div>
                 ) : (
                   <div className="p-4 bg-slate-50 border border-slate-100 border-dashed rounded-2xl flex items-center justify-between opacity-60">

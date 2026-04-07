@@ -20,7 +20,8 @@ export async function GET(req: Request) {
       },
     });
 
-    // 2. Find clients due today
+    // 2. Find clients due today that are PENDING 
+    // We filter by emailEnabled inside the loop to ensure accuracy
     const snapshot = await db.collection("clients")
       .where("date", "==", today)
       .where("status", "==", "pending")
@@ -39,8 +40,15 @@ export async function GET(req: Request) {
       const userSnap = await db.collection("users").doc(client.userId).get();
       const userData = userSnap.data();
 
-      // 4. Pro Check
-      if (userData?.isPro === true && userData?.email) {
+      // 4. THE MASTER CHECK:
+      // - Must be a Pro user
+      // - Must have a valid email
+      // - The specific client toggle (emailEnabled) must be TRUE
+      if (
+        userData?.isPro === true && 
+        userData?.email && 
+        client.emailEnabled === true
+      ) {
         await transporter.sendMail({
           from: '"OffboardPro Alerts" <offboardpro@gmail.com>',
           to: userData.email,
@@ -53,6 +61,8 @@ export async function GET(req: Request) {
                 <p style="margin: 0; color: #64748b; font-size: 10px; font-weight: bold; text-transform: uppercase;">Tools to Revoke:</p>
                 <p style="margin: 5px 0 0 0; color: #9BCB3B; font-weight: bold; font-size: 16px;">${client.tools}</p>
               </div>
+              <p>You enabled automated reminders for this project. Please ensure all access points are closed.</p>
+              <br />
               <a href="https://offboardpro.vercel.app/dashboard" style="background: #243F74; color: white; padding: 12px 20px; text-decoration: none; border-radius: 10px; font-weight: bold; display: inline-block;">Manage Project</a>
             </div>
           `
@@ -61,7 +71,11 @@ export async function GET(req: Request) {
       }
     }
 
-    return NextResponse.json({ success: true, emailsSent: sentCount });
+    return NextResponse.json({ 
+      success: true, 
+      emailsSent: sentCount,
+      totalDueToday: snapshot.size 
+    });
 
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
