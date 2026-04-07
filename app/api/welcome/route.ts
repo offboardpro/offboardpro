@@ -1,17 +1,19 @@
-import { NextResponse } from "next/server";
-import nodemailer from "nodemailer";
+import { NextRequest, NextResponse } from "next/server";
+import * as nodemailer from "nodemailer";
 
-export const maxDuration = 60; 
+export const maxDuration = 10; 
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const { email, name } = await req.json();
+    const body = await req.json();
+    const { email, name } = body;
+    const userName = name || "Freelancer";
 
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
-        user: "offboardpro@gmail.com", 
-        pass: "tantokelalvzekdr", 
+        user: "offboardpro@gmail.com",
+        pass: "tantokelalvzekdr",
       },
     });
 
@@ -21,7 +23,7 @@ export async function POST(req: Request) {
       subject: "Welcome to OffboardPro! 🚀",
       html: `
         <div style="font-family: sans-serif; color: #243F74; padding: 40px; border: 1px solid #f1f5f9; border-radius: 32px; max-width: 600px; margin: auto; background-color: #ffffff;">
-          <h1 style="color: #9BCB3B; font-style: italic;">Welcome, ${name}!</h1>
+          <h1 style="color: #9BCB3B; font-style: italic;">Welcome, ${userName}!</h1>
           <p style="font-size: 16px; font-weight: bold;">You're ready to start tracking your client access like a pro.</p>
           <div style="margin: 30px 0; text-align: center;">
             <a href="https://offboardpro.com/dashboard" 
@@ -35,7 +37,7 @@ export async function POST(req: Request) {
     };
 
     await transporter.sendMail(mailOptions);
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
     console.error("Email API Error:", error);
     return NextResponse.json({ error: "Email failed" }, { status: 500 });
