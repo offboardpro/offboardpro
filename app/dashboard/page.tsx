@@ -283,18 +283,17 @@ export default function DashboardPage() {
     try {
       await addDoc(collection(db, "clients"), {
         userId: user.uid,
-        userEmail: user.email, // <--- SYNC EMAIL TO CLIENT RECORD FOR THE ROBOT
+        userEmail: user.email, 
         name: clientName,
         tools: tools,
         date: offboardDate,
         notes: isPro ? notes : "",
         status: "pending",
-        // SAVE TOGGLE STATE:
         emailEnabled: isPro ? emailEnabled : false,
         createdAt: serverTimestamp()
       });
       setClientName(""); setTools(""); setOffboardDate(""); setNotes(""); 
-      setEmailEnabled(true); // Reset toggle for next client
+      setEmailEnabled(true); 
       setIsModalOpen(false);
       setShowToast(true);
       setTimeout(() => setShowToast(false), 3000);
@@ -368,27 +367,27 @@ export default function DashboardPage() {
         
         {/* PRO ONLY: EMAIL WHITELIST NOTE */}
         {isPro && (
-          <div className={`mb-8 p-4 rounded-2xl border-2 border-dashed flex flex-col md:flex-row items-center justify-between gap-4 transition-all animate-in fade-in slide-in-from-top-4 duration-700 ${isDarkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-blue-50/30 border-blue-100'}`}>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 flex-shrink-0">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className={`mb-8 p-5 rounded-[2rem] border-2 border-dashed flex flex-col md:flex-row items-center justify-between gap-6 transition-all animate-in fade-in slide-in-from-top-4 duration-700 ${isDarkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-blue-50/30 border-blue-100'}`}>
+            <div className="flex items-center gap-4 text-center md:text-left">
+              <div className="w-12 h-12 rounded-2xl bg-blue-100 flex items-center justify-center text-blue-600 flex-shrink-0">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v12a2 2 0 002 2z" />
                 </svg>
               </div>
               <div>
-                <p className={`text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'text-slate-300' : 'text-[#243F74]'}`}>
-                  Ensure Pro Delivery
+                <p className={`text-xs font-black uppercase tracking-widest mb-1 ${isDarkMode ? 'text-slate-200' : 'text-[#243F74]'}`}>
+                  Ensure Pro Delivery ⚡
                 </p>
-                <p className="text-[11px] font-bold text-slate-400">
-                  Add <span className="text-[#9BCB3B]">offboardpro@gmail.com</span> to your contacts to ensure your automated alerts land in your primary inbox.
+                <p className="text-[11px] font-bold text-slate-400 leading-relaxed">
+                  Add <span className="text-[#9BCB3B] font-black">offboardpro@gmail.com</span> to your contacts to ensure automated alerts land in your primary inbox.
                 </p>
               </div>
             </div>
             <button 
-              onClick={() => alert("Check your spam folder and click 'Not Spam' to help our robot learn!")}
-              className="text-[9px] font-black uppercase tracking-widest px-4 py-2 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all text-slate-500 shadow-sm"
+              onClick={() => alert("Checking spam and marking 'Not Spam' helps our automated system reach you faster!")}
+              className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm ${isDarkMode ? 'bg-slate-800 text-slate-300 border-slate-700' : 'bg-white text-slate-500 border-slate-100'} border`}
             >
-              Learn More
+              Whitelisting Guide
             </button>
           </div>
         )}
@@ -465,7 +464,7 @@ export default function DashboardPage() {
 
         {/* PRO TOOLS ACTIONS */}
         {isPro && (
-          <div className="flex flex-wrap items-center gap-4 mb-8 p-5 rounded-[2rem] border-2 bg-slate-500/5 border-slate-500/10 transition-all">
+          <div className="flex flex-wrap items-center gap-4 mb-8 p-5 rounded-[2rem] border-2 bg-slate-500/5 border-slate-500/10 transition-all animate-in fade-in duration-700">
             <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 mr-2">Admin Tools:</span>
             <button onClick={generatePDF} className="bg-[#243F74] text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg shadow-[#243F74]/20">📄 Export PDF</button>
             <button onClick={exportCSV} className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all border-2 ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-100 text-[#243F74]'}`}>📊 Export CSV</button>
@@ -475,7 +474,7 @@ export default function DashboardPage() {
 
         {/* STATS CARDS */}
         {isPro && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-10">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-10 animate-in slide-in-from-bottom-4 duration-700">
             <div className={`p-6 md:p-8 rounded-[2rem] border-2 text-center transition-colors ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'}`}>
               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">Client Tools Tracked</span>
               <span className={`text-2xl md:text-3xl font-black italic ${isDarkMode ? 'text-white' : 'text-[#243F74]'}`}>{clients.length === 0 ? "0" : clients.length}</span>
