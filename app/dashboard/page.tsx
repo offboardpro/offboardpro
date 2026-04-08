@@ -283,17 +283,18 @@ export default function DashboardPage() {
     try {
       await addDoc(collection(db, "clients"), {
         userId: user.uid,
-        userEmail: user.email, 
+        userEmail: user.email, // <--- SYNC EMAIL TO CLIENT RECORD FOR THE ROBOT
         name: clientName,
         tools: tools,
         date: offboardDate,
         notes: isPro ? notes : "",
         status: "pending",
+        // SAVE TOGGLE STATE:
         emailEnabled: isPro ? emailEnabled : false,
         createdAt: serverTimestamp()
       });
       setClientName(""); setTools(""); setOffboardDate(""); setNotes(""); 
-      setEmailEnabled(true); 
+      setEmailEnabled(true); // Reset toggle for next client
       setIsModalOpen(false);
       setShowToast(true);
       setTimeout(() => setShowToast(false), 3000);
@@ -365,7 +366,7 @@ export default function DashboardPage() {
       {/* MAIN CONTENT */}
       <main className="flex-grow w-full max-w-7xl mx-auto pt-40 md:pt-48 pb-16 px-4 md:px-8">
         
-        {/* PRO ONLY: EMAIL WHITELIST NOTE */}
+        {/* NEW: PRO ONLY EMAIL WHITELIST BANNER */}
         {isPro && (
           <div className={`mb-8 p-5 rounded-[2rem] border-2 border-dashed flex flex-col md:flex-row items-center justify-between gap-6 transition-all animate-in fade-in slide-in-from-top-4 duration-700 ${isDarkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-blue-50/30 border-blue-100'}`}>
             <div className="flex items-center gap-4 text-center md:text-left">
@@ -384,7 +385,7 @@ export default function DashboardPage() {
               </div>
             </div>
             <button 
-              onClick={() => alert("Checking spam and marking 'Not Spam' helps our automated system reach you faster!")}
+              onClick={() => alert("Marking our emails as 'Not Spam' ensures you never miss a critical access review!")}
               className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm ${isDarkMode ? 'bg-slate-800 text-slate-300 border-slate-700' : 'bg-white text-slate-500 border-slate-100'} border`}
             >
               Whitelisting Guide
