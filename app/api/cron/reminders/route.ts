@@ -52,7 +52,6 @@ export async function GET(req: Request) {
       const userData = userSnap.data();
 
       // 2. SUPER-CHECK EMAIL LOOKUP (Aggressive Search)
-      // We look in every possible field to find the recipient's address
       const targetEmail = 
         userData?.email ||       // Check the User Profile document
         client.userEmail ||     // Check Client record field 'userEmail'
@@ -69,9 +68,12 @@ export async function GET(req: Request) {
         console.log(`📧 SENDING DYNAMIC EMAIL TO: ${targetEmail}`);
         
         await transporter.sendMail({
-          from: '"OffboardPro Alerts" <offboardpro@gmail.com>',
+          from: '"OffboardPro Security" <offboardpro@gmail.com>',
           to: targetEmail,
+          replyTo: "offboardpro@gmail.com", // Helps prevent sender-looping
           subject: `⚠️ Security Reminder: Offboard ${client.name} today`,
+          priority: "high", // Signals importance to Gmail
+          text: `Hi ${userData?.displayName || 'Pro User'}, today is the review date for ${client.name}. Tools: ${client.tools || "All access"}. Dashboard: https://offboardpro.vercel.app/dashboard`,
           html: `
             <div style="font-family: sans-serif; padding: 30px; border: 1px solid #f1f5f9; border-radius: 24px; max-width: 600px; margin: auto;">
               <h2 style="color: #243F74; font-style: italic; margin-bottom: 20px;">Security Reminder</h2>
@@ -93,7 +95,6 @@ export async function GET(req: Request) {
         sentCount++;
         console.log(`✅ SUCCESS: Email delivered to ${targetEmail}`);
       } else {
-        // Detailed log to understand why it failed
         console.log(`⏭️ SKIPPED: EmailFound: ${!!targetEmail}, Pro: ${isUserPro}, Toggle: ${isEmailEnabled}`);
       }
     }
