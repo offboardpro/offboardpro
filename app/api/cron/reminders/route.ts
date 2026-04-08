@@ -51,14 +51,18 @@ export async function GET(req: Request) {
       const userSnap = await db.collection("users").doc(client.userId).get();
       const userData = userSnap.data();
 
-      // 2. SMART EMAIL LOOKUP (Zero-Touch)
-      // Check User Profile first, then fallback to the email stored on the Client record
-      const targetEmail = userData?.email || client.userEmail || client.email;
-      
-      const isUserPro = userData?.isPro === true;
-      const isEmailEnabled = client.emailEnabled !== false; // Default to true if not set
+      // 2. SUPER-CHECK EMAIL LOOKUP (Aggressive Search)
+      // We look in every possible field to find the recipient's address
+      const targetEmail = 
+        userData?.email ||       // Check the User Profile document
+        client.userEmail ||     // Check Client record field 'userEmail'
+        client.email ||         // Check Client record field 'email'
+        client.createdByEmail;  // Check Client record field 'createdByEmail'
 
-      console.log(`📡 Target: ${targetEmail} | Pro: ${isUserPro} | Toggle: ${isEmailEnabled}`);
+      const isUserPro = userData?.isPro === true;
+      const isEmailEnabled = client.emailEnabled !== false; 
+
+      console.log(`📡 Final Target: ${targetEmail || "NOT FOUND"} | Pro: ${isUserPro} | Toggle: ${isEmailEnabled}`);
 
       // 3. THE FINAL CHECK
       if (isUserPro && targetEmail && isEmailEnabled) {
@@ -89,7 +93,8 @@ export async function GET(req: Request) {
         sentCount++;
         console.log(`✅ SUCCESS: Email delivered to ${targetEmail}`);
       } else {
-        console.log(`⏭️ SKIPPED: Missing email, Not Pro, or Toggle is OFF.`);
+        // Detailed log to understand why it failed
+        console.log(`⏭️ SKIPPED: EmailFound: ${!!targetEmail}, Pro: ${isUserPro}, Toggle: ${isEmailEnabled}`);
       }
     }
 
