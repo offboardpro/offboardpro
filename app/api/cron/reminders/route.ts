@@ -2,15 +2,12 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/firebase-admin";
 import nodemailer from "nodemailer";
 
-export const dynamic = 'force-dynamic'; // Ensures the robot runs fresh code
+export const dynamic = 'force-dynamic'; 
 
 export async function GET(req: Request) {
   console.log("🤖 ROBOT WAKING UP...");
 
-  // 1. Security Check Log
   const authHeader = req.headers.get('authorization');
-  console.log("🔑 Auth Header Received:", authHeader ? "YES" : "NO");
-
   if (
     authHeader !== `Bearer ${process.env.CRON_SECRET}` && 
     authHeader !== `Bearer ${process.env.VERCEL_CRON_TOKEN}`
@@ -21,18 +18,12 @@ export async function GET(req: Request) {
 
   try {
     const today = new Date().toISOString().split('T')[0]; 
-    console.log("📅 Checking Database for date:", today);
-
-    // 2. Database Lookup Log
     const snapshot = await db.collection("clients")
       .where("date", "==", today)
       .where("status", "==", "pending")
       .get();
 
-    console.log("📊 Found due clients count:", snapshot.size);
-
     if (snapshot.empty) {
-      console.log("😴 No work today. Going back to sleep.");
       return NextResponse.json({ message: "No reviews due today." });
     }
 
@@ -48,31 +39,50 @@ export async function GET(req: Request) {
 
     for (const doc of snapshot.docs) {
       const client = doc.data();
-      console.log(`🔍 Checking Client: ${client.name} | Toggle: ${client.emailEnabled}`);
       
+      // 1. Get the owner of this client record
       const userSnap = await db.collection("users").doc(client.userId).get();
       const userData = userSnap.data();
-      console.log(`👤 User: ${userData?.email} | Pro Status: ${userData?.isPro}`);
 
-      if (userData?.isPro === true && userData?.email && client.emailEnabled === true) {
-        console.log(`📧 SENDING EMAIL TO: ${userData.email}...`);
+      // 2. FULLY DYNAMIC EMAIL LOOKUP:
+      // First check the User Profile (userData.email)
+      // If missing, check the Client record itself (client.userEmail)
+      const targetEmail = userData?.email || client.userEmail;
+      
+      const isUserPro = userData?.isPro === true;
+
+      // 3. Only send if we found an email AND the user is Pro AND toggle is ON
+      if (isUserPro && targetEmail && client.emailEnabled === true) {
+        console.log(`📧 SENDING DYNAMIC EMAIL TO: ${targetEmail}`);
+        
         await transporter.sendMail({
           from: '"OffboardPro Alerts" <offboardpro@gmail.com>',
-          to: userData.email,
-          subject: `⚠️ Pro Reminder: Offboard ${client.name} today`,
-          html: `<b>Today is offboarding day for ${client.name}!</b>` // Simplified for test
+          to: targetEmail,
+          subject: `⚠️ Security Reminder: Offboard ${client.name} today`,
+          html: `
+            <div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 20px; max-width: 600px; margin: auto;">
+              <h2 style="color: #243F74; font-style: italic;">OffboardPro Reminder</h2>
+              <p>Hi ${userData?.displayName || 'there'},</p>
+              <p>Today is the scheduled offboarding date for <strong>${client.name}</strong>.</p>
+              <div style="background: #f8fafc; padding: 15px; border-radius: 12px; margin: 20px 0;">
+                <p style="margin: 0; color: #64748b; font-size: 10px; font-weight: bold; text-transform: uppercase;">Review these tools:</p>
+                <p style="margin: 5px 0 0 0; color: #9BCB3B; font-weight: bold; font-size: 16px;">${client.tools || "All associated access"}</p>
+              </div>
+              <a href="https://offboardpro.vercel.app/dashboard" style="background: #243F74; color: white; padding: 12px 24px; text-decoration: none; border-radius: 12px; font-weight: bold; display: inline-block;">Open My Dashboard</a>
+            </div>
+          `
         });
+        
         sentCount++;
-        console.log(`✅ EMAIL SENT SUCCESS!`);
       } else {
-        console.log(`⏭️ SKIPPED: User is not Pro or Toggle is OFF.`);
+        console.log(`⏭️ SKIPPED: Missing email for ${client.name} or User not Pro.`);
       }
     }
 
     return NextResponse.json({ success: true, emailsSent: sentCount });
 
   } catch (error: any) {
-    console.error("🚨 CRITICAL ROBOT ERROR:", error.message);
+    console.error("🚨 ROBOT ERROR:", error.message);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

@@ -4,9 +4,10 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-// 1. Import Firebase Auth and your config
-import { auth } from "@/lib/firebase"; 
+// 1. Import Firebase Auth, Firestore, and your config
+import { auth, db } from "@/lib/firebase"; 
 import { createUserWithEmailAndPassword, updateProfile, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -14,6 +15,19 @@ export default function SignUpPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // --- HELPER: Sync User Data to Firestore ---
+  const syncUserToFirestore = async (user: any, customName?: string) => {
+    const userRef = doc(db, "users", user.uid);
+    await setDoc(userRef, {
+      uid: user.uid,
+      email: user.email,
+      displayName: customName || user.displayName || "User",
+      photoURL: user.photoURL || null,
+      createdAt: serverTimestamp(),
+      isPro: false, // Default new users to free plan
+    }, { merge: true });
+  };
 
   // --- HELPER: Trigger Welcome Email ---
   const triggerWelcomeEmail = async (userEmail: string | null, userName: string | null) => {
@@ -42,10 +56,13 @@ export default function SignUpPage() {
       // Create the user in Firebase
       const userCredential = await createUserWithEmailAndPassword(auth, email.trim().toLowerCase(), password);
       
-      // Save the user's Display Name in Firebase
+      // Save the user's Display Name in Firebase Auth
       await updateProfile(userCredential.user, {
         displayName: name
       });
+
+      // AUTO-SYNC: Save user to Firestore collection
+      await syncUserToFirestore(userCredential.user, name);
 
       // TRIGGER WELCOME EMAIL
       triggerWelcomeEmail(userCredential.user.email, name);
@@ -66,6 +83,9 @@ export default function SignUpPage() {
     try {
       const result = await signInWithPopup(auth, provider);
       
+      // AUTO-SYNC: Save user to Firestore collection
+      await syncUserToFirestore(result.user);
+
       // TRIGGER WELCOME EMAIL FOR GOOGLE USER
       triggerWelcomeEmail(result.user.email, result.user.displayName);
 
@@ -108,14 +128,14 @@ export default function SignUpPage() {
           
           {/* Mobile Logo Indicator */}
           <div className="mb-12 lg:hidden flex flex-col items-center">
-             <Image 
+              <Image 
                 src="/logo.png" 
                 alt="Logo" 
                 width={130} 
                 height={40} 
                 className="mb-4 object-contain" 
-             />
-             <div className="h-1 w-10 bg-[#9BCB3B] rounded-full" />
+              />
+              <div className="h-1 w-10 bg-[#9BCB3B] rounded-full" />
           </div>
 
           <h1 style={{ color: '#243F74' }} className="text-4xl font-black tracking-tight mb-2 italic text-center md:text-left">Create Account</h1>

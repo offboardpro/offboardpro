@@ -4,15 +4,28 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-// 1. Import Firebase Auth and your config
-import { auth } from "@/lib/firebase";
+// 1. Import Firebase Auth, DB, and Firestore methods
+import { auth, db } from "@/lib/firebase";
 import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Helper function to sync user data to Firestore
+  const syncUserToFirestore = async (user: any) => {
+    const userRef = doc(db, "users", user.uid);
+    await setDoc(userRef, {
+      uid: user.uid,
+      email: user.email,
+      displayName: user.displayName || "User",
+      photoURL: user.photoURL || null,
+      lastLogin: serverTimestamp(),
+    }, { merge: true });
+  };
 
   // 2. Real Email/Password Login
   const handleLogin = async (e: React.FormEvent) => {
@@ -21,7 +34,11 @@ export default function LoginPage() {
 
     try {
       // Added .trim() and .toLowerCase() to ensure the email format is perfect 
-      await signInWithEmailAndPassword(auth, email.trim().toLowerCase(), password);
+      const userCredential = await signInWithEmailAndPassword(auth, email.trim().toLowerCase(), password);
+      
+      // AUTO-SYNC: Save user email to Firestore collection
+      await syncUserToFirestore(userCredential.user);
+      
       // UPDATED: Redirect to Home instead of Dashboard
       router.push("/");
     } catch (error: any) {
@@ -44,7 +61,11 @@ export default function LoginPage() {
   const handleGoogleLogin = async () => {
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      
+      // AUTO-SYNC: Save user email to Firestore collection
+      await syncUserToFirestore(result.user);
+      
       // UPDATED: Redirect to Home instead of Dashboard
       router.push("/");
     } catch (error: any) {
@@ -92,14 +113,14 @@ export default function LoginPage() {
           
           {/* Mobile Logo & Brand Indicator */}
           <div className="mb-12 lg:hidden flex flex-col items-center">
-             <Image 
+              <Image 
                 src="/logo.png" 
                 alt="Logo" 
                 width={140} 
                 height={50} 
                 className="mb-4 object-contain" 
-             />
-             <div className="h-1 w-10 bg-[#9BCB3B] rounded-full" />
+              />
+              <div className="h-1 w-10 bg-[#9BCB3B] rounded-full" />
           </div>
 
           <h1 style={{ color: '#243F74' }} className="text-4xl font-black tracking-tight mb-2 italic">Welcome back</h1>
