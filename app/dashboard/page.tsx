@@ -366,6 +366,34 @@ export default function DashboardPage() {
       {/* MAIN CONTENT */}
       <main className="flex-grow w-full max-w-7xl mx-auto pt-40 md:pt-48 pb-16 px-4 md:px-8">
         
+        {/* --- PRO ONLY: EMAIL WHITELIST NOTE --- */}
+        {isPro && (
+          <div className={`mb-8 p-4 rounded-2xl border-2 border-dashed flex flex-col md:flex-row items-center justify-between gap-4 transition-all animate-in fade-in slide-in-from-top-4 duration-700 ${isDarkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-blue-50/30 border-blue-100'}`}>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 flex-shrink-0">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <div>
+                <p className={`text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'text-slate-300' : 'text-[#243F74]'}`}>
+                  Ensure Pro Delivery
+                </p>
+                <p className="text-[11px] font-bold text-slate-400">
+                  Add <span className="text-[#9BCB3B]">offboardpro@gmail.com</span> to your contacts to ensure your automated alerts land in your primary inbox.
+                </p>
+              </div>
+            </div>
+            <button 
+              onClick={() => alert("Check your spam folder and click 'Not Spam' to help our robot learn!")}
+              className="text-[9px] font-black uppercase tracking-widest px-4 py-2 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all text-slate-500 shadow-sm"
+            >
+              Learn More
+            </button>
+          </div>
+        )}
+        {/* --- END OF NOTE --- */}
+
         {/* PRO AUTOMATION BADGE */}
         {isPro && (
           <div className="flex items-center gap-2 mb-6 p-3 bg-blue-50/50 border border-blue-100 rounded-2xl w-fit animate-in fade-in slide-in-from-left-4 duration-700">
