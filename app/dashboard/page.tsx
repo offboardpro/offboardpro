@@ -366,7 +366,7 @@ export default function DashboardPage() {
       {/* MAIN CONTENT */}
       <main className="flex-grow w-full max-w-7xl mx-auto pt-40 md:pt-48 pb-16 px-4 md:px-8">
         
-        {/* --- PRO ONLY: EMAIL WHITELIST NOTE --- */}
+        {/* PRO ONLY: EMAIL WHITELIST NOTE */}
         {isPro && (
           <div className={`mb-8 p-4 rounded-2xl border-2 border-dashed flex flex-col md:flex-row items-center justify-between gap-4 transition-all animate-in fade-in slide-in-from-top-4 duration-700 ${isDarkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-blue-50/30 border-blue-100'}`}>
             <div className="flex items-center gap-3">
@@ -392,7 +392,6 @@ export default function DashboardPage() {
             </button>
           </div>
         )}
-        {/* --- END OF NOTE --- */}
 
         {/* PRO AUTOMATION BADGE */}
         {isPro && (
