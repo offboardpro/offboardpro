@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Script from "next/script"; // 1. Added Razorpay Script support
 import { SpeedInsights } from "@vercel/speed-insights/next"; // 3. Added Speed Insights
+import { Analytics } from "@vercel/analytics/next"; // <--- ADDED ANALYTICS IMPORT
 import "./globals.css";
 
 const geistSans = Geist({
@@ -57,6 +58,9 @@ export default function RootLayout({
 
         {/* 4. Vercel Speed Insights Component */}
         <SpeedInsights />
+
+        {/* 5. Vercel Analytics Component - Tracks your visitors and page views */}
+        <Analytics />
       </body>
     </html>
   );
