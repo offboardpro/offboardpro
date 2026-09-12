@@ -30,6 +30,190 @@ import {
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
+// COMMON TOOLS LIST FOR MULTISELECT
+const COMMON_TOOLS = [
+  "Google Ads",
+  "Meta Business Manager",
+  "Google Analytics 4",
+  "Google Tag Manager",
+  "Google Search Console",
+  "Looker Studio",
+  "Slack",
+  "Google Workspace",
+  "Google Drive",
+  "Microsoft 365",
+  "ClickUp",
+  "Asana",
+  "Notion",
+  "Figma",
+  "Canva",
+  "WordPress",
+  "Shopify",
+  "Cloudflare",
+  "GitHub",
+  "GitLab",
+  "AWS",
+  "DigitalOcean",
+  "Hosting",
+  "cPanel",
+  "HubSpot",
+  "Salesforce",
+  "Stripe",
+  "Zapier",
+  "Make",
+];
+
+const TOOL_CHECKLISTS: Record<string, string[]> = {
+  "Google Ads": [
+    "Remove client/user access",
+    "Remove manager account access",
+  ],
+  "Meta Business Manager": [
+    "Remove client/user access",
+    "Remove ad account access",
+    "Remove Business Manager access",
+  ],
+  "Google Analytics 4": [
+    "Remove client/user access",
+    "Remove property access",
+  ],
+  "Google Tag Manager": [
+    "Remove client/user access",
+    "Remove container access",
+  ],
+  "Google Search Console": [
+    "Remove client/user access",
+    "Remove property access",
+  ],
+  "Looker Studio": [
+    "Remove client/user access",
+    "Remove report/data-source access",
+  ],
+  Slack: [
+    "Remove from client workspace",
+    "Remove shared channel access",
+  ],
+  "Google Workspace": [
+    "Remove account/delegated access",
+    "Remove shared resource access",
+  ],
+  "Google Drive": [
+    "Remove shared drive access",
+    "Remove shared file/folder access",
+  ],
+  "Microsoft 365": [
+    "Remove account/access",
+    "Remove shared resource access",
+  ],
+  ClickUp: [
+    "Remove workspace access",
+    "Remove project/list access",
+  ],
+  Asana: [
+    "Remove workspace access",
+    "Remove project access",
+  ],
+  Notion: [
+    "Remove workspace access",
+    "Remove page/database access",
+  ],
+  Figma: [
+    "Remove team access",
+    "Remove file/project access",
+  ],
+  Canva: [
+    "Remove team access",
+    "Remove shared design access",
+  ],
+  WordPress: [
+    "Remove WordPress user account",
+    "Remove admin/editor access",
+  ],
+  Shopify: [
+    "Remove staff account",
+    "Remove store access",
+  ],
+  Cloudflare: [
+    "Remove member access",
+    "Remove zone/domain access",
+  ],
+  GitHub: [
+    "Remove repository access",
+    "Remove organization access",
+  ],
+  GitLab: [
+    "Remove project access",
+    "Remove group access",
+  ],
+  AWS: [
+    "Remove IAM/user access",
+    "Remove console access",
+  ],
+  DigitalOcean: [
+    "Remove team access",
+    "Remove project access",
+  ],
+  Hosting: [
+    "Remove hosting account access",
+    "Remove server/control-panel access",
+  ],
+  cPanel: [
+    "Remove cPanel account access",
+    "Remove FTP/file access",
+  ],
+  HubSpot: [
+    "Remove user access",
+    "Remove portal permissions",
+  ],
+  Salesforce: [
+    "Deactivate/remove user access",
+    "Remove profile/permission access",
+  ],
+  Stripe: [
+    "Remove team/member access",
+    "Remove account permissions",
+  ],
+  Zapier: [
+    "Remove workspace access",
+    "Remove shared automation access",
+  ],
+  Make: [
+    "Remove team access",
+    "Remove shared automation access",
+  ],
+};
+
+// --- CLIENT STATUS HELPERS ---
+const getClientStatusLabel = (status?: string) => {
+  switch (status) {
+    case "ending_soon":
+      return "Ending Soon";
+    case "offboarding":
+      return "Offboarding";
+    case "ready_to_close":
+      return "Ready to Close";
+    case "closed":
+      return "Closed";
+    default:
+      return "Active";
+  }
+};
+
+const getClientStatusClasses = (status?: string) => {
+  switch (status) {
+    case "ending_soon":
+      return "bg-amber-50 text-amber-700 border-amber-200";
+    case "offboarding":
+      return "bg-blue-50 text-blue-700 border-blue-200";
+    case "ready_to_close":
+      return "bg-[#9BCB3B]/10 text-[#6d941f] border-[#9BCB3B]/30";
+    case "closed":
+      return "bg-slate-100 text-slate-500 border-slate-200";
+    default:
+      return "bg-emerald-50 text-emerald-700 border-emerald-200";
+  }
+};
+
 export default function DashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
@@ -44,15 +228,38 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true); 
   const [subscriptionData, setSubscriptionData] = useState<any>(null); 
   
+  // FORM STATES
   const [clientName, setClientName] = useState("");
-  const [tools, setTools] = useState("");
-  const [offboardDate, setOffboardDate] = useState("");
+  const [clientStatus, setClientStatus] = useState("active");
+  const [projectName, setProjectName] = useState("");
+  const [tools, setTools] = useState<string[]>([]);
+  const [projectStartDate, setProjectStartDate] = useState("");
+  const [projectEndDate, setProjectEndDate] = useState("");
+  const [accessRemovalDeadline, setAccessRemovalDeadline] = useState("");
+  const [accessReviewDate, setAccessReviewDate] = useState("");
   const [notes, setNotes] = useState("");
   
-  // NEW: Toggle state for Email Reminders
+  // Toggle state for Email Reminders
   const [emailEnabled, setEmailEnabled] = useState(true);
 
   const [clients, setClients] = useState<any[]>([]);
+
+  // Helper function to safely display tools whether stored as string or array
+  const formatToolsDisplay = (toolsData: any) => {
+    if (Array.isArray(toolsData)) {
+      return toolsData.join(", ");
+    }
+    return toolsData || "";
+  };
+
+  // TOOL TOGGLE FUNCTION
+  const toggleTool = (tool: string) => {
+    setTools((current) =>
+      current.includes(tool)
+        ? current.filter((item) => item !== tool)
+        : [...current, tool]
+    );
+  };
 
   // --- SMART ALERTS CALCULATION ---
   const activeAlerts = useMemo(() => {
@@ -131,10 +338,67 @@ export default function DashboardPage() {
         );
 
         const unsubscribeData = onSnapshot(q, (snapshot) => {
-          const clientData = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          }));
+          const clientData = snapshot.docs.map((doc) => {
+            const client = {
+              id: doc.id,
+              ...doc.data(),
+            } as any;
+
+            const currentStatus = client.clientStatus || "active";
+
+            // Never automatically change a closed client.
+            if (currentStatus === "closed") {
+              return client;
+            }
+
+            // Once offboarding has started, determine whether it is ready to close.
+            if (
+              currentStatus === "offboarding" &&
+              Array.isArray(client.checklist)
+            ) {
+              const allComplete =
+                client.checklist.length > 0 &&
+                client.checklist.every(
+                  (task: any) =>
+                    task.status === "removed" ||
+                    task.status === "not_needed"
+                );
+
+              return {
+                ...client,
+                clientStatus: allComplete
+                  ? "ready_to_close"
+                  : "offboarding",
+              };
+            }
+
+            // Ending Soon is based on the project end date.
+            if (client.projectEndDate && currentStatus !== "offboarding" && currentStatus !== "ready_to_close") {
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+
+              const endDate = new Date(client.projectEndDate);
+              endDate.setHours(0, 0, 0, 0);
+
+              const diffDays = Math.ceil(
+                (endDate.getTime() - today.getTime()) /
+                  (1000 * 60 * 60 * 24)
+              );
+
+              if (diffDays >= 0 && diffDays <= 7) {
+                return {
+                  ...client,
+                  clientStatus: "ending_soon",
+                };
+              }
+            }
+
+            return {
+              ...client,
+              clientStatus: currentStatus,
+            };
+          });
+
           setClients(clientData);
         });
 
@@ -164,7 +428,7 @@ export default function DashboardPage() {
       head: [['Client Name', 'Tools/Access', 'Review Date', 'Status']],
       body: filteredClients.map(c => [
         c.name, 
-        c.tools, 
+        formatToolsDisplay(c.tools), 
         c.date, 
         c.status === 'completed' ? 'SECURED' : 'PENDING'
       ]),
@@ -179,7 +443,7 @@ export default function DashboardPage() {
     const headers = ["Client Name", "Tools", "Review Date", "Status", "Notes"];
     const csvData = filteredClients.map(c => [
       c.name,
-      c.tools,
+      formatToolsDisplay(c.tools),
       c.date,
       c.status,
       c.notes || ""
@@ -252,6 +516,126 @@ export default function DashboardPage() {
     }
   };
 
+  const startOffboarding = async (id: string) => {
+    try {
+      const client = clients.find((item) => item.id === id);
+
+      if (!client) {
+        alert("Client not found.");
+        return;
+      }
+
+      const selectedTools = Array.isArray(client.tools)
+        ? client.tools
+        : typeof client.tools === "string" && client.tools.trim()
+          ? client.tools
+              .split(",")
+              .map((tool: string) => tool.trim())
+              .filter(Boolean)
+          : [];
+
+      const checklist = selectedTools.flatMap((tool: string) => {
+        const tasks = TOOL_CHECKLISTS[tool] || [
+          `Remove access from ${tool}`,
+        ];
+
+        return tasks.map((task: string) => ({
+          id: crypto.randomUUID(),
+          title: task,
+          tool,
+          status: "pending",
+        }));
+      });
+
+      await updateDoc(doc(db, "clients", id), {
+        clientStatus: "offboarding",
+        offboardingStartedAt: serverTimestamp(),
+        checklist,
+      });
+    } catch (error) {
+      console.error("Failed to start offboarding:", error);
+      alert("Failed to start offboarding. Please try again.");
+    }
+  };
+
+  const updateChecklistTask = async (
+    clientId: string,
+    taskId: string,
+    newStatus: string
+  ) => {
+    try {
+      const client = clients.find((item) => item.id === clientId);
+
+      if (!client || !Array.isArray(client.checklist)) {
+        return;
+      }
+
+      const updatedChecklist = client.checklist.map((task: any) =>
+        task.id === taskId
+          ? { ...task, status: newStatus }
+          : task
+      );
+
+      await updateDoc(doc(db, "clients", clientId), {
+        checklist: updatedChecklist,
+      });
+    } catch (error) {
+      console.error("Failed to update checklist task:", error);
+      alert("Failed to update task. Please try again.");
+    }
+  };
+
+  const closeClient = async (clientId: string) => {
+    try {
+      const client = clients.find((item) => item.id === clientId);
+
+      if (!client) return;
+
+      const checklist = Array.isArray(client.checklist)
+        ? client.checklist
+        : [];
+
+      const incompleteTasks = checklist.filter(
+        (task: any) =>
+          task.status !== "removed" &&
+          task.status !== "not_needed"
+      );
+
+      if (incompleteTasks.length > 0) {
+        const shouldClose = window.confirm(
+          `${incompleteTasks.length} offboarding task${
+            incompleteTasks.length === 1 ? "" : "s"
+          } still need attention.\n\nAre you sure you want to close this client anyway?`
+        );
+
+        if (!shouldClose) return;
+      }
+
+      let closeReason = "";
+
+      if (incompleteTasks.length > 0) {
+        closeReason =
+          window.prompt(
+            "Why are you closing this client with incomplete tasks?"
+          )?.trim() || "";
+
+        if (!closeReason) {
+          alert("Please provide a reason before closing the client.");
+          return;
+        }
+      }
+
+      await updateDoc(doc(db, "clients", clientId), {
+        clientStatus: "closed",
+        closedAt: serverTimestamp(),
+        closeReason,
+      });
+    } catch (error) {
+      console.error("Failed to close client:", error);
+      alert("Failed to close client. Please try again.");
+    }
+  };
+
   const viewPortal = (id: string) => {
     if (!isPro) return;
     const portalUrl = `${window.location.origin}/shared/${id}`;
@@ -275,26 +659,51 @@ export default function DashboardPage() {
       router.push("/pricing");
       return;
     }
-    if (clientName.trim() === "" || offboardDate === "") {
-        alert("Please provide a client name and access review date.");
-        return;
+    
+    if (
+      clientName.trim() === "" ||
+      projectName.trim() === "" ||
+      projectStartDate === "" ||
+      projectEndDate === "" ||
+      accessRemovalDeadline === "" ||
+      accessReviewDate === ""
+    ) {
+      alert("Please complete the client name, project name, and all project dates.");
+      return;
     }
+
     setIsSaving(true);
     try {
       await addDoc(collection(db, "clients"), {
         userId: user.uid,
-        userEmail: user.email, // <--- SYNC EMAIL TO CLIENT RECORD FOR THE ROBOT
+        userEmail: user.email,
         name: clientName,
+        projectName: projectName,
         tools: tools,
-        date: offboardDate,
+        projectStartDate: projectStartDate,
+        projectEndDate: projectEndDate,
+        accessRemovalDeadline: accessRemovalDeadline,
+        accessReviewDate: accessReviewDate,
+        date: accessReviewDate,
         notes: isPro ? notes : "",
         status: "pending",
-        // SAVE TOGGLE STATE:
+        clientStatus: clientStatus,
         emailEnabled: isPro ? emailEnabled : false,
         createdAt: serverTimestamp()
       });
-      setClientName(""); setTools(""); setOffboardDate(""); setNotes(""); 
-      setEmailEnabled(true); // Reset toggle for next client
+      
+      // RESET FIELDS
+      setClientName("");
+      setClientStatus("active");
+      setProjectName("");
+      setTools([]);
+      setProjectStartDate("");
+      setProjectEndDate("");
+      setAccessRemovalDeadline("");
+      setAccessReviewDate("");
+      setNotes("");
+      setEmailEnabled(true);
+      
       setIsModalOpen(false);
       setShowToast(true);
       setTimeout(() => setShowToast(false), 3000);
@@ -314,10 +723,13 @@ export default function DashboardPage() {
     }
   };
 
-  const filteredClients = clients.filter(client => 
-    client.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.tools?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredClients = clients.filter(client => {
+    const formattedTools = formatToolsDisplay(client.tools);
+    return (
+      client.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      formattedTools.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  });
 
   if (loading) {
     return (
@@ -366,7 +778,7 @@ export default function DashboardPage() {
       {/* MAIN CONTENT */}
       <main className="flex-grow w-full max-w-7xl mx-auto pt-40 md:pt-48 pb-16 px-4 md:px-8">
         
-        {/* NEW: PRO ONLY EMAIL WHITELIST BANNER */}
+        {/* PRO ONLY EMAIL WHITELIST BANNER */}
         {isPro && (
           <div className={`mb-8 p-5 rounded-[2rem] border-2 border-dashed flex flex-col md:flex-row items-center justify-between gap-6 transition-all animate-in fade-in slide-in-from-top-4 duration-700 ${isDarkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-blue-50/30 border-blue-100'}`}>
             <div className="flex items-center gap-4 text-center md:text-left">
@@ -513,52 +925,408 @@ export default function DashboardPage() {
                   <thead className={`${isDarkMode ? 'bg-slate-800/50 border-slate-800' : 'bg-slate-50 border-slate-100'} border-b-2`}>
                     <tr>
                       <th className="px-8 py-5 text-slate-400 uppercase text-[10px] font-black tracking-widest">Client & Tools</th>
+                      <th className="px-8 py-5 text-slate-400 uppercase text-[10px] font-black tracking-widest text-center">Lifecycle Status</th>
                       <th className="px-8 py-5 text-slate-400 uppercase text-[10px] font-black tracking-widest text-center">Review Date</th>
                       <th className="px-8 py-5 text-slate-400 uppercase text-[10px] font-black text-center">Status</th>
                       <th className="px-8 py-5 text-slate-400 uppercase text-[10px] font-black text-right">Action</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredClients.map((client) => (
-                      <tr key={client.id} className={`border-b-2 transition-colors ${isDarkMode ? 'border-slate-800 hover:bg-slate-800/30' : 'border-slate-50 hover:bg-slate-50/50'}`}>
-                        <td className="px-8 py-6">
-                          <div className={`font-black italic text-lg leading-tight ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>{client.name}</div>
-                          <div style={{ color: '#9BCB3B' }} className="text-[10px] font-black uppercase mt-1 tracking-widest">{client.tools}</div>
-                        </td>
-                        <td className={`px-8 py-6 text-center font-black text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{client.date}</td>
-                        <td className="px-8 py-6 text-center">
-                          <button onClick={() => toggleStatus(client.id, client.status)} className={`px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${client.status === 'completed' ? 'bg-[#9BCB3B] text-white' : 'bg-slate-100 text-slate-400'}`}>{client.status === 'completed' ? '✓ Secured' : '○ Pending'}</button>
-                        </td>
-                        <td className="px-8 py-6 text-right whitespace-nowrap">
-                          {isPro && <button onClick={() => viewPortal(client.id)} className="text-[#9BCB3B] font-black text-[10px] uppercase tracking-widest mr-5 hover:underline decoration-2">View Portal</button>}
-                          <button onClick={() => handleDelete(client.id)} className="text-slate-500 hover:text-red-400 font-black text-[10px] uppercase transition-colors">Remove</button>
-                        </td>
-                      </tr>
-                    ))}
+                    {filteredClients.map((client) => {
+                      // 1. PROGRESS CALCULATION
+                      const totalTasks = Array.isArray(client.checklist)
+                        ? client.checklist.length
+                        : 0;
+                      const completedTasks = Array.isArray(client.checklist)
+                        ? client.checklist.filter(
+                            (task: any) =>
+                              task.status === "removed" ||
+                              task.status === "not_needed"
+                          ).length
+                        : 0;
+                      const progress =
+                        totalTasks > 0
+                          ? Math.round((completedTasks / totalTasks) * 100)
+                          : 0;
+
+                      // 3. OVERDUE CALCULATION
+                      const deadlineDate = client.accessRemovalDeadline
+                        ? new Date(client.accessRemovalDeadline)
+                        : null;
+                      const isOverdue =
+                        (client.clientStatus === "offboarding" || client.clientStatus === "ready_to_close") &&
+                        deadlineDate !== null &&
+                        deadlineDate < new Date() &&
+                        progress < 100;
+
+                      return (
+                        <tr key={client.id} className={`border-b-2 transition-colors ${isDarkMode ? 'border-slate-800 hover:bg-slate-800/30' : 'border-slate-50 hover:bg-slate-50/50'}`}>
+                          <td className="px-8 py-6">
+                            <div className={`font-black italic text-lg leading-tight ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>{client.name}</div>
+                            <div style={{ color: '#9BCB3B' }} className="text-[10px] font-black uppercase mt-1 tracking-widest">{formatToolsDisplay(client.tools)}</div>
+                            
+                            {/* DESKTOP CHECKLIST VIEW */}
+                            {(client.clientStatus === "offboarding" || client.clientStatus === "ready_to_close") &&
+                              Array.isArray(client.checklist) &&
+                              client.checklist.length > 0 && (
+                                <div className={`mt-5 rounded-2xl border p-4 ${isDarkMode ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-50 border-slate-100'}`}>
+                                  
+                                  {/* OVERDUE WARNING */}
+                                  {isOverdue && (
+                                    <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+                                      <div className="flex items-start gap-3">
+                                        <div className="mt-0.5 h-2.5 w-2.5 rounded-full bg-red-500 shrink-0" />
+                                        <div>
+                                          <p className="text-sm font-black text-red-700">
+                                            Access removal deadline overdue
+                                          </p>
+                                          <p className="mt-1 text-xs font-semibold text-red-600">
+                                            Complete the remaining offboarding tasks as soon as possible.
+                                          </p>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {/* PROGRESS UI */}
+                                  <div className="mb-4">
+                                    <div className="flex items-center justify-between mb-2">
+                                      <span className="text-xs font-black uppercase tracking-widest text-slate-400">
+                                        Progress
+                                      </span>
+                                      <span className="text-xs font-black text-slate-600 dark:text-slate-300">
+                                        {completedTasks}/{totalTasks} completed
+                                      </span>
+                                    </div>
+                                    <div className="h-2 w-full rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+                                      <div
+                                        className="h-full rounded-full bg-[#9BCB3B] transition-all duration-300"
+                                        style={{ width: `${progress}%` }}
+                                      />
+                                    </div>
+                                    <p className="mt-2 text-xs font-bold text-slate-400">
+                                      {progress}% complete
+                                    </p>
+                                  </div>
+
+                                  <div className="flex items-center justify-between mb-4">
+                                    <div>
+                                      <p className="text-xs font-black uppercase tracking-widest text-slate-400">
+                                        Offboarding Checklist
+                                      </p>
+                                    </div>
+                                  </div>
+
+                                  <div className="space-y-2">
+                                    {client.checklist.map((task: any) => (
+                                      <div
+                                        key={task.id}
+                                        className={`rounded-xl border p-3 ${isDarkMode ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-100'}`}
+                                      >
+                                        <div className="flex items-center gap-3">
+                                          <div
+                                            className={`h-2.5 w-2.5 rounded-full shrink-0 ${
+                                              task.status === "removed"
+                                                ? "bg-[#9BCB3B]"
+                                                : task.status === "in_progress"
+                                                  ? "bg-amber-400"
+                                                  : task.status === "not_needed"
+                                                    ? "bg-slate-400"
+                                                    : task.status === "waiting_client"
+                                                      ? "bg-blue-400"
+                                                      : "bg-slate-300"
+                                            }`}
+                                          />
+
+                                          <div className="flex-1 min-w-0">
+                                            <p
+                                              className={`text-sm font-bold ${
+                                                task.status === "removed" ||
+                                                task.status === "not_needed"
+                                                  ? "text-slate-400 line-through"
+                                                  : isDarkMode ? "text-slate-200" : "text-slate-700"
+                                              }`}
+                                            >
+                                              {task.title}
+                                            </p>
+
+                                            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-0.5">
+                                              {task.tool}
+                                            </p>
+                                          </div>
+
+                                          <select
+                                            value={task.status}
+                                            onChange={(e) =>
+                                              updateChecklistTask(
+                                                client.id,
+                                                task.id,
+                                                e.target.value
+                                              )
+                                            }
+                                            className={`rounded-lg border px-2 py-2 text-xs font-bold outline-none focus:border-[#9BCB3B] ${
+                                              isDarkMode
+                                                ? "bg-slate-800 border-slate-700 text-slate-200"
+                                                : "bg-white border-slate-200 text-slate-600"
+                                            }`}
+                                          >
+                                            <option value="pending">Pending</option>
+                                            <option value="in_progress">In Progress</option>
+                                            <option value="removed">Removed</option>
+                                            <option value="not_needed">Not Needed</option>
+                                            <option value="waiting_client">
+                                              Waiting for Client
+                                            </option>
+                                          </select>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                            )}
+                          </td>
+                          <td className="px-8 py-6 text-center">
+                            <span
+                              className={`inline-flex items-center rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-wider ${getClientStatusClasses(
+                                client.clientStatus
+                              )}`}
+                            >
+                              {getClientStatusLabel(client.clientStatus)}
+                            </span>
+                          </td>
+                          <td className={`px-8 py-6 text-center font-black text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{client.date}</td>
+                          <td className="px-8 py-6 text-center">
+                            <button onClick={() => toggleStatus(client.id, client.status)} className={`px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${client.status === 'completed' ? 'bg-[#9BCB3B] text-white' : 'bg-slate-100 text-slate-400'}`}>{client.status === 'completed' ? '✓ Secured' : '○ Pending'}</button>
+                          </td>
+                          <td className="px-8 py-6 text-right whitespace-nowrap">
+                            {(client.clientStatus === "active" || client.clientStatus === "ending_soon") && (
+                              <button
+                                type="button"
+                                onClick={() => startOffboarding(client.id)}
+                                className="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-black hover:bg-slate-800 transition mr-3"
+                              >
+                                Start Offboarding
+                              </button>
+                            )}
+                            {(client.clientStatus === "offboarding" || client.clientStatus === "ready_to_close") && (
+                              <button
+                                type="button"
+                                onClick={() => closeClient(client.id)}
+                                className="px-4 py-2 rounded-xl bg-[#9BCB3B] text-white text-xs font-black hover:opacity-90 transition mr-3"
+                              >
+                                Close Client
+                              </button>
+                            )}
+                            {isPro && <button onClick={() => viewPortal(client.id)} className="text-[#9BCB3B] font-black text-[10px] uppercase tracking-widest mr-5 hover:underline decoration-2">View Portal</button>}
+                            <button onClick={() => handleDelete(client.id)} className="text-slate-500 hover:text-red-400 font-black text-[10px] uppercase transition-colors">Remove</button>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
             </div>
 
             <div className="md:hidden space-y-4">
-              {filteredClients.map((client) => (
-                <div key={client.id} className={`p-6 rounded-[2rem] border-2 transition-all ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100 shadow-xl'}`}>
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <h3 className={`font-black italic text-xl leading-tight ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>{client.name}</h3>
-                      <p style={{ color: '#9BCB3B' }} className="text-[10px] font-black uppercase tracking-widest mt-1">{client.tools}</p>
+              {filteredClients.map((client) => {
+                // 1. PROGRESS CALCULATION
+                const totalTasks = Array.isArray(client.checklist)
+                  ? client.checklist.length
+                  : 0;
+                const completedTasks = Array.isArray(client.checklist)
+                  ? client.checklist.filter(
+                      (task: any) =>
+                        task.status === "removed" ||
+                        task.status === "not_needed"
+                    ).length
+                  : 0;
+                const progress =
+                  totalTasks > 0
+                    ? Math.round((completedTasks / totalTasks) * 100)
+                    : 0;
+
+                // 3. OVERDUE CALCULATION
+                const deadlineDate = client.accessRemovalDeadline
+                  ? new Date(client.accessRemovalDeadline)
+                  : null;
+                const isOverdue =
+                  (client.clientStatus === "offboarding" || client.clientStatus === "ready_to_close") &&
+                  deadlineDate !== null &&
+                  deadlineDate < new Date() &&
+                  progress < 100;
+
+                return (
+                  <div key={client.id} className={`p-6 rounded-[2rem] border-2 transition-all ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100 shadow-xl'}`}>
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h3 className={`font-black italic text-xl leading-tight ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>{client.name}</h3>
+                        <p style={{ color: '#9BCB3B' }} className="text-[10px] font-black uppercase tracking-widest mt-1">{formatToolsDisplay(client.tools)}</p>
+                        
+                        <div className="mt-3">
+                          <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Status</div>
+                          <span
+                            className={`inline-flex items-center rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-wider ${getClientStatusClasses(
+                              client.clientStatus
+                            )}`}
+                          >
+                            {getClientStatusLabel(client.clientStatus)}
+                          </span>
+                        </div>
+                      </div>
+                      <button onClick={() => toggleStatus(client.id, client.status)} className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${client.status === 'completed' ? 'bg-[#9BCB3B] text-white shadow-lg shadow-[#9BCB3B]/40' : 'bg-slate-100 text-slate-400'}`}>{client.status === 'completed' ? '✓' : '○'}</button>
                     </div>
-                    <button onClick={() => toggleStatus(client.id, client.status)} className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${client.status === 'completed' ? 'bg-[#9BCB3B] text-white shadow-lg shadow-[#9BCB3B]/40' : 'bg-slate-100 text-slate-400'}`}>{client.status === 'completed' ? '✓' : '○'}</button>
-                  </div>
-                  <div className="flex items-center justify-between pt-4 border-t-2 border-slate-100 dark:border-slate-800">
-                    <span className="text-slate-400 font-black text-sm">{client.date}</span>
-                    <div className="flex gap-4">
-                      {isPro && <button onClick={() => viewPortal(client.id)} className="text-[#9BCB3B] font-black text-xs uppercase tracking-widest">Portal</button>}
-                      <button onClick={() => handleDelete(client.id)} className="text-red-400 font-black text-xs uppercase tracking-widest">Delete</button>
+
+                    {/* MOBILE CHECKLIST VIEW */}
+                    {(client.clientStatus === "offboarding" || client.clientStatus === "ready_to_close") &&
+                      Array.isArray(client.checklist) &&
+                      client.checklist.length > 0 && (
+                        <div className={`mt-5 rounded-2xl border p-4 ${isDarkMode ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-50 border-slate-100'}`}>
+                          
+                          {/* OVERDUE WARNING */}
+                          {isOverdue && (
+                            <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+                              <div className="flex items-start gap-3">
+                                <div className="mt-0.5 h-2.5 w-2.5 rounded-full bg-red-500 shrink-0" />
+                                <div>
+                                  <p className="text-sm font-black text-red-700">
+                                    Access removal deadline overdue
+                                  </p>
+                                  <p className="mt-1 text-xs font-semibold text-red-600">
+                                    Complete the remaining offboarding tasks as soon as possible.
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* PROGRESS UI */}
+                          <div className="mb-4">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-xs font-black uppercase tracking-widest text-slate-400">
+                                Progress
+                              </span>
+                              <span className="text-xs font-black text-slate-600 dark:text-slate-300">
+                                {completedTasks}/{totalTasks} completed
+                              </span>
+                            </div>
+                            <div className="h-2 w-full rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+                              <div
+                                className="h-full rounded-full bg-[#9BCB3B] transition-all duration-300"
+                                style={{ width: `${progress}%` }}
+                              />
+                            </div>
+                            <p className="mt-2 text-xs font-bold text-slate-400">
+                              {progress}% complete
+                            </p>
+                          </div>
+
+                          <div className="flex items-center justify-between mb-4">
+                            <div>
+                              <p className="text-xs font-black uppercase tracking-widest text-slate-400">
+                                Offboarding Checklist
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            {client.checklist.map((task: any) => (
+                              <div
+                                key={task.id}
+                                className={`rounded-xl border p-3 ${isDarkMode ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-100'}`}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div
+                                    className={`h-2.5 w-2.5 rounded-full shrink-0 ${
+                                      task.status === "removed"
+                                        ? "bg-[#9BCB3B]"
+                                        : task.status === "in_progress"
+                                          ? "bg-amber-400"
+                                          : task.status === "not_needed"
+                                            ? "bg-slate-400"
+                                            : task.status === "waiting_client"
+                                              ? "bg-blue-400"
+                                              : "bg-slate-300"
+                                    }`}
+                                  />
+
+                                  <div className="flex-1 min-w-0">
+                                    <p
+                                      className={`text-sm font-bold ${
+                                        task.status === "removed" ||
+                                        task.status === "not_needed"
+                                          ? "text-slate-400 line-through"
+                                          : isDarkMode ? "text-slate-200" : "text-slate-700"
+                                      }`}
+                                    >
+                                      {task.title}
+                                    </p>
+
+                                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-0.5">
+                                      {task.tool}
+                                    </p>
+                                  </div>
+
+                                  <select
+                                    value={task.status}
+                                    onChange={(e) =>
+                                      updateChecklistTask(
+                                        client.id,
+                                        task.id,
+                                        e.target.value
+                                      )
+                                    }
+                                    className={`rounded-lg border px-2 py-2 text-xs font-bold outline-none focus:border-[#9BCB3B] ${
+                                      isDarkMode
+                                        ? "bg-slate-800 border-slate-700 text-slate-200"
+                                        : "bg-white border-slate-200 text-slate-600"
+                                    }`}
+                                  >
+                                    <option value="pending">Pending</option>
+                                    <option value="in_progress">In Progress</option>
+                                    <option value="removed">Removed</option>
+                                    <option value="not_needed">Not Needed</option>
+                                    <option value="waiting_client">
+                                      Waiting for Client
+                                    </option>
+                                  </select>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                    )}
+
+                    <div className="flex flex-col gap-3 pt-4 border-t-2 border-slate-100 dark:border-slate-800 mt-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-400 font-black text-sm">{client.date}</span>
+                        <div className="flex gap-4 items-center">
+                          {isPro && <button onClick={() => viewPortal(client.id)} className="text-[#9BCB3B] font-black text-xs uppercase tracking-widest">Portal</button>}
+                          <button onClick={() => handleDelete(client.id)} className="text-red-400 font-black text-xs uppercase tracking-widest">Delete</button>
+                        </div>
+                      </div>
+                      {(client.clientStatus === "active" || client.clientStatus === "ending_soon") && (
+                        <button
+                          type="button"
+                          onClick={() => startOffboarding(client.id)}
+                          className="w-full py-2.5 rounded-xl bg-slate-900 text-white text-xs font-black hover:bg-slate-800 transition text-center"
+                        >
+                          Start Offboarding
+                        </button>
+                      )}
+                      {(client.clientStatus === "offboarding" || client.clientStatus === "ready_to_close") && (
+                        <button
+                          type="button"
+                          onClick={() => closeClient(client.id)}
+                          className="w-full py-2.5 rounded-xl bg-[#9BCB3B] text-white text-xs font-black hover:opacity-90 transition text-center"
+                        >
+                          Close Client
+                        </button>
+                      )}
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </>
         )}
@@ -657,7 +1425,7 @@ export default function DashboardPage() {
       {/* ADD CLIENT MODAL */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xl flex items-center justify-center z-[100] px-4">
-            <div className={`w-full max-w-[480px] rounded-[2.5rem] p-8 md:p-10 shadow-2xl border-t-[10px] transition-all animate-in zoom-in duration-300 ${isDarkMode ? 'bg-slate-900 border-[#9BCB3B]' : 'bg-white border-[#9BCB3B]'}`}>
+            <div className={`w-full max-w-[540px] rounded-[2.5rem] p-8 md:p-10 shadow-2xl border-t-[10px] transition-all animate-in zoom-in duration-300 max-h-[90vh] overflow-y-auto ${isDarkMode ? 'bg-slate-900 border-[#9BCB3B]' : 'bg-white border-[#9BCB3B]'}`}>
               
               <h2 className={`text-3xl font-black italic mb-6 ${isDarkMode ? 'text-white' : 'text-[#243F74]'}`}>Add Client Project</h2>
               
@@ -670,27 +1438,120 @@ export default function DashboardPage() {
                   className={`w-full border-2 rounded-2xl px-5 py-3.5 font-black outline-none text-sm ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white focus:border-[#9BCB3B]' : 'bg-slate-50 border-slate-100 focus:border-[#9BCB3B]'}`} 
                 />
 
-                <input 
-                  type="text" 
-                  value={tools} 
-                  onChange={(e) => setTools(e.target.value)} 
-                  placeholder="Tools used for this client (Slack, AWS, GA4, etc.)" 
-                  className={`w-full border-2 rounded-2xl px-5 py-3.5 font-black outline-none text-sm ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white focus:border-[#9BCB3B]' : 'bg-slate-50 border-slate-100 focus:border-[#9BCB3B]'}`} 
+                <input
+                  type="text"
+                  value={projectName}
+                  onChange={(e) => setProjectName(e.target.value)}
+                  placeholder="Project / Engagement name"
+                  className={`w-full border-2 rounded-2xl px-5 py-3.5 font-black outline-none text-sm ${
+                    isDarkMode
+                      ? "bg-slate-800 border-slate-700 text-white focus:border-[#9BCB3B]"
+                      : "bg-slate-50 border-slate-100 focus:border-[#9BCB3B]"
+                  }`}
                 />
 
-                <div className="relative">
-                  <div className="absolute left-5 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none">
-                    <svg className="w-4 h-4 text-[#9BCB3B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v12a2 2 0 002 2z" />
-                    </svg>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 whitespace-nowrap">Access review date:</span>
+                {/* MULTISELECT TOOL BUTTONS */}
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">
+                    Tools used for this client
+                  </label>
+
+                  <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto p-1">
+                    {COMMON_TOOLS.map((tool) => {
+                      const selected = tools.includes(tool);
+
+                      return (
+                        <button
+                          key={tool}
+                          type="button"
+                          onClick={() => toggleTool(tool)}
+                          className={`px-3 py-2 rounded-xl text-xs font-bold border-2 transition ${
+                            selected
+                              ? "border-[#9BCB3B] bg-[#9BCB3B]/10 text-[#6d941f]"
+                              : isDarkMode
+                                ? "border-slate-700 bg-slate-800 text-slate-300 hover:border-slate-500"
+                                : "border-slate-100 bg-slate-50 text-slate-600 hover:border-slate-200"
+                          }`}
+                        >
+                          {tool}
+                          {selected && " ×"}
+                        </button>
+                      );
+                    })}
                   </div>
-                  <input 
-                    type="date" 
-                    value={offboardDate} 
-                    onChange={(e) => setOffboardDate(e.target.value)} 
-                    className={`w-full border-2 rounded-2xl pl-48 md:pl-56 pr-5 py-3.5 font-black outline-none text-sm ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white focus:border-[#9BCB3B]' : 'bg-white border-slate-100 focus:border-[#9BCB3B]'}`} 
-                  />
+
+                  {tools.length > 0 && (
+                    <p className="mt-3 text-xs font-semibold text-slate-400">
+                      {tools.length} tool{tools.length === 1 ? "" : "s"} selected
+                    </p>
+                  )}
+                </div>
+
+                {/* 4 DATE FIELDS IN A 2x2 GRID */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">
+                      Project Start Date
+                    </label>
+                    <input
+                      type="date"
+                      value={projectStartDate}
+                      onChange={(e) => setProjectStartDate(e.target.value)}
+                      className={`w-full border-2 rounded-2xl px-5 py-3.5 font-black outline-none text-sm ${
+                        isDarkMode
+                          ? "bg-slate-800 border-slate-700 text-white focus:border-[#9BCB3B]"
+                          : "bg-white border-slate-100 focus:border-[#9BCB3B]"
+                      }`}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">
+                      Project End Date
+                    </label>
+                    <input
+                      type="date"
+                      value={projectEndDate}
+                      onChange={(e) => setProjectEndDate(e.target.value)}
+                      className={`w-full border-2 rounded-2xl px-5 py-3.5 font-black outline-none text-sm ${
+                        isDarkMode
+                          ? "bg-slate-800 border-slate-700 text-white focus:border-[#9BCB3B]"
+                          : "bg-white border-slate-100 focus:border-[#9BCB3B]"
+                      }`}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">
+                      Access Removal Deadline
+                    </label>
+                    <input
+                      type="date"
+                      value={accessRemovalDeadline}
+                      onChange={(e) => setAccessRemovalDeadline(e.target.value)}
+                      className={`w-full border-2 rounded-2xl px-5 py-3.5 font-black outline-none text-sm ${
+                        isDarkMode
+                          ? "bg-slate-800 border-slate-700 text-white focus:border-[#9BCB3B]"
+                          : "bg-white border-slate-100 focus:border-[#9BCB3B]"
+                      }`}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">
+                      Access Review Date
+                    </label>
+                    <input
+                      type="date"
+                      value={accessReviewDate}
+                      onChange={(e) => setAccessReviewDate(e.target.value)}
+                      className={`w-full border-2 rounded-2xl px-5 py-3.5 font-black outline-none text-sm ${
+                        isDarkMode
+                          ? "bg-slate-800 border-slate-700 text-white focus:border-[#9BCB3B]"
+                          : "bg-white border-slate-100 focus:border-[#9BCB3B]"
+                      }`}
+                    />
+                  </div>
                 </div>
                 
                 <textarea 
@@ -702,7 +1563,7 @@ export default function DashboardPage() {
                   className={`w-full border-2 rounded-2xl px-5 py-3.5 font-black outline-none resize-none text-sm ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white focus:border-[#9BCB3B]' : 'bg-white border-slate-100 focus:border-[#9BCB3B]'}`} 
                 />
 
-                {/* EMAIL REMINDER PRO SECTION WITH FUNCTIONAL TOGGLE */}
+                {/* EMAIL REMINDER PRO SECTION */}
                 {isPro ? (
                   <div className="p-4 bg-blue-50/50 border border-blue-100 rounded-2xl flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -718,7 +1579,6 @@ export default function DashboardPage() {
                         </p>
                       </div>
                     </div>
-                    {/* CLICKABLE TOGGLE BUTTON */}
                     <button 
                       onClick={() => setEmailEnabled(!emailEnabled)}
                       className={`w-10 h-5 rounded-full relative transition-all duration-300 ${emailEnabled ? 'bg-blue-600' : 'bg-slate-300'}`}
