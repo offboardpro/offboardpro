@@ -668,6 +668,52 @@ export default function DashboardPage() {
     }
   };
 
+  const assignChecklistTask = async (
+    clientId: string,
+    taskId: string
+  ) => {
+    if (!isPro) return;
+
+    const client = clients.find((item) => item.id === clientId);
+
+    if (!client || !Array.isArray(client.checklist)) {
+      return;
+    }
+
+    const task = client.checklist.find((item: any) => item.id === taskId);
+
+    if (!task) return;
+
+    const currentAssignee = task.assignee || "";
+
+    const assignee = window
+      .prompt(
+        "Assign this task to a team member (name or email):",
+        currentAssignee
+      )
+      ?.trim();
+
+    if (assignee === undefined) return;
+
+    try {
+      const updatedChecklist = client.checklist.map((item: any) =>
+        item.id === taskId
+          ? {
+              ...item,
+              assignee: assignee || null,
+            }
+          : item
+      );
+
+      await updateDoc(doc(db, "clients", clientId), {
+        checklist: updatedChecklist,
+      });
+    } catch (error) {
+      console.error("Failed to assign checklist task:", error);
+      alert("Failed to assign task. Please try again.");
+    }
+  };
+
   const closeClient = async (clientId: string) => {
     try {
       const client = clients.find((item) => item.id === clientId);
@@ -1267,6 +1313,28 @@ export default function DashboardPage() {
                                               Waiting for Client
                                             </option>
                                           </select>
+
+                                          {isPro && (
+                                            <button
+                                              type="button"
+                                              onClick={() =>
+                                                assignChecklistTask(client.id, task.id)
+                                              }
+                                              className={`rounded-lg border px-3 py-2 text-[10px] font-black uppercase tracking-wider transition-all ${
+                                                task.assignee
+                                                  ? isDarkMode
+                                                    ? "bg-blue-500/10 border-blue-500/30 text-blue-400"
+                                                    : "bg-blue-50 border-blue-200 text-blue-600"
+                                                  : isDarkMode
+                                                    ? "bg-slate-800 border-slate-700 text-slate-400 hover:border-blue-500/50 hover:text-blue-400"
+                                                    : "bg-white border-slate-200 text-slate-400 hover:border-blue-200 hover:text-blue-600"
+                                              }`}
+                                            >
+                                              {task.assignee
+                                                ? `👤 ${task.assignee}`
+                                                : "Assign"}
+                                            </button>
+                                          )}
                                         </div>
                                       </div>
                                     ))}
@@ -1480,6 +1548,28 @@ export default function DashboardPage() {
                                     </option>
                                   </select>
                                 </div>
+
+                                {isPro && (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      assignChecklistTask(client.id, task.id)
+                                    }
+                                    className={`w-full mt-2 rounded-lg border px-3 py-2 text-[10px] font-black uppercase tracking-wider transition-all ${
+                                      task.assignee
+                                        ? isDarkMode
+                                          ? "bg-blue-500/10 border-blue-500/30 text-blue-400"
+                                          : "bg-blue-50 border-blue-200 text-blue-600"
+                                        : isDarkMode
+                                          ? "bg-slate-800 border-slate-700 text-slate-400"
+                                          : "bg-white border-slate-200 text-slate-400"
+                                    }`}
+                                  >
+                                    {task.assignee
+                                      ? `👤 ${task.assignee}`
+                                      : "Assign Task"}
+                                  </button>
+                                )}
                               </div>
                             ))}
                           </div>
