@@ -274,6 +274,89 @@ export default function DashboardPage() {
     });
   }, [clients]);
 
+  // --- NEEDS YOUR ATTENTION ---
+  const attentionItems = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    return clients
+      .filter((client) => client.clientStatus !== "closed")
+      .map((client) => {
+        const checklist = Array.isArray(client.checklist)
+          ? client.checklist
+          : [];
+
+        const totalTasks = checklist.length;
+        const completedTasks = checklist.filter(
+          (task: any) =>
+            task.status === "removed" ||
+            task.status === "not_needed"
+        ).length;
+
+        const progress =
+          totalTasks > 0
+            ? Math.round((completedTasks / totalTasks) * 100)
+            : 0;
+
+        const deadlineDate = client.accessRemovalDeadline
+          ? new Date(client.accessRemovalDeadline)
+          : null;
+
+        if (
+          (client.clientStatus === "offboarding" ||
+            client.clientStatus === "ready_to_close") &&
+          deadlineDate &&
+          deadlineDate < today &&
+          progress < 100
+        ) {
+          return {
+            ...client,
+            attentionType: "overdue",
+            attentionLabel: "Overdue",
+            attentionText: "Access removal deadline has passed.",
+            priority: 1,
+          };
+        }
+
+        if (client.clientStatus === "ready_to_close") {
+          return {
+            ...client,
+            attentionType: "ready",
+            attentionLabel: "Ready to Close",
+            attentionText: "All offboarding tasks are complete.",
+            priority: 2,
+          };
+        }
+
+        if (client.clientStatus === "offboarding") {
+          return {
+            ...client,
+            attentionType: "offboarding",
+            attentionLabel: "Offboarding",
+            attentionText:
+              progress > 0
+                ? `${progress}% of offboarding tasks complete.`
+                : "Offboarding has started.",
+            priority: 3,
+          };
+        }
+
+        if (client.clientStatus === "ending_soon") {
+          return {
+            ...client,
+            attentionType: "ending",
+            attentionLabel: "Ending Soon",
+            attentionText: "Project end date is approaching.",
+            priority: 4,
+          };
+        }
+
+        return null;
+      })
+      .filter(Boolean)
+      .sort((a: any, b: any) => a.priority - b.priority);
+  }, [clients]);
+
   // --- DYNAMIC SECURITY RATING CALCULATION ---
   const securityMetrics = useMemo(() => {
     if (clients.length === 0) return { score: "NOT RATED", color: "#94a3b8" }; 
@@ -836,6 +919,112 @@ export default function DashboardPage() {
                 ))}
              </div>
           </div>
+        )}
+
+        {/* NEEDS YOUR ATTENTION */}
+        {isPro && attentionItems.length > 0 && (
+          <section className="mb-10 animate-in fade-in slide-in-from-top-4 duration-500">
+            <div className="flex items-end justify-between mb-4">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1">
+                  Dashboard
+                </p>
+                <h2
+                  className={`text-2xl md:text-3xl font-black italic ${
+                    isDarkMode ? "text-white" : "text-[#243F74]"
+                  }`}
+                >
+                  Needs Your Attention
+                </h2>
+              </div>
+
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                {attentionItems.length}{" "}
+                {attentionItems.length === 1 ? "item" : "items"}
+              </span>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              {attentionItems.map((item: any) => (
+                <div
+                  key={item.id}
+                  className={`rounded-[2rem] border-2 p-5 transition-all ${
+                    isDarkMode
+                      ? "bg-slate-900 border-slate-800 hover:border-slate-700"
+                      : "bg-white border-slate-100 shadow-lg hover:shadow-xl"
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <h3
+                        className={`font-black italic text-lg truncate ${
+                          isDarkMode ? "text-white" : "text-[#243F74]"
+                        }`}
+                      >
+                        {item.name}
+                      </h3>
+
+                      {item.projectName && (
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1 truncate">
+                          {item.projectName}
+                        </p>
+                      )}
+                    </div>
+
+                    <span
+                      className={`shrink-0 rounded-full border px-3 py-1 text-[9px] font-black uppercase tracking-wider ${
+                        item.attentionType === "overdue"
+                          ? "bg-red-50 text-red-600 border-red-200"
+                          : item.attentionType === "ready"
+                            ? "bg-[#9BCB3B]/10 text-[#6d941f] border-[#9BCB3B]/30"
+                            : item.attentionType === "offboarding"
+                              ? "bg-blue-50 text-blue-600 border-blue-200"
+                              : "bg-amber-50 text-amber-700 border-amber-200"
+                      }`}
+                    >
+                      {item.attentionLabel}
+                    </span>
+                  </div>
+
+                  <p className="text-xs font-bold text-slate-400 mt-4">
+                    {item.attentionText}
+                  </p>
+
+                  <div className="mt-5 flex items-center justify-between">
+                    {item.accessRemovalDeadline ? (
+                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                        Deadline: {item.accessRemovalDeadline}
+                      </span>
+                    ) : (
+                      <span />
+                    )}
+
+                    {(item.clientStatus === "active" ||
+                      item.clientStatus === "ending_soon") && (
+                      <button
+                        type="button"
+                        onClick={() => startOffboarding(item.id)}
+                        className="px-4 py-2 rounded-xl bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition"
+                      >
+                        Start Offboarding
+                      </button>
+                    )}
+
+                    {(item.clientStatus === "offboarding" ||
+                      item.clientStatus === "ready_to_close") && (
+                      <button
+                        type="button"
+                        onClick={() => closeClient(item.id)}
+                        className="px-4 py-2 rounded-xl bg-[#9BCB3B] text-white text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition"
+                      >
+                        Close Client
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
         )}
 
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-10 text-center lg:text-left">
