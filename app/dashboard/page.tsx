@@ -30,40 +30,276 @@ import {
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
-// COMMON TOOLS LIST FOR MULTISELECT
-const COMMON_TOOLS = [
-  "Google Ads",
-  "Meta Business Manager",
-  "Google Analytics 4",
-  "Google Tag Manager",
-  "Google Search Console",
-  "Looker Studio",
-  "Slack",
-  "Google Workspace",
-  "Google Drive",
-  "Microsoft 365",
-  "ClickUp",
-  "Asana",
-  "Notion",
-  "Figma",
-  "Canva",
-  "WordPress",
-  "Shopify",
-  "Cloudflare",
-  "GitHub",
-  "GitLab",
-  "AWS",
-  "DigitalOcean",
-  "Hosting",
-  "cPanel",
-  "HubSpot",
-  "Salesforce",
-  "Stripe",
-  "Zapier",
-  "Make",
-];
+// MASTER TOOL LIBRARY
+// Keep tool names as stable strings because selected tools are stored in Firestore.
+const TOOL_LIBRARY: Record<string, string[]> = {
+  "Advertising & Paid Media": [
+    "Google Ads",
+    "Meta Business Manager",
+    "Meta Ads Manager",
+    "LinkedIn Campaign Manager",
+    "TikTok Ads Manager",
+    "Microsoft Advertising",
+    "Pinterest Ads",
+    "Snapchat Ads",
+    "Reddit Ads",
+    "Amazon Ads",
+    "Apple Search Ads",
+    "X Ads",
+  ],
+
+  "Analytics & Tracking": [
+    "Google Analytics 4",
+    "Google Tag Manager",
+    "Google Search Console",
+    "Looker Studio",
+    "Microsoft Clarity",
+    "Hotjar",
+    "Mixpanel",
+    "Amplitude",
+    "Heap",
+    "Matomo",
+    "Plausible",
+    "PostHog",
+    "Segment",
+  ],
+
+  "SEO": [
+    "Ahrefs",
+    "Semrush",
+    "Moz",
+    "Ubersuggest",
+    "Screaming Frog",
+    "Surfer SEO",
+    "Yoast SEO",
+    "Rank Math",
+    "Google Business Profile",
+    "BrightLocal",
+  ],
+
+  "Social Media": [
+    "Buffer",
+    "Hootsuite",
+    "Later",
+    "Sprout Social",
+    "SocialBee",
+    "Metricool",
+    "Loomly",
+    "Planable",
+    "Publer",
+    "Agorapulse",
+  ],
+
+  "CRM & Sales": [
+    "HubSpot",
+    "Salesforce",
+    "Pipedrive",
+    "Zoho CRM",
+    "Freshsales",
+    "Close",
+    "Copper",
+    "Monday Sales CRM",
+    "Apollo",
+    "Intercom",
+  ],
+
+  "Project Management": [
+    "ClickUp",
+    "Asana",
+    "Trello",
+    "Monday.com",
+    "Notion",
+    "Jira",
+    "Linear",
+    "Basecamp",
+    "Teamwork",
+    "Wrike",
+    "Todoist",
+    "Airtable",
+  ],
+
+  "Communication": [
+    "Slack",
+    "Microsoft Teams",
+    "Google Chat",
+    "Discord",
+    "Zoom",
+    "Google Meet",
+  ],
+
+  "Files & Collaboration": [
+    "Google Workspace",
+    "Google Drive",
+    "Dropbox",
+    "Microsoft OneDrive",
+    "Microsoft SharePoint",
+    "Box",
+  ],
+
+  "Design & Creative": [
+    "Figma",
+    "Canva",
+    "Adobe Creative Cloud",
+    "Adobe Photoshop",
+    "Adobe Illustrator",
+    "Adobe InDesign",
+    "Adobe XD",
+    "Sketch",
+    "FigJam",
+    "Miro",
+    "Whimsical",
+  ],
+
+  "Website & CMS": [
+    "WordPress",
+    "Shopify",
+    "WooCommerce",
+    "Webflow",
+    "Wix",
+    "Squarespace",
+    "Ghost",
+    "Drupal",
+    "HubSpot CMS",
+    "Elementor",
+    "Divi",
+    "Framer",
+  ],
+
+  "Development": [
+    "GitHub",
+    "GitLab",
+    "Bitbucket",
+    "Vercel",
+    "Netlify",
+    "Firebase",
+    "Supabase",
+    "Render",
+    "Railway",
+    "Heroku",
+    "Replit",
+    "CodePen",
+  ],
+
+  "Hosting & Infrastructure": [
+    "Hosting",
+    "Microsoft 365",
+    "AWS",
+    "Google Cloud",
+    "Microsoft Azure",
+    "DigitalOcean",
+    "Vultr",
+    "Cloudflare",
+    "cPanel",
+    "Plesk",
+    "Hostinger",
+    "GoDaddy",
+    "Namecheap",
+    "SiteGround",
+    "Bluehost",
+  ],
+
+  "Ecommerce & Payments": [
+    "Stripe",
+    "PayPal",
+    "Razorpay",
+    "Square",
+    "Shopify Payments",
+    "Klarna",
+    "Payoneer",
+    "Wise Business",
+    "BigCommerce",
+    "Magento",
+  ],
+
+  "Automation & Integrations": [
+    "Zapier",
+    "Make",
+    "n8n",
+    "Pipedream",
+    "IFTTT",
+    "Workato",
+    "Microsoft Power Automate",
+  ],
+
+  "Email Marketing": [
+    "Mailchimp",
+    "Brevo",
+    "Klaviyo",
+    "ActiveCampaign",
+    "Kit",
+    "Drip",
+    "Constant Contact",
+    "Campaign Monitor",
+    "MailerLite",
+    "GetResponse",
+  ],
+
+  "Scheduling": [
+    "Calendly",
+    "Cal.com",
+    "Acuity Scheduling",
+    "Doodle",
+    "Google Calendar",
+    "Microsoft Outlook",
+  ],
+
+  "Time Tracking": [
+    "Toggl Track",
+    "Harvest",
+    "Clockify",
+    "Everhour",
+    "Hubstaff",
+    "Timely",
+  ],
+
+  "Video & Content": [
+    "Loom",
+    "Vimeo",
+    "Wistia",
+    "Descript",
+    "Riverside",
+    "Vidyard",
+    "YouTube",
+    "YouTube Studio",
+    "CapCut",
+    "Adobe Premiere Pro",
+  ],
+
+  "Documents & Signatures": [
+    "DocuSign",
+    "Adobe Acrobat",
+    "Dropbox Sign",
+    "PandaDoc",
+    "Google Docs",
+    "Microsoft Word",
+  ],
+
+  "Finance & Invoicing": [
+    "QuickBooks",
+    "Xero",
+    "FreshBooks",
+    "Wave",
+    "Zoho Books",
+  ],
+
+  "Client Management & Agency Operations": [
+    "Bonsai",
+    "HoneyBook",
+    "Dubsado",
+    "Plutio",
+    "Clientary",
+    "SuiteDash",
+    "Moxie",
+  ],
+};
+
+// Flat list used by the existing selection/Firestore system.
+const COMMON_TOOLS = Array.from(
+  new Set(Object.values(TOOL_LIBRARY).flat())
+);
 
 const TOOL_CHECKLISTS: Record<string, string[]> = {
+  // --- ADVERTISING & PAID MEDIA ---
   "Google Ads": [
     "Remove client/user access",
     "Remove manager account access",
@@ -73,6 +309,55 @@ const TOOL_CHECKLISTS: Record<string, string[]> = {
     "Remove ad account access",
     "Remove Business Manager access",
   ],
+  "Meta Ads Manager": [
+    "Remove user access",
+    "Remove ad account access",
+    "Remove Page / Instagram access",
+  ],
+  "LinkedIn Campaign Manager": [
+    "Remove user access",
+    "Remove ad account access",
+    "Remove LinkedIn Page access",
+  ],
+  "TikTok Ads Manager": [
+    "Remove user access",
+    "Remove ad account access",
+    "Remove TikTok Business access",
+  ],
+  "Microsoft Advertising": [
+    "Remove user access",
+    "Remove advertising account access",
+    "Remove manager account access",
+  ],
+  "Pinterest Ads": [
+    "Remove user access",
+    "Remove ad account access",
+    "Remove business account access",
+  ],
+  "Snapchat Ads": [
+    "Remove user access",
+    "Remove ad account access",
+    "Remove Business Manager access",
+  ],
+  "Reddit Ads": [
+    "Remove user access",
+    "Remove advertising account access",
+  ],
+  "Amazon Ads": [
+    "Remove user access",
+    "Remove advertising account access",
+    "Remove marketplace / seller access if applicable",
+  ],
+  "Apple Search Ads": [
+    "Remove user access",
+    "Remove Search Ads account access",
+  ],
+  "X Ads": [
+    "Remove user access",
+    "Remove advertising account access",
+  ],
+
+  // --- ANALYTICS & TRACKING ---
   "Google Analytics 4": [
     "Remove client/user access",
     "Remove property access",
@@ -89,22 +374,194 @@ const TOOL_CHECKLISTS: Record<string, string[]> = {
     "Remove client/user access",
     "Remove report/data-source access",
   ],
-  Slack: [
-    "Remove from client workspace",
-    "Remove shared channel access",
+  "Microsoft Clarity": [
+    "Remove user access",
+    "Remove project access",
   ],
-  "Google Workspace": [
-    "Remove account/delegated access",
-    "Remove shared resource access",
+  "Hotjar": [
+    "Remove user access",
+    "Remove site/project access",
   ],
-  "Google Drive": [
-    "Remove shared drive access",
-    "Remove shared file/folder access",
+  "Mixpanel": [
+    "Remove user access",
+    "Remove project access",
   ],
-  "Microsoft 365": [
-    "Remove account/access",
-    "Remove shared resource access",
+  "Amplitude": [
+    "Remove user access",
+    "Remove project access",
   ],
+  "Heap": [
+    "Remove user access",
+    "Remove project access",
+  ],
+  "Matomo": [
+    "Remove user access",
+    "Remove site/property access",
+  ],
+  "Plausible": [
+    "Remove user access",
+    "Remove website access",
+  ],
+  "PostHog": [
+    "Remove user access",
+    "Remove project access",
+  ],
+  "Segment": [
+    "Remove user access",
+    "Remove workspace access",
+    "Remove source/destination access",
+  ],
+
+  // --- SEO ---
+  "Ahrefs": [
+    "Remove user access",
+    "Remove project access",
+    "Remove shared workspace access",
+  ],
+  "Semrush": [
+    "Remove user access",
+    "Remove project access",
+    "Remove shared workspace access",
+  ],
+  "Moz": [
+    "Remove user access",
+    "Remove campaign/project access",
+  ],
+  "Ubersuggest": [
+    "Remove user access",
+    "Remove project access",
+  ],
+  "Screaming Frog": [
+    "Remove user access if applicable",
+    "Remove stored client project/data access",
+    "Remove shared license access if applicable",
+  ],
+  "Surfer SEO": [
+    "Remove user access",
+    "Remove content/project access",
+  ],
+  "Yoast SEO": [
+    "Remove WordPress user access",
+    "Remove admin/editor access",
+  ],
+  "Rank Math": [
+    "Remove WordPress user access",
+    "Remove admin/editor access",
+  ],
+  "Google Business Profile": [
+    "Remove user/manager access",
+    "Remove business profile access",
+  ],
+  "BrightLocal": [
+    "Remove user access",
+    "Remove client/location access",
+  ],
+
+  // --- SOCIAL MEDIA ---
+  "Buffer": [
+    "Remove user access",
+    "Remove social account/channel access",
+    "Remove workspace access",
+  ],
+  "Hootsuite": [
+    "Remove user access",
+    "Remove social profile access",
+    "Remove organization/workspace access",
+  ],
+  "Later": [
+    "Remove user access",
+    "Remove social profile access",
+    "Remove workspace access",
+  ],
+  "Sprout Social": [
+    "Remove user access",
+    "Remove social profile access",
+    "Remove organization access",
+  ],
+  "SocialBee": [
+    "Remove user access",
+    "Remove social account access",
+    "Remove workspace access",
+  ],
+  "Metricool": [
+    "Remove user access",
+    "Remove social profile access",
+    "Remove workspace access",
+  ],
+  "Loomly": [
+    "Remove user access",
+    "Remove social account access",
+    "Remove workspace access",
+  ],
+  "Planable": [
+    "Remove user access",
+    "Remove workspace access",
+    "Remove social account access",
+  ],
+  "Publer": [
+    "Remove user access",
+    "Remove social account access",
+    "Remove workspace access",
+  ],
+  "Agorapulse": [
+    "Remove user access",
+    "Remove social profile access",
+    "Remove organization/workspace access",
+  ],
+
+  // --- CRM & SALES ---
+  "HubSpot": [
+    "Remove user access",
+    "Remove CRM access",
+    "Remove portal/team access",
+  ],
+  "Salesforce": [
+    "Deactivate/remove user access",
+    "Remove profile/permission access",
+    "Remove account/team access",
+  ],
+  "Pipedrive": [
+    "Remove user access",
+    "Remove team/workspace access",
+    "Remove shared pipeline access",
+  ],
+  "Zoho CRM": [
+    "Remove user access",
+    "Remove CRM/team access",
+    "Remove role/permission access",
+  ],
+  "Freshsales": [
+    "Remove user access",
+    "Remove sales workspace access",
+    "Remove team/role access",
+  ],
+  "Close": [
+    "Remove user access",
+    "Remove workspace access",
+    "Remove shared pipeline access",
+  ],
+  "Copper": [
+    "Remove user access",
+    "Remove workspace access",
+    "Remove shared CRM access",
+  ],
+  "Monday Sales CRM": [
+    "Remove user access",
+    "Remove board/workspace access",
+    "Remove CRM permissions",
+  ],
+  "Apollo": [
+    "Remove user access",
+    "Remove workspace access",
+    "Remove shared prospect/contact data access",
+  ],
+  "Intercom": [
+    "Remove user access",
+    "Remove workspace/team access",
+    "Remove inbox/helpdesk access",
+  ],
+
+  // --- PROJECT MANAGEMENT ---
   ClickUp: [
     "Remove workspace access",
     "Remove project/list access",
@@ -113,18 +570,165 @@ const TOOL_CHECKLISTS: Record<string, string[]> = {
     "Remove workspace access",
     "Remove project access",
   ],
+  "Trello": [
+    "Remove user from workspace",
+    "Remove board access",
+    "Remove member access from shared boards",
+  ],
+  "Monday.com": [
+    "Remove user from workspace",
+    "Remove board access",
+    "Remove team/member permissions",
+  ],
   Notion: [
     "Remove workspace access",
     "Remove page/database access",
   ],
-  Figma: [
+  "Jira": [
+    "Remove user from organization",
+    "Remove project access",
+    "Remove project role/permissions",
+  ],
+  "Linear": [
+    "Remove user from workspace",
+    "Remove team access",
+    "Remove project access",
+  ],
+  "Basecamp": [
+    "Remove user from organization",
+    "Remove project access",
+    "Remove client/project permissions",
+  ],
+  "Teamwork": [
+    "Remove user access",
+    "Remove project access",
+    "Remove team permissions",
+  ],
+  "Wrike": [
+    "Remove user from workspace",
+    "Remove folder/project access",
+    "Remove team permissions",
+  ],
+  "Todoist": [
+    "Remove user from workspace/team",
+    "Remove shared project access",
+  ],
+  "Airtable": [
+    "Remove user from workspace",
+    "Remove base access",
+    "Remove shared interface/access permissions",
+  ],
+
+  // --- COMMUNICATION ---
+  "Microsoft Teams": [
+    "Remove user from client team",
+    "Remove shared channel access",
+    "Remove guest access if applicable",
+  ],
+  "Google Chat": [
+    "Remove user from client spaces",
+    "Remove shared space access",
+  ],
+  "Discord": [
+    "Remove user from client server",
+    "Remove role/channel access",
+  ],
+  "Zoom": [
+    "Remove user/account access",
+    "Remove shared workspace access",
+  ],
+  "Google Meet": [
+    "Remove shared meeting/resource access",
+    "Remove related Google Workspace access if applicable",
+  ],
+  Slack: [
+    "Remove from client workspace",
+    "Remove shared channel access",
+  ],
+
+  // --- FILES & COLLABORATION ---
+  "Google Workspace": [
+    "Remove account/delegated access",
+    "Remove shared resource access",
+  ],
+  "Google Drive": [
+    "Remove shared drive access",
+    "Remove shared file/folder access",
+  ],
+  "Dropbox": [
+    "Remove user access",
+    "Remove shared folder access",
+    "Remove team/workspace access",
+  ],
+  "Microsoft OneDrive": [
+    "Remove user access",
+    "Remove shared file/folder access",
+    "Remove shared resource access",
+  ],
+  "Microsoft SharePoint": [
+    "Remove user/site access",
+    "Remove site/library permissions",
+    "Remove team/group membership",
+  ],
+  "Box": [
+    "Remove user access",
+    "Remove shared folder access",
+    "Remove organization access",
+  ],
+
+  // --- DESIGN & CREATIVE ---
+  "Figma": [
     "Remove team access",
     "Remove file/project access",
   ],
-  Canva: [
+  "Canva": [
     "Remove team access",
     "Remove shared design access",
   ],
+  "Adobe Creative Cloud": [
+    "Remove user/license access",
+    "Remove shared team access",
+    "Remove client project/file access",
+  ],
+  "Adobe Photoshop": [
+    "Remove shared file/project access",
+    "Remove team/license access if applicable",
+  ],
+  "Adobe Illustrator": [
+    "Remove shared file/project access",
+    "Remove team/license access if applicable",
+  ],
+  "Adobe InDesign": [
+    "Remove shared file/project access",
+    "Remove team/license access if applicable",
+  ],
+  "Adobe XD": [
+    "Remove shared file/project access",
+    "Remove team/license access if applicable",
+  ],
+  "Sketch": [
+    "Remove workspace access",
+    "Remove shared document access",
+  ],
+  "Framer": [
+    "Remove workspace access",
+    "Remove project/site access",
+  ],
+  "FigJam": [
+    "Remove team access",
+    "Remove shared board access",
+  ],
+  "Miro": [
+    "Remove user from team",
+    "Remove board access",
+    "Remove workspace access",
+  ],
+  "Whimsical": [
+    "Remove workspace access",
+    "Remove shared board/document access",
+  ],
+
+  // --- WEBSITE & CMS ---
   WordPress: [
     "Remove WordPress user account",
     "Remove admin/editor access",
@@ -133,53 +737,513 @@ const TOOL_CHECKLISTS: Record<string, string[]> = {
     "Remove staff account",
     "Remove store access",
   ],
-  Cloudflare: [
-    "Remove member access",
-    "Remove zone/domain access",
+  WooCommerce: [
+    "Remove WordPress user access",
+    "Remove store/admin access",
+    "Remove shared site access",
   ],
+  Webflow: [
+    "Remove workspace access",
+    "Remove site/project access",
+    "Remove collaborator access",
+  ],
+  Wix: [
+    "Remove collaborator access",
+    "Remove site access",
+    "Remove role/permission access",
+  ],
+  Squarespace: [
+    "Remove contributor access",
+    "Remove website access",
+    "Remove account permissions",
+  ],
+  Ghost: [
+    "Remove staff/user access",
+    "Remove publication access",
+    "Remove administrator/editor permissions",
+  ],
+  Drupal: [
+    "Remove user account",
+    "Remove administrator/editor access",
+    "Remove site/project access",
+  ],
+  "HubSpot CMS": [
+    "Remove user access",
+    "Remove CMS/content access",
+    "Remove portal/team access",
+  ],
+  Elementor: [
+    "Remove WordPress user access",
+    "Remove website/editor access",
+  ],
+  Divi: [
+    "Remove WordPress user access",
+    "Remove website/editor access",
+  ],
+
+  // --- DEVELOPMENT ---
   GitHub: [
+    "Remove organization membership",
     "Remove repository access",
-    "Remove organization access",
+    "Remove team/collaborator access",
   ],
   GitLab: [
+    "Remove group membership",
+    "Remove project/repository access",
+    "Remove team/member permissions",
+  ],
+  Bitbucket: [
+    "Remove workspace access",
+    "Remove repository access",
+    "Remove project permissions",
+  ],
+  Vercel: [
+    "Remove team membership",
     "Remove project access",
-    "Remove group access",
+    "Remove deployment/environment access",
   ],
-  AWS: [
-    "Remove IAM/user access",
-    "Remove console access",
+  Netlify: [
+    "Remove team membership",
+    "Remove site access",
+    "Remove deployment access",
   ],
-  DigitalOcean: [
-    "Remove team access",
+  Firebase: [
+    "Remove project access",
+    "Remove IAM/team access",
+    "Remove Firebase console access",
+  ],
+  Supabase: [
+    "Remove organization/project access",
+    "Remove team membership",
+    "Remove database/project permissions",
+  ],
+  Render: [
+    "Remove team membership",
+    "Remove service/project access",
+  ],
+  Railway: [
+    "Remove workspace membership",
     "Remove project access",
   ],
-  Hosting: [
+  Heroku: [
+    "Remove team membership",
+    "Remove app access",
+    "Remove pipeline/resource access",
+  ],
+  Replit: [
+    "Remove team/workspace access",
+    "Remove project access",
+  ],
+  CodePen: [
+    "Remove team/project access",
+    "Remove shared asset access",
+  ],
+
+  // --- HOSTING & INFRASTRUCTURE ---
+  "Hosting": [
     "Remove hosting account access",
     "Remove server/control-panel access",
   ],
-  cPanel: [
+  "Microsoft 365": [
+    "Remove account/access",
+    "Remove shared resource access",
+  ],
+  "AWS": [
+    "Remove IAM/user access",
+    "Remove console access",
+  ],
+  "Google Cloud": [
+    "Remove user/IAM access",
+    "Remove project access",
+    "Remove service/resource access",
+  ],
+  "Microsoft Azure": [
+    "Remove user access",
+    "Remove subscription/resource access",
+    "Remove role/permission access",
+  ],
+  "DigitalOcean": [
+    "Remove team access",
+    "Remove project access",
+  ],
+  "Vultr": [
+    "Remove team/user access",
+    "Remove project/server access",
+  ],
+  "Cloudflare": [
+    "Remove member access",
+    "Remove zone/domain access",
+  ],
+  "cPanel": [
     "Remove cPanel account access",
     "Remove FTP/file access",
   ],
-  HubSpot: [
+  "Plesk": [
     "Remove user access",
-    "Remove portal permissions",
+    "Remove hosting/subscription access",
   ],
-  Salesforce: [
-    "Deactivate/remove user access",
-    "Remove profile/permission access",
+  "Hostinger": [
+    "Remove account/team access",
+    "Remove hosting access",
+    "Remove domain access if applicable",
   ],
-  Stripe: [
-    "Remove team/member access",
+  "GoDaddy": [
+    "Remove delegate access",
+    "Remove domain/hosting access",
     "Remove account permissions",
   ],
-  Zapier: [
-    "Remove workspace access",
-    "Remove shared automation access",
+  "Namecheap": [
+    "Remove shared/delegate access",
+    "Remove domain/hosting access",
   ],
-  Make: [
-    "Remove team access",
-    "Remove shared automation access",
+  "SiteGround": [
+    "Remove collaborator access",
+    "Remove website/hosting access",
+  ],
+  "Bluehost": [
+    "Remove account/user access",
+    "Remove hosting/website access",
+  ],
+
+  // --- ECOMMERCE & PAYMENTS ---
+  "Stripe": [
+    "Remove team member access",
+    "Remove account/dashboard access",
+    "Remove developer/API access if applicable",
+  ],
+  "PayPal": [
+    "Remove user/business account access",
+    "Remove account permissions",
+  ],
+  "Razorpay": [
+    "Remove team member access",
+    "Remove dashboard/account access",
+    "Remove API/key access if applicable",
+  ],
+  "Square": [
+    "Remove team/member access",
+    "Remove business/location access",
+  ],
+  "Shopify Payments": [
+    "Remove staff access",
+    "Remove payment/account access",
+  ],
+  "Klarna": [
+    "Remove user/business access",
+    "Remove merchant account access",
+  ],
+  "Payoneer": [
+    "Remove user/business account access",
+    "Remove shared account permissions",
+  ],
+  "Wise Business": [
+    "Remove team member access",
+    "Remove business account permissions",
+  ],
+  "BigCommerce": [
+    "Remove user access",
+    "Remove store/admin access",
+    "Remove API access if applicable",
+  ],
+  "Magento": [
+    "Remove admin/user account",
+    "Remove store access",
+    "Remove integration/API access if applicable",
+  ],
+
+  // --- AUTOMATION & INTEGRATIONS ---
+  "Zapier": [
+    "Remove user/team access",
+    "Remove shared workspace access",
+    "Review and remove client-related connections",
+  ],
+  "Make": [
+    "Remove user/team access",
+    "Remove organization/workspace access",
+    "Review and remove client-related connections",
+  ],
+  "n8n": [
+    "Remove user/team access",
+    "Remove workspace/project access",
+    "Review client-related workflows and credentials",
+  ],
+  "Pipedream": [
+    "Remove user/team access",
+    "Remove project/workspace access",
+    "Review client-related integrations and credentials",
+  ],
+  "IFTTT": [
+    "Remove user/account access",
+    "Review and remove client-related app connections",
+  ],
+  "Workato": [
+    "Remove user/team access",
+    "Remove workspace access",
+    "Review client-related connections and recipes",
+  ],
+  "Microsoft Power Automate": [
+    "Remove user access",
+    "Remove environment/flow access",
+    "Review client-related connections",
+  ],
+
+  // --- EMAIL MARKETING ---
+  "Mailchimp": [
+    "Remove user access",
+    "Remove audience/list access",
+    "Remove account/team permissions",
+  ],
+  "Brevo": [
+    "Remove user access",
+    "Remove account/workspace access",
+    "Review client-related integrations",
+  ],
+  "Klaviyo": [
+    "Remove user access",
+    "Remove account/store access",
+    "Remove shared project permissions",
+  ],
+  "ActiveCampaign": [
+    "Remove user access",
+    "Remove account access",
+    "Review client-related integrations",
+  ],
+  "Kit": [
+    "Remove user access",
+    "Remove creator/account access",
+    "Review client-related integrations",
+  ],
+  "Drip": [
+    "Remove user access",
+    "Remove account access",
+    "Review client-related integrations",
+  ],
+  "Constant Contact": [
+    "Remove user access",
+    "Remove account/list access",
+  ],
+  "Campaign Monitor": [
+    "Remove user access",
+    "Remove account/list access",
+  ],
+  "MailerLite": [
+    "Remove user access",
+    "Remove account/workspace access",
+  ],
+  "GetResponse": [
+    "Remove user access",
+    "Remove account/list access",
+  ],
+
+  // --- SCHEDULING ---
+  "Calendly": [
+    "Remove user access",
+    "Remove team/workspace access",
+    "Remove shared event/workflow access",
+  ],
+  "Cal.com": [
+    "Remove user access",
+    "Remove organization/team access",
+    "Remove shared booking configuration access",
+  ],
+  "Acuity Scheduling": [
+    "Remove user access",
+    "Remove scheduling account access",
+    "Review client-related calendars and integrations",
+  ],
+  "Doodle": [
+    "Remove user access",
+    "Remove shared team access",
+  ],
+  "Google Calendar": [
+    "Remove shared calendar access",
+    "Remove delegated calendar access",
+    "Remove client-related sharing permissions",
+  ],
+  "Microsoft Outlook": [
+    "Remove shared calendar/mailbox access",
+    "Remove delegated access",
+    "Remove client-related permissions",
+  ],
+
+  // --- TIME TRACKING ---
+  "Toggl Track": [
+    "Remove user access",
+    "Remove workspace/project access",
+    "Remove client/project data access",
+  ],
+  "Harvest": [
+    "Remove user access",
+    "Remove team/workspace access",
+    "Remove client/project access",
+  ],
+  "Clockify": [
+    "Remove user access",
+    "Remove workspace access",
+    "Remove project/client access",
+  ],
+  "Everhour": [
+    "Remove user access",
+    "Remove workspace/team access",
+    "Remove project access",
+  ],
+  "Hubstaff": [
+    "Remove user access",
+    "Remove team/workspace access",
+    "Remove project/client access",
+  ],
+  "Timely": [
+    "Remove user access",
+    "Remove workspace/team access",
+    "Remove client/project access",
+  ],
+
+  // --- VIDEO & CONTENT ---
+  "Loom": [
+    "Remove user access",
+    "Remove workspace access",
+    "Review and remove client-related recordings if required",
+  ],
+  "Vimeo": [
+    "Remove user/team access",
+    "Remove project/video access",
+    "Review shared client content",
+  ],
+  "Wistia": [
+    "Remove user access",
+    "Remove workspace/project access",
+    "Review shared client media",
+  ],
+  "Descript": [
+    "Remove user/workspace access",
+    "Remove project access",
+    "Review shared client media",
+  ],
+  "Riverside": [
+    "Remove user/team access",
+    "Remove workspace/project access",
+    "Review shared client recordings",
+  ],
+  "Vidyard": [
+    "Remove user access",
+    "Remove workspace/team access",
+    "Review shared client content",
+  ],
+  "YouTube": [
+    "Remove channel/Brand Account access",
+    "Remove manager/editor permissions",
+    "Review shared channel resources",
+  ],
+  "YouTube Studio": [
+    "Remove channel access",
+    "Remove manager/editor permissions",
+    "Review shared channel resources",
+  ],
+  "CapCut": [
+    "Remove team/workspace access",
+    "Remove shared project access",
+    "Review client project files",
+  ],
+  "Adobe Premiere Pro": [
+    "Remove shared project access",
+    "Remove team/license access if applicable",
+    "Review client media/project files",
+  ],
+
+  // --- DOCUMENTS & SIGNATURES ---
+  "DocuSign": [
+    "Remove user access",
+    "Remove shared account/team access",
+    "Review client documents and permissions",
+  ],
+  "Adobe Acrobat": [
+    "Remove user/team access",
+    "Remove shared document access",
+    "Review client files and permissions",
+  ],
+  "Dropbox Sign": [
+    "Remove user access",
+    "Remove team/workspace access",
+    "Review client documents and permissions",
+  ],
+  "PandaDoc": [
+    "Remove user access",
+    "Remove workspace/team access",
+    "Review client documents and templates",
+  ],
+  "Google Docs": [
+    "Remove shared document access",
+    "Remove shared folder/Drive access",
+    "Review client document permissions",
+  ],
+  "Microsoft Word": [
+    "Remove shared document access",
+    "Remove shared OneDrive/SharePoint access",
+    "Review client document permissions",
+  ],
+
+  // --- FINANCE & INVOICING ---
+  "QuickBooks": [
+    "Remove user/account access",
+    "Remove company file access",
+    "Review client financial data permissions",
+  ],
+  "Xero": [
+    "Remove user access",
+    "Remove organization/company access",
+    "Review financial data permissions",
+  ],
+  "FreshBooks": [
+    "Remove user access",
+    "Remove client/account access",
+    "Review shared financial data",
+  ],
+  "Wave": [
+    "Remove user access",
+    "Remove business/account access",
+    "Review financial data permissions",
+  ],
+  "Zoho Books": [
+    "Remove user access",
+    "Remove organization access",
+    "Review role and financial permissions",
+  ],
+
+  // --- CLIENT MANAGEMENT & AGENCY OPERATIONS ---
+  "Bonsai": [
+    "Remove user/team access",
+    "Remove client/project access",
+    "Review shared contracts, invoices and documents",
+  ],
+  "HoneyBook": [
+    "Remove user/team access",
+    "Remove workspace/client access",
+    "Review shared projects, files and financial data",
+  ],
+  "Dubsado": [
+    "Remove user access",
+    "Remove workspace/client access",
+    "Review shared projects, forms and documents",
+  ],
+  "Plutio": [
+    "Remove user/team access",
+    "Remove workspace/project access",
+    "Review shared client data",
+  ],
+  "Clientary": [
+    "Remove user/team access",
+    "Remove client/project access",
+    "Review shared client data and documents",
+  ],
+  "SuiteDash": [
+    "Remove user/team access",
+    "Remove client portal/project access",
+    "Review shared client data and files",
+  ],
+  "Moxie": [
+    "Remove user/team access",
+    "Remove client/project access",
+    "Review shared contracts, invoices and documents",
   ],
 };
 
@@ -202,7 +1266,7 @@ const getClientStatusLabel = (status?: string) => {
 const getClientStatusClasses = (status?: string) => {
   switch (status) {
     case "ending_soon":
-      return "bg-amber-50 text-amber-700 border-amber-200";
+      return "bg-[#9BCB3B]/10 text-[#6d941f] border-[#9BCB3B]/30";
     case "offboarding":
       return "bg-blue-50 text-blue-700 border-blue-200";
     case "ready_to_close":
@@ -239,10 +1303,17 @@ export default function DashboardPage() {
   const [accessReviewDate, setAccessReviewDate] = useState("");
   const [notes, setNotes] = useState("");
   
+  // TOOL SEARCH & CATEGORY FILTER STATES
+  const [toolSearch, setToolSearch] = useState("");
+  const [activeToolCategory, setActiveToolCategory] = useState("All");
+
   // Toggle state for Email Reminders
   const [emailEnabled, setEmailEnabled] = useState(true);
 
   const [clients, setClients] = useState<any[]>([]);
+
+  // STEP 1 — Completion Summary State
+  const [completionSummaryClient, setCompletionSummaryClient] = useState<any>(null);
 
   // Helper function to safely display tools whether stored as string or array
   const formatToolsDisplay = (toolsData: any) => {
@@ -261,16 +1332,50 @@ export default function DashboardPage() {
     );
   };
 
-  // --- SMART ALERTS CALCULATION ---
+  // --- SMART ACCESS ALERTS ---
   const activeAlerts = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    return clients.filter(c => {
-      const pDate = new Date(c.date);
-      const diffTime = pDate.getTime() - today.getTime();
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      return c.status !== "completed" && diffDays <= 2;
+    return clients.filter((client) => {
+      // Closed clients should never appear in active access alerts.
+      if (client.clientStatus === "closed") {
+        return false;
+      }
+
+      const deadline = client.accessRemovalDeadline
+        ? new Date(client.accessRemovalDeadline)
+        : null;
+
+      if (!deadline) {
+        return false;
+      }
+
+      deadline.setHours(0, 0, 0, 0);
+
+      const diffDays = Math.ceil(
+        (deadline.getTime() - today.getTime()) /
+          (1000 * 60 * 60 * 24)
+      );
+
+      const checklist = Array.isArray(client.checklist)
+        ? client.checklist
+        : [];
+
+      const completedTasks = checklist.filter(
+        (task: any) =>
+          task.status === "removed" ||
+          task.status === "not_needed"
+      ).length;
+
+      const progress =
+        checklist.length > 0
+          ? Math.round((completedTasks / checklist.length) * 100)
+          : 0;
+
+      // Alert when access removal is due within 2 days
+      // or already overdue, as long as work is incomplete.
+      return diffDays <= 2 && progress < 100;
     });
   }, [clients]);
 
@@ -359,18 +1464,57 @@ export default function DashboardPage() {
 
   // --- DYNAMIC SECURITY RATING CALCULATION ---
   const securityMetrics = useMemo(() => {
-    if (clients.length === 0) return { score: "NOT RATED", color: "#94a3b8" }; 
-    
+    if (clients.length === 0) {
+      return { score: "NOT RATED", color: "#94a3b8" };
+    }
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const overdueRisks = clients.filter(c => {
-      const projectDate = new Date(c.date);
-      return projectDate < today && c.status !== "completed";
+    const overdueRisks = clients.filter((client) => {
+      if (
+        client.clientStatus !== "offboarding" &&
+        client.clientStatus !== "ready_to_close"
+      ) {
+        return false;
+      }
+
+      const checklist = Array.isArray(client.checklist)
+        ? client.checklist
+        : [];
+
+      const totalTasks = checklist.length;
+
+      const completedTasks = checklist.filter(
+        (task: any) =>
+          task.status === "removed" ||
+          task.status === "not_needed"
+      ).length;
+
+      const progress =
+        totalTasks > 0
+          ? Math.round((completedTasks / totalTasks) * 100)
+          : 0;
+
+      const deadlineDate = client.accessRemovalDeadline
+        ? new Date(client.accessRemovalDeadline)
+        : null;
+
+      return (
+        deadlineDate !== null &&
+        deadlineDate < today &&
+        progress < 100
+      );
     });
 
-    if (overdueRisks.length === 0) return { score: "SECURED", color: "#9BCB3B" };
-    if (overdueRisks.length === 1) return { score: "WARNING", color: "#facc15" };
+    if (overdueRisks.length === 0) {
+      return { score: "SECURED", color: "#9BCB3B" };
+    }
+
+    if (overdueRisks.length === 1) {
+      return { score: "WARNING", color: "#facc15" };
+    }
+
     return { score: "AT RISK", color: "#ef4444" };
   }, [clients]);
 
@@ -590,15 +1734,6 @@ export default function DashboardPage() {
     }
   };
 
-  const toggleStatus = async (id: string, currentStatus: string) => {
-    try {
-      const newStatus = currentStatus === "completed" ? "pending" : "completed";
-      await updateDoc(doc(db, "clients", id), { status: newStatus });
-    } catch (error) {
-      console.error("Status update failed:", error);
-    }
-  };
-
   const startOffboarding = async (id: string) => {
     try {
       const client = clients.find((item) => item.id === id);
@@ -714,6 +1849,7 @@ export default function DashboardPage() {
     }
   };
 
+  // STEP 2 — Upgraded closeClient with Snapshot support
   const closeClient = async (clientId: string) => {
     try {
       const client = clients.find((item) => item.id === clientId);
@@ -754,15 +1890,107 @@ export default function DashboardPage() {
         }
       }
 
+      const removedTasks = checklist.filter(
+        (task: any) => task.status === "removed"
+      ).length;
+
+      const notNeededTasks = checklist.filter(
+        (task: any) => task.status === "not_needed"
+      ).length;
+
+      const assignees = Array.from(
+        new Set(
+          checklist
+            .map((task: any) => task.assignee)
+            .filter(Boolean)
+        )
+      );
+
       await updateDoc(doc(db, "clients", clientId), {
         clientStatus: "closed",
         closedAt: serverTimestamp(),
         closeReason,
+
+        completionSnapshot: {
+          clientName: client.name || "",
+          projectName: client.projectName || "",
+          tools: Array.isArray(client.tools)
+            ? client.tools
+            : [],
+          totalTasks: checklist.length,
+          removedTasks,
+          notNeededTasks,
+          incompleteTasks: incompleteTasks.length,
+          assignees,
+        },
+      });
+
+      setCompletionSummaryClient({
+        ...client,
+        clientStatus: "closed",
+        closeReason,
+        completionSnapshot: {
+          clientName: client.name || "",
+          projectName: client.projectName || "",
+          tools: Array.isArray(client.tools)
+            ? client.tools
+            : [],
+          totalTasks: checklist.length,
+          removedTasks,
+          notNeededTasks,
+          incompleteTasks: incompleteTasks.length,
+          assignees,
+        },
       });
     } catch (error) {
       console.error("Failed to close client:", error);
       alert("Failed to close client. Please try again.");
     }
+  };
+
+  // STEP 3 — Summary Opener Helper
+  const openCompletionSummary = (client: any) => {
+    const checklist = Array.isArray(client.checklist)
+      ? client.checklist
+      : [];
+
+    const removedTasks = checklist.filter(
+      (task: any) => task.status === "removed"
+    ).length;
+
+    const notNeededTasks = checklist.filter(
+      (task: any) => task.status === "not_needed"
+    ).length;
+
+    const incompleteTasks = checklist.filter(
+      (task: any) =>
+        task.status !== "removed" &&
+        task.status !== "not_needed"
+    ).length;
+
+    const assignees = Array.from(
+      new Set(
+        checklist
+          .map((task: any) => task.assignee)
+          .filter(Boolean)
+      )
+    );
+
+    setCompletionSummaryClient({
+      ...client,
+      completionSnapshot: client.completionSnapshot || {
+        clientName: client.name || "",
+        projectName: client.projectName || "",
+        tools: Array.isArray(client.tools)
+          ? client.tools
+          : [],
+        totalTasks: checklist.length,
+        removedTasks,
+        notNeededTasks,
+        incompleteTasks,
+        assignees,
+      },
+    });
   };
 
   const viewPortal = (id: string) => {
@@ -792,12 +2020,13 @@ export default function DashboardPage() {
     if (
       clientName.trim() === "" ||
       projectName.trim() === "" ||
+      tools.length === 0 ||
       projectStartDate === "" ||
       projectEndDate === "" ||
       accessRemovalDeadline === "" ||
       accessReviewDate === ""
     ) {
-      alert("Please complete the client name, project name, and all project dates.");
+      alert("Please complete all required fields and select at least one tool.");
       return;
     }
 
@@ -832,6 +2061,8 @@ export default function DashboardPage() {
       setAccessReviewDate("");
       setNotes("");
       setEmailEnabled(true);
+      setToolSearch("");
+      setActiveToolCategory("All");
       
       setIsModalOpen(false);
       setShowToast(true);
@@ -946,24 +2177,23 @@ export default function DashboardPage() {
 
         {isPro && activeAlerts.length > 0 && (
           <div className="mb-10 animate-in fade-in slide-in-from-top-4 duration-500">
-             <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-red-500 mb-3 flex items-center gap-2">
+              <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-red-500 mb-3 flex items-center gap-2">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
                 </span>
                 Smart Security Alerts
-             </h4>
-             <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
+              </h4>
+              <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
                 {activeAlerts.map(alert => (
                   <div key={alert.id} className={`min-w-[300px] border-2 p-5 rounded-[2rem] flex items-center justify-between transition-all ${isDarkMode ? 'bg-red-500/10 border-red-500/20' : 'bg-red-50 border-red-100 shadow-lg shadow-red-500/5'}`}>
                     <div>
                       <p className={`font-black text-sm italic mb-1 ${isDarkMode ? 'text-red-400' : 'text-[#243F74]'}`}>{alert.name}</p>
                       <p className={`text-[10px] font-black uppercase tracking-tight ${isDarkMode ? 'text-slate-400' : 'text-red-500'}`}>Access Review Overdue</p>
                     </div>
-                    <button onClick={() => toggleStatus(alert.id, alert.status)} className={`px-4 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest shadow-sm transition-all hover:scale-105 active:scale-95 ${isDarkMode ? 'bg-red-500 text-white' : 'bg-white text-red-500'}`}>Secure</button>
                   </div>
                 ))}
-             </div>
+              </div>
           </div>
         )}
 
@@ -1162,7 +2392,6 @@ export default function DashboardPage() {
                       <th className="px-8 py-5 text-slate-400 uppercase text-[10px] font-black tracking-widest">Client & Tools</th>
                       <th className="px-8 py-5 text-slate-400 uppercase text-[10px] font-black tracking-widest text-center">Lifecycle Status</th>
                       <th className="px-8 py-5 text-slate-400 uppercase text-[10px] font-black tracking-widest text-center">Review Date</th>
-                      <th className="px-8 py-5 text-slate-400 uppercase text-[10px] font-black text-center">Status</th>
                       <th className="px-8 py-5 text-slate-400 uppercase text-[10px] font-black text-right">Action</th>
                     </tr>
                   </thead>
@@ -1352,9 +2581,6 @@ export default function DashboardPage() {
                             </span>
                           </td>
                           <td className={`px-8 py-6 text-center font-black text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{client.date}</td>
-                          <td className="px-8 py-6 text-center">
-                            <button onClick={() => toggleStatus(client.id, client.status)} className={`px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${client.status === 'completed' ? 'bg-[#9BCB3B] text-white' : 'bg-slate-100 text-slate-400'}`}>{client.status === 'completed' ? '✓ Secured' : '○ Pending'}</button>
-                          </td>
                           <td className="px-8 py-6 text-right whitespace-nowrap">
                             {(client.clientStatus === "active" || client.clientStatus === "ending_soon") && (
                               <button
@@ -1374,6 +2600,19 @@ export default function DashboardPage() {
                                 Close Client
                               </button>
                             )}
+
+                            {/* STEP 4 — Desktop View Summary Button */}
+                            {(client.clientStatus === "ready_to_close" ||
+                              client.clientStatus === "closed") && (
+                              <button
+                                type="button"
+                                onClick={() => openCompletionSummary(client)}
+                                className="text-[#243F74] dark:text-[#9BCB3B] font-black text-[10px] uppercase tracking-widest mr-5 hover:underline decoration-2"
+                              >
+                                View Summary
+                              </button>
+                            )}
+
                             {isPro && <button onClick={() => viewPortal(client.id)} className="text-[#9BCB3B] font-black text-[10px] uppercase tracking-widest mr-5 hover:underline decoration-2">View Portal</button>}
                             <button onClick={() => handleDelete(client.id)} className="text-slate-500 hover:text-red-400 font-black text-[10px] uppercase transition-colors">Remove</button>
                           </td>
@@ -1431,7 +2670,6 @@ export default function DashboardPage() {
                           </span>
                         </div>
                       </div>
-                      <button onClick={() => toggleStatus(client.id, client.status)} className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${client.status === 'completed' ? 'bg-[#9BCB3B] text-white shadow-lg shadow-[#9BCB3B]/40' : 'bg-slate-100 text-slate-400'}`}>{client.status === 'completed' ? '✓' : '○'}</button>
                     </div>
 
                     {/* MOBILE CHECKLIST VIEW */}
@@ -1584,6 +2822,23 @@ export default function DashboardPage() {
                           <button onClick={() => handleDelete(client.id)} className="text-red-400 font-black text-xs uppercase tracking-widest">Delete</button>
                         </div>
                       </div>
+                      
+                      {/* STEP 5 — Mobile View Summary Button */}
+                      {(client.clientStatus === "ready_to_close" ||
+                        client.clientStatus === "closed") && (
+                        <button
+                          type="button"
+                          onClick={() => openCompletionSummary(client)}
+                          className={`w-full py-2.5 rounded-xl border-2 text-xs font-black transition text-center ${
+                            isDarkMode
+                              ? "border-slate-700 text-slate-300 hover:border-[#9BCB3B]"
+                              : "border-slate-100 text-[#243F74] hover:border-[#9BCB3B]"
+                          }`}
+                        >
+                          View Completion Summary
+                        </button>
+                      )}
+
                       {(client.clientStatus === "active" || client.clientStatus === "ending_soon") && (
                         <button
                           type="button"
@@ -1611,6 +2866,218 @@ export default function DashboardPage() {
         )}
       </main>
 
+      {/* STEP 6 — COMPLETION SUMMARY MODAL */}
+      {completionSummaryClient && (
+        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xl flex items-center justify-center z-[120] px-4">
+          <div
+            className={`w-full max-w-[620px] max-h-[90vh] overflow-y-auto rounded-[2.5rem] p-8 md:p-10 shadow-2xl border-t-[10px] ${
+              isDarkMode
+                ? "bg-slate-900 border-[#9BCB3B]"
+                : "bg-white border-[#9BCB3B]"
+            }`}
+          >
+            <div className="flex items-start justify-between gap-4 mb-8">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#9BCB3B] mb-2">
+                  Offboarding Complete
+                </p>
+
+                <h2
+                  className={`text-3xl font-black italic ${
+                    isDarkMode ? "text-white" : "text-[#243F74]"
+                  }`}
+                >
+                  Completion Summary
+                </h2>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setCompletionSummaryClient(null)}
+                className="text-slate-400 hover:text-red-500 transition-colors text-2xl font-black"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-5">
+              {/* CLIENT */}
+              <div
+                className={`rounded-2xl border-2 p-5 ${
+                  isDarkMode
+                    ? "bg-slate-800/50 border-slate-700"
+                    : "bg-slate-50 border-slate-100"
+                }`}
+              >
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">
+                  Client
+                </p>
+
+                <h3
+                  className={`text-xl font-black ${
+                    isDarkMode ? "text-white" : "text-[#243F74]"
+                  }`}
+                >
+                  {completionSummaryClient.completionSnapshot?.clientName ||
+                    completionSummaryClient.name}
+                </h3>
+
+                {(
+                  completionSummaryClient.completionSnapshot?.projectName ||
+                  completionSummaryClient.projectName
+                ) && (
+                  <p className="text-xs font-bold text-slate-400 mt-1">
+                    {completionSummaryClient.completionSnapshot?.projectName ||
+                      completionSummaryClient.projectName}
+                  </p>
+                )}
+              </div>
+
+              {/* FINAL STATUS */}
+              <div className="flex items-center justify-between rounded-2xl border-2 border-[#9BCB3B]/20 bg-[#9BCB3B]/5 px-5 py-4">
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  Final Status
+                </span>
+
+                <span className="rounded-full bg-[#9BCB3B] text-white px-4 py-2 text-[10px] font-black uppercase tracking-widest">
+                  {completionSummaryClient.clientStatus === "closed"
+                    ? "Closed"
+                    : "Ready to Close"}
+                </span>
+              </div>
+
+              {/* TOOLS */}
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">
+                  Tools / Access
+                </p>
+
+                <div className="flex flex-wrap gap-2">
+                  {(completionSummaryClient.completionSnapshot?.tools || []).map(
+                    (tool: string) => (
+                      <span
+                        key={tool}
+                        className={`px-3 py-2 rounded-xl text-xs font-bold border ${
+                          isDarkMode
+                            ? "bg-slate-800 border-slate-700 text-slate-300"
+                            : "bg-slate-50 border-slate-100 text-slate-600"
+                        }`}
+                      >
+                        {tool}
+                      </span>
+                    )
+                  )}
+                </div>
+              </div>
+
+              {/* TASK SUMMARY */}
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">
+                  Task Summary
+                </p>
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div className="rounded-2xl border-2 border-slate-100 p-4 text-center">
+                    <p className="text-xl font-black text-[#243F74]">
+                      {completionSummaryClient.completionSnapshot?.totalTasks || 0}
+                    </p>
+                    <p className="text-[9px] font-black uppercase tracking-wider text-slate-400 mt-1">
+                      Total
+                    </p>
+                  </div>
+
+                  <div className="rounded-2xl border-2 border-[#9BCB3B]/20 bg-[#9BCB3B]/5 p-4 text-center">
+                    <p className="text-xl font-black text-[#6d941f]">
+                      {completionSummaryClient.completionSnapshot?.removedTasks || 0}
+                    </p>
+                    <p className="text-[9px] font-black uppercase tracking-wider text-slate-400 mt-1">
+                      Removed
+                    </p>
+                  </div>
+
+                  <div className="rounded-2xl border-2 border-slate-100 p-4 text-center">
+                    <p className="text-xl font-black text-slate-500">
+                      {completionSummaryClient.completionSnapshot?.notNeededTasks || 0}
+                    </p>
+                    <p className="text-[9px] font-black uppercase tracking-wider text-slate-400 mt-1">
+                      Not Needed
+                    </p>
+                  </div>
+
+                  <div className="rounded-2xl border-2 border-red-100 bg-red-50 p-4 text-center">
+                    <p className="text-xl font-black text-red-500">
+                      {completionSummaryClient.completionSnapshot?.incompleteTasks || 0}
+                    </p>
+                    <p className="text-[9px] font-black uppercase tracking-wider text-slate-400 mt-1">
+                      Incomplete
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* PRO ASSIGNEES */}
+              {isPro && (
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">
+                    Assigned Team Members
+                  </p>
+
+                  {completionSummaryClient.completionSnapshot?.assignees?.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {completionSummaryClient.completionSnapshot.assignees.map(
+                        (assignee: string) => (
+                          <span
+                            key={assignee}
+                            className="px-3 py-2 rounded-xl bg-blue-50 border border-blue-200 text-blue-600 text-xs font-bold"
+                          >
+                            👤 {assignee}
+                          </span>
+                        )
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-xs font-bold text-slate-400">
+                      No team members were assigned.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* CLOSE REASON */}
+              {completionSummaryClient.closeReason && (
+                <div
+                  className={`rounded-2xl border-2 p-5 ${
+                    isDarkMode
+                      ? "bg-slate-800/50 border-slate-700"
+                      : "bg-slate-50 border-slate-100"
+                  }`}
+                >
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">
+                    Closure Note
+                  </p>
+
+                  <p
+                    className={`text-sm font-bold leading-relaxed ${
+                      isDarkMode ? "text-slate-300" : "text-slate-600"
+                    }`}
+                  >
+                    {completionSummaryClient.closeReason}
+                  </p>
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={() => setCompletionSummaryClient(null)}
+                className="w-full py-4 rounded-2xl bg-[#243F74] text-white font-black text-xs uppercase tracking-widest hover:opacity-90 transition"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* SETTINGS MODAL */}
       {isSettingsOpen && (
         <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xl flex items-center justify-center z-[100] px-4">
@@ -1619,8 +3086,8 @@ export default function DashboardPage() {
               {!viewingSubscription ? (
                 <>
                   <div className="flex justify-between items-center mb-6">
-                     <h2 className={`text-2xl font-black italic ${isDarkMode ? 'text-white' : 'text-[#243F74]'}`}>Settings</h2>
-                     <button onClick={() => setIsSettingsOpen(false)} className="text-slate-400 hover:text-red-500 transition-colors text-2xl font-black">✕</button>
+                      <h2 className={`text-2xl font-black italic ${isDarkMode ? 'text-white' : 'text-[#243F74]'}`}>Settings</h2>
+                      <button onClick={() => setIsSettingsOpen(false)} className="text-slate-400 hover:text-red-500 transition-colors text-2xl font-black">✕</button>
                   </div>
                   <div className="space-y-4">
                     <div className={`p-4 rounded-2xl text-left border-2 ${isDarkMode ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-50 border-slate-100'}`}>
@@ -1729,40 +3196,118 @@ export default function DashboardPage() {
                   }`}
                 />
 
-                {/* MULTISELECT TOOL BUTTONS */}
+                {/* TOOL LIBRARY */}
                 <div>
                   <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">
                     Tools used for this client
                   </label>
 
-                  <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto p-1">
-                    {COMMON_TOOLS.map((tool) => {
-                      const selected = tools.includes(tool);
+                  {/* Search */}
+                  <input
+                    type="text"
+                    value={toolSearch}
+                    onChange={(e) => setToolSearch(e.target.value)}
+                    placeholder="Search tools..."
+                    className={`w-full border-2 rounded-2xl px-5 py-3.5 font-bold outline-none text-sm mb-3 ${
+                      isDarkMode
+                        ? "bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 focus:border-[#9BCB3B]"
+                        : "bg-slate-50 border-slate-100 text-slate-800 placeholder:text-slate-400 focus:border-[#9BCB3B]"
+                    }`}
+                  />
 
-                      return (
-                        <button
-                          key={tool}
-                          type="button"
-                          onClick={() => toggleTool(tool)}
-                          className={`px-3 py-2 rounded-xl text-xs font-bold border-2 transition ${
-                            selected
-                              ? "border-[#9BCB3B] bg-[#9BCB3B]/10 text-[#6d941f]"
-                              : isDarkMode
-                                ? "border-slate-700 bg-slate-800 text-slate-300 hover:border-slate-500"
-                                : "border-slate-100 bg-slate-50 text-slate-600 hover:border-slate-200"
-                          }`}
-                        >
-                          {tool}
-                          {selected && " ×"}
-                        </button>
-                      );
-                    })}
+                  {/* Categories */}
+                  <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                    {["All", ...Object.keys(TOOL_LIBRARY)].map((category) => (
+                      <button
+                        key={category}
+                        type="button"
+                        onClick={() => setActiveToolCategory(category)}
+                        className={`shrink-0 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-wide border-2 transition ${
+                          activeToolCategory === category
+                            ? "border-[#9BCB3B] bg-[#9BCB3B]/10 text-[#6d941f]"
+                            : isDarkMode
+                              ? "border-slate-700 bg-slate-800 text-slate-400 hover:border-slate-500"
+                              : "border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200"
+                        }`}
+                      >
+                        {category}
+                      </button>
+                    ))}
                   </div>
 
+                  {/* Tools */}
+                  <div className="mt-2 max-h-64 overflow-y-auto p-1 space-y-4">
+                    {Object.entries(TOOL_LIBRARY)
+                      .filter(([category]) =>
+                        activeToolCategory === "All"
+                          ? true
+                          : category === activeToolCategory
+                      )
+                      .map(([category, categoryTools]) => {
+                        const filteredTools = categoryTools
+                          .filter((tool) =>
+                            tool.toLowerCase().includes(toolSearch.toLowerCase())
+                          )
+                          .sort((a, b) => a.localeCompare(b));
+
+                        if (filteredTools.length === 0) return null;
+
+                        return (
+                          <div key={category}>
+                            {/* Category heading */}
+                            {activeToolCategory === "All" && (
+                              <p
+                                className={`text-[9px] font-black uppercase tracking-widest mb-2 px-1 ${
+                                  isDarkMode ? "text-slate-500" : "text-slate-400"
+                                }`}
+                              >
+                                {category}
+                              </p>
+                            )}
+
+                            <div className="flex flex-wrap gap-2">
+                              {filteredTools.map((tool) => {
+                                const selected = tools.includes(tool);
+
+                                return (
+                                  <button
+                                    key={tool}
+                                    type="button"
+                                    onClick={() => toggleTool(tool)}
+                                    className={`px-3 py-2 rounded-xl text-xs font-bold border-2 transition ${
+                                      selected
+                                        ? "border-[#9BCB3B] bg-[#9BCB3B]/10 text-[#6d941f]"
+                                        : isDarkMode
+                                          ? "border-slate-700 bg-slate-800 text-slate-300 hover:border-slate-500"
+                                          : "border-slate-100 bg-slate-50 text-slate-600 hover:border-slate-200"
+                                    }`}
+                                  >
+                                    {tool}
+                                    {selected && " ×"}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
+
+                  {/* Selected count */}
                   {tools.length > 0 && (
-                    <p className="mt-3 text-xs font-semibold text-slate-400">
-                      {tools.length} tool{tools.length === 1 ? "" : "s"} selected
-                    </p>
+                    <div className="mt-3 flex items-center justify-between gap-3">
+                      <p className="text-xs font-semibold text-slate-400">
+                        {tools.length} tool{tools.length === 1 ? "" : "s"} selected
+                      </p>
+
+                      <button
+                        type="button"
+                        onClick={() => setTools([])}
+                        className="text-[10px] font-black uppercase tracking-wider text-red-400 hover:text-red-500"
+                      >
+                        Clear all
+                      </button>
+                    </div>
                   )}
                 </div>
 
@@ -1869,14 +3414,14 @@ export default function DashboardPage() {
                   <div className="p-4 bg-slate-50 border border-slate-100 border-dashed rounded-2xl flex items-center justify-between opacity-60">
                     <div className="flex items-center gap-3">
                       <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2-2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2-2v6a2 2 0 02 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                       </svg>
                       <div>
                         <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Email Alerts (Pro)</p>
                         <p className="text-[8px] font-bold text-slate-400 uppercase">Upgrade to enable reminders</p>
                       </div>
                     </div>
-                    <button onClick={() => router.push("/pricing")} className="text-[8px] font-black bg-slate-200 text-slate-500 px-2 py-1 rounded-md uppercase tracking-widest hover:bg-[#9BCB3B] hover:text-white transition-all">Unlock</button>
+                    <button onClick={() => router.push("/pricing")} className="text-[8px] font-black bg-slate-200 text-[#243F74] px-2.5 py-1 rounded-md uppercase tracking-widest hover:bg-[#9BCB3B] hover:text-white transition-all">Unlock</button>
                   </div>
                 )}
 

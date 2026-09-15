@@ -2,6 +2,7 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBbj_4mD7GYgmYzYNGQQcWsDAsPZ-TcGFQ",
@@ -16,6 +17,7 @@ const firebaseConfig = {
 // Initialize Firebase (Prevents double-initialization in Next.js)
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
-// Export the services you'll need for Login/Signup and Data
+// Export the services you'll need for Login/Signup, Data, and Storage
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+export const storage = getStorage(app);
