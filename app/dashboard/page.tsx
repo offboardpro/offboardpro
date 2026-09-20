@@ -30,6 +30,9 @@ import {
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
+// 1. IMPORT TOOL INSTRUCTIONS
+import { TOOL_INSTRUCTIONS } from "@/lib/tool-instructions";
+
 // MASTER TOOL LIBRARY
 // Keep tool names as stable strings because selected tools are stored in Firestore.
 const TOOL_LIBRARY: Record<string, string[]> = {
@@ -1292,6 +1295,9 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true); 
   const [subscriptionData, setSubscriptionData] = useState<any>(null); 
   
+  // 2. STATE FOR INSTRUCTIONS TASK
+  const [instructionTask, setInstructionTask] = useState<any>(null);
+
   // FORM STATES
   const [clientName, setClientName] = useState("");
   const [clientStatus, setClientStatus] = useState("active");
@@ -1321,6 +1327,11 @@ export default function DashboardPage() {
       return toolsData.join(", ");
     }
     return toolsData || "";
+  };
+
+  // 3. INSTRUCTION OPENER HELPER
+  const openToolInstructions = (task: any) => {
+    setInstructionTask(task);
   };
 
   // TOOL TOGGLE FUNCTION
@@ -2514,9 +2525,26 @@ export default function DashboardPage() {
                                               {task.title}
                                             </p>
 
-                                            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-0.5">
-                                              {task.tool}
-                                            </p>
+                                            <div className="flex items-center gap-2 mt-0.5">
+                                              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                                {task.tool}
+                                              </p>
+
+                                              {/* 4. VIEW INSTRUCTIONS BUTTON */}
+                                              {TOOL_INSTRUCTIONS[task.tool] && (
+                                                <button
+                                                  type="button"
+                                                  onClick={() => openToolInstructions(task)}
+                                                  className={`text-[10px] font-black uppercase tracking-widest ${
+                                                    isDarkMode
+                                                      ? "text-blue-400 hover:text-blue-300"
+                                                      : "text-[#243F74] hover:underline"
+                                                  }`}
+                                                >
+                                                  View Instructions
+                                                </button>
+                                              )}
+                                            </div>
                                           </div>
 
                                           <select
@@ -2757,9 +2785,26 @@ export default function DashboardPage() {
                                       {task.title}
                                     </p>
 
-                                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-0.5">
-                                      {task.tool}
-                                    </p>
+                                    <div className="flex items-center gap-2 mt-0.5">
+                                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                        {task.tool}
+                                      </p>
+
+                                      {/* 4. VIEW INSTRUCTIONS BUTTON */}
+                                      {TOOL_INSTRUCTIONS[task.tool] && (
+                                        <button
+                                          type="button"
+                                          onClick={() => openToolInstructions(task)}
+                                          className={`text-[10px] font-black uppercase tracking-widest ${
+                                            isDarkMode
+                                              ? "text-blue-400 hover:text-blue-300"
+                                              : "text-[#243F74] hover:underline"
+                                          }`}
+                                        >
+                                          View Instructions
+                                        </button>
+                                      )}
+                                    </div>
                                   </div>
 
                                   <select
@@ -2865,6 +2910,84 @@ export default function DashboardPage() {
           </>
         )}
       </main>
+
+      {/* TOOL INSTRUCTIONS MODAL */}
+      {instructionTask && TOOL_INSTRUCTIONS[instructionTask.tool] && (
+        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xl flex items-center justify-center z-[130] px-4">
+          <div
+            className={`w-full max-w-[540px] max-h-[85vh] overflow-y-auto rounded-[2.5rem] p-8 md:p-10 shadow-2xl border-t-[10px] ${
+              isDarkMode
+                ? "bg-slate-900 border-[#243F74]"
+                : "bg-white border-[#243F74]"
+            }`}
+          >
+            <div className="flex items-start justify-between gap-4 mb-6">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#9BCB3B] mb-1">
+                  How-To Guide
+                </p>
+                <h2
+                  className={`text-2xl font-black italic ${
+                    isDarkMode ? "text-white" : "text-[#243F74]"
+                  }`}
+                >
+                  {instructionTask.tool}
+                </h2>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setInstructionTask(null)}
+                className="text-slate-400 hover:text-red-500 transition-colors text-2xl font-black"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <p className="text-xs font-bold text-slate-400">
+                Follow these instructions to safely remove access for this tool:
+              </p>
+
+              {/* MAP OVER STEPS ARRAY */}
+              <ol className="space-y-3 pl-2">
+                {TOOL_INSTRUCTIONS[instructionTask.tool].steps.map(
+                  (step: string, index: number) => (
+                    <li key={index} className="flex gap-3 text-xs font-bold">
+                      <span className="shrink-0 flex items-center justify-center w-5 h-5 rounded-full bg-[#243F74] text-white text-[10px] font-black">
+                        {index + 1}
+                      </span>
+                      <span className={isDarkMode ? "text-slate-200" : "text-slate-700"}>
+                        {step}
+                      </span>
+                    </li>
+                  )
+                )}
+              </ol>
+
+              {/* VERIFICATION SECTION IF AVAILABLE */}
+              {TOOL_INSTRUCTIONS[instructionTask.tool].verification && (
+                <div className="mt-4 p-4 rounded-2xl bg-blue-50/50 border border-blue-100 text-xs">
+                  <p className="font-black uppercase tracking-wider text-blue-800 mb-1">
+                    Verification
+                  </p>
+                  <p className="text-blue-700">
+                    {TOOL_INSTRUCTIONS[instructionTask.tool].verification}
+                  </p>
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={() => setInstructionTask(null)}
+                className="w-full mt-6 py-3.5 rounded-2xl bg-[#243F74] text-white font-black text-xs uppercase tracking-widest hover:opacity-90 transition"
+              >
+                Got It
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* STEP 6 — COMPLETION SUMMARY MODAL */}
       {completionSummaryClient && (

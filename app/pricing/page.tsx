@@ -7,7 +7,7 @@ import Link from "next/link";
 // 1. Import Firebase Auth and Firestore
 import { auth, db } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import { doc, setDoc, serverTimestamp, onSnapshot } from "firebase/firestore";
+import { doc, onSnapshot } from "firebase/firestore";
 import confetti from "canvas-confetti"; // Confetti Import
 
 export default function PricingPage() {
@@ -16,7 +16,7 @@ export default function PricingPage() {
   const [isUpgrading, setIsUpgrading] = useState(false);
   const [isPro, setIsPro] = useState(false);
   const [loading, setLoading] = useState(true);
-  
+
   // Billing Cycle State
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
 
@@ -30,10 +30,10 @@ export default function PricingPage() {
 
     const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
-      
+
       if (currentUser) {
         const userRef = doc(db, "users", currentUser.uid);
-        
+
         const unsubscribeDoc = onSnapshot(userRef, (docSnap) => {
           if (docSnap.exists()) {
             const data = docSnap.data();
@@ -59,7 +59,7 @@ export default function PricingPage() {
             setIsPro(false);
             localStorage.setItem("offboardpro_isPro", "false");
           }
-          setLoading(false); 
+          setLoading(false);
         }, (error) => {
           console.error("Pricing sync error:", error);
           setLoading(false);
@@ -67,7 +67,7 @@ export default function PricingPage() {
 
         return () => unsubscribeDoc();
       } else {
-        setIsPro(false); 
+        setIsPro(false);
         setLoading(false);
       }
     });
@@ -86,16 +86,20 @@ export default function PricingPage() {
       return;
     }
 
-    // Amount in paise
-    const amountInPaise = billingCycle === 'monthly' ? 19900 : 199000;
-
     try {
+      const idToken = await user.getIdToken();
+
       const res = await fetch("/api/razorpay", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: amountInPaise, userId: user.uid }), 
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({
+          billingCycle,
+        }),
       });
-      
+
       const order = await res.json();
 
       if (!order.id) {
@@ -104,14 +108,43 @@ export default function PricingPage() {
       }
 
       const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID, 
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
         amount: order.amount,
         currency: "INR",
         name: "OffboardPro",
         description: `${billingCycle.toUpperCase()} Pro Subscription`,
         order_id: order.id,
         handler: async function (response: any) {
-          await finalizeCloudUpgrade();
+          try {
+            const idToken = await user.getIdToken();
+            const verifyRes = await fetch("/api/razorpay/verify", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${idToken}`,
+              },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              }),
+            });
+
+            const result = await verifyRes.json();
+
+            if (!verifyRes.ok || !result.success) {
+              console.error("Payment verification failed:", result);
+              alert("Payment could not be verified. Please contact support.");
+              setIsUpgrading(false);
+              return;
+            }
+
+            await finalizeCloudUpgrade();
+          } catch (error) {
+            console.error("Payment verification error:", error);
+            alert("Payment verification failed. Please contact support.");
+            setIsUpgrading(false);
+          }
         },
         prefill: {
           name: user.displayName || "Freelancer",
@@ -140,49 +173,32 @@ export default function PricingPage() {
       e.preventDefault();
       e.returnValue = "";
     };
+
     window.addEventListener("beforeunload", preventClose);
 
     confetti({
       particleCount: 150,
       spread: 70,
       origin: { y: 0.6 },
-      colors: ['#243F74', '#9BCB3B', '#ffffff']
+      colors: ["#243F74", "#9BCB3B", "#ffffff"],
     });
-    
+
     try {
-        const userRef = doc(db, "users", user.uid);
-        
-        const now = new Date();
-        const expiryDate = new Date();
-        
-        if (billingCycle === 'monthly') {
-          expiryDate.setMonth(now.getMonth() + 1);
-        } else {
-          expiryDate.setFullYear(now.getFullYear() + 1);
-        }
-        
-        await setDoc(userRef, { 
-          isPro: true,
-          plan: "Professional",
-          billingCycle: billingCycle,
-          upgradedAt: serverTimestamp(),
-          expiresAt: expiryDate 
-        }, { merge: true });
+      // The server has already verified the payment
+      // and granted the Pro entitlement.
+      localStorage.setItem("offboardpro_isPro", "true");
+      setIsPro(true);
 
-        localStorage.setItem("offboardpro_isPro", "true");
-        setIsPro(true);
-        
-        setTimeout(() => {
-          window.removeEventListener("beforeunload", preventClose);
-          setIsUpgrading(false); 
-          router.push("/success");
-        }, 2500);
-
-    } catch (error) {
-        console.error("Upgrade failed:", error);
+      setTimeout(() => {
         window.removeEventListener("beforeunload", preventClose);
         setIsUpgrading(false);
-        alert("Payment successful, but status update failed. Please refresh manually or contact support.");
+        router.push("/success");
+      }, 2500);
+    } catch (error) {
+      console.error("Upgrade finalization failed:", error);
+      window.removeEventListener("beforeunload", preventClose);
+      setIsUpgrading(false);
+      alert("Payment was verified, but something went wrong. Please contact support.");
     }
   };
 
@@ -206,8 +222,8 @@ export default function PricingPage() {
           </div>
           <h2 style={{ color: '#243F74' }} className="text-4xl font-black italic mb-2 tracking-tight">Welcome to Pro.</h2>
           <p className="text-slate-400 font-bold uppercase text-[10px] tracking-[0.3em] mb-8">Unlocking your premium features...</p>
-          
-          <button 
+
+          <button
             disabled
             style={{ backgroundColor: '#243F74' }}
             className="px-10 py-4 rounded-xl text-white font-black text-xs uppercase tracking-widest shadow-xl animate-pulse"
@@ -243,15 +259,15 @@ export default function PricingPage() {
           <p className="text-slate-400 text-sm md:text-lg font-medium max-w-2xl mx-auto">
             Choose the plan that fits your freelance scale. Upgrade or downgrade anytime.
           </p>
-          
+
           <div className="flex items-center justify-center gap-4 mt-12 bg-slate-50 w-fit mx-auto p-2 rounded-full border border-slate-100">
-            <button 
+            <button
               onClick={() => setBillingCycle('monthly')}
               className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${billingCycle === 'monthly' ? 'bg-white text-[#243F74] shadow-sm' : 'text-slate-400'}`}
             >
               Monthly
             </button>
-            <button 
+            <button
               onClick={() => setBillingCycle('yearly')}
               className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${billingCycle === 'yearly' ? 'bg-white text-[#243F74] shadow-sm' : 'text-slate-400'}`}
             >
@@ -286,7 +302,7 @@ export default function PricingPage() {
                 Recommended
               </div>
             )}
-            
+
             {/* Show "Active" badge if they are Pro */}
             {isPro && (
               <div style={{ backgroundColor: '#243F74' }} className="absolute top-0 right-0 px-6 py-2 text-white text-[10px] font-black uppercase rounded-bl-[1.5rem] tracking-widest">
@@ -318,9 +334,9 @@ export default function PricingPage() {
             <div className="space-y-3">
               {/* FIXED UI: Only show Upgrade button if NOT Pro */}
               {!isPro ? (
-                <button 
-                  onClick={handleUpgrade} 
-                  style={{ backgroundColor: '#243F74' }} 
+                <button
+                  onClick={handleUpgrade}
+                  style={{ backgroundColor: '#243F74' }}
                   className="w-full py-5 rounded-2xl text-white font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-[#243F74]/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -336,8 +352,8 @@ export default function PricingPage() {
                     </svg>
                     Pro Plan Active
                   </div>
-                  <Link 
-                    href="/dashboard" 
+                  <Link
+                    href="/dashboard"
                     style={{ backgroundColor: '#243F74' }}
                     className="w-full py-4 rounded-2xl text-white text-center font-black text-[10px] uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all shadow-lg"
                   >
@@ -352,7 +368,7 @@ export default function PricingPage() {
             </div>
           </div>
         </div>
-        
+
         <div className="mt-20 text-center">
             <p className="text-slate-400 text-xs font-bold mb-4 uppercase tracking-widest">Trusted by 2,000+ Freelancers</p>
             <div className="flex flex-wrap justify-center gap-8 opacity-40 grayscale">
