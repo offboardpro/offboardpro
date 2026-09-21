@@ -18,16 +18,16 @@ export default function SignUpPage() {
 
   // --- HELPER: Sync User Data to Firestore ---
   const syncUserToFirestore = async (user: any, customName?: string) => {
-    const userRef = doc(db, "users", user.uid);
-    await setDoc(userRef, {
-      uid: user.uid,
-      email: user.email,
-      displayName: customName || user.displayName || "User",
-      photoURL: user.photoURL || null,
-      createdAt: serverTimestamp(),
-      isPro: false, // Default new users to free plan
-    }, { merge: true });
-  };
+  const userRef = doc(db, "users", user.uid);
+
+  await setDoc(userRef, {
+    uid: user.uid,
+    email: user.email,
+    displayName: customName || user.displayName || "User",
+    photoURL: user.photoURL || null,
+    createdAt: serverTimestamp(),
+  }, { merge: true });
+};
 
   // --- HELPER: Trigger Welcome Email ---
   const triggerWelcomeEmail = async (userEmail: string | null, userName: string | null) => {
