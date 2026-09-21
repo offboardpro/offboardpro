@@ -1321,6 +1321,11 @@ export default function DashboardPage() {
   // STEP 1 — Completion Summary State
   const [completionSummaryClient, setCompletionSummaryClient] = useState<any>(null);
 
+  // Safely extract instruction object for current instructionTask
+  const currentInstruction = useMemo(() => {
+    return instructionTask ? TOOL_INSTRUCTIONS[instructionTask.tool] : null;
+  }, [instructionTask]);
+
   // Helper function to safely display tools whether stored as string or array
   const formatToolsDisplay = (toolsData: any) => {
     if (Array.isArray(toolsData)) {
@@ -2912,25 +2917,16 @@ export default function DashboardPage() {
       </main>
 
       {/* TOOL INSTRUCTIONS MODAL */}
-      {instructionTask && TOOL_INSTRUCTIONS[instructionTask.tool] && (
-        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xl flex items-center justify-center z-[130] px-4">
-          <div
-            className={`w-full max-w-[540px] max-h-[85vh] overflow-y-auto rounded-[2.5rem] p-8 md:p-10 shadow-2xl border-t-[10px] ${
-              isDarkMode
-                ? "bg-slate-900 border-[#243F74]"
-                : "bg-white border-[#243F74]"
-            }`}
-          >
-            <div className="flex items-start justify-between gap-4 mb-6">
+      {instructionTask && currentInstruction && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-2xl dark:bg-slate-900">
+            {/* Header */}
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white px-6 py-5 dark:border-slate-700 dark:bg-slate-900">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#9BCB3B] mb-1">
+                <p className="text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">
                   How-To Guide
                 </p>
-                <h2
-                  className={`text-2xl font-black italic ${
-                    isDarkMode ? "text-white" : "text-[#243F74]"
-                  }`}
-                >
+                <h2 className="mt-1 text-xl font-bold text-slate-900 dark:text-white">
                   {instructionTask.tool}
                 </h2>
               </div>
@@ -2938,49 +2934,102 @@ export default function DashboardPage() {
               <button
                 type="button"
                 onClick={() => setInstructionTask(null)}
-                className="text-slate-400 hover:text-red-500 transition-colors text-2xl font-black"
+                className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                aria-label="Close instructions"
               >
                 ✕
               </button>
             </div>
 
-            <div className="space-y-4">
-              <p className="text-xs font-bold text-slate-400">
-                Follow these instructions to safely remove access for this tool:
-              </p>
+            <div className="space-y-6 p-6">
+              {/* Access Type */}
+              <div>
+                <h3 className="mb-2 text-sm font-semibold text-slate-900 dark:text-white">
+                  Access Type
+                </h3>
 
-              {/* MAP OVER STEPS ARRAY */}
-              <ol className="space-y-3 pl-2">
-                {TOOL_INSTRUCTIONS[instructionTask.tool].steps.map(
-                  (step: string, index: number) => (
-                    <li key={index} className="flex gap-3 text-xs font-bold">
-                      <span className="shrink-0 flex items-center justify-center w-5 h-5 rounded-full bg-[#243F74] text-white text-[10px] font-black">
+                <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                  {currentInstruction.accessType}
+                </div>
+              </div>
+
+              {/* Removal Steps */}
+              <div>
+                <h3 className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">
+                  Removal Steps
+                </h3>
+
+                <ol className="space-y-3">
+                  {currentInstruction.steps.map((step, index) => (
+                    <li
+                      key={index}
+                      className="flex gap-3 text-sm text-slate-700 dark:text-slate-300"
+                    >
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
                         {index + 1}
                       </span>
-                      <span className={isDarkMode ? "text-slate-200" : "text-slate-700"}>
+
+                      <span className="pt-0.5 leading-6">
                         {step}
                       </span>
                     </li>
-                  )
-                )}
-              </ol>
+                  ))}
+                </ol>
+              </div>
 
-              {/* VERIFICATION SECTION IF AVAILABLE */}
-              {TOOL_INSTRUCTIONS[instructionTask.tool].verification && (
-                <div className="mt-4 p-4 rounded-2xl bg-blue-50/50 border border-blue-100 text-xs">
-                  <p className="font-black uppercase tracking-wider text-blue-800 mb-1">
-                    Verification
-                  </p>
-                  <p className="text-blue-700">
-                    {TOOL_INSTRUCTIONS[instructionTask.tool].verification}
-                  </p>
+              {/* Verification */}
+              <div>
+                <h3 className="mb-2 text-sm font-semibold text-slate-900 dark:text-white">
+                  Verification
+                </h3>
+
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm leading-6 text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-900/20 dark:text-emerald-300">
+                  {currentInstruction.verification}
+                </div>
+              </div>
+
+              {/* Notes */}
+              {currentInstruction.notes && currentInstruction.notes.length > 0 && (
+                <div>
+                  <h3 className="mb-2 text-sm font-semibold text-slate-900 dark:text-white">
+                    Notes
+                  </h3>
+
+                  <ul className="space-y-2">
+                    {currentInstruction.notes.map((note, index) => (
+                      <li
+                        key={index}
+                        className="flex gap-2 text-sm leading-6 text-slate-600 dark:text-slate-400"
+                      >
+                        <span>•</span>
+                        <span>{note}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               )}
 
+              {/* Official Help */}
+              {currentInstruction.helpUrl && (
+                <div>
+                  <a
+                    href={currentInstruction.helpUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                  >
+                    Open Official Help ↗
+                  </a>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="sticky bottom-0 border-t border-slate-200 bg-white px-6 py-4 dark:border-slate-700 dark:bg-slate-900">
               <button
                 type="button"
                 onClick={() => setInstructionTask(null)}
-                className="w-full mt-6 py-3.5 rounded-2xl bg-[#243F74] text-white font-black text-xs uppercase tracking-widest hover:opacity-90 transition"
+                className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
               >
                 Got It
               </button>
