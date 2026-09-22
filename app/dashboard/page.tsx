@@ -301,6 +301,53 @@ const COMMON_TOOLS = Array.from(
   new Set(Object.values(TOOL_LIBRARY).flat())
 );
 
+// STEP 1 — Add the templates
+const OFFBOARDING_TEMPLATES: Record<string, string[]> = {
+  "Web Development": [
+    "WordPress",
+    "GitHub",
+    "Vercel",
+    "Google Analytics 4",
+    "Google Tag Manager",
+    "Cloudflare",
+  ],
+
+  "Digital Marketing": [
+    "Google Ads",
+    "Meta Business Manager",
+    "Google Analytics 4",
+    "Google Tag Manager",
+    "Google Search Console",
+    "Canva",
+  ],
+
+  "SEO": [
+    "Google Search Console",
+    "Google Analytics 4",
+    "Ahrefs",
+    "Semrush",
+    "Google Business Profile",
+  ],
+
+  "Design": [
+    "Figma",
+    "Canva",
+    "Adobe Creative Cloud",
+    "Adobe Photoshop",
+    "Adobe Illustrator",
+  ],
+
+  "Social Media": [
+    "Meta Business Manager",
+    "Meta Ads Manager",
+    "Buffer",
+    "Hootsuite",
+    "Canva",
+  ],
+
+  "General": [],
+};
+
 const TOOL_CHECKLISTS: Record<string, string[]> = {
   // --- ADVERTISING & PAID MEDIA ---
   "Google Ads": [
@@ -1303,6 +1350,8 @@ export default function DashboardPage() {
   const [clientStatus, setClientStatus] = useState("active");
   const [projectName, setProjectName] = useState("");
   const [tools, setTools] = useState<string[]>([]);
+  // STEP 2 — Add template state
+  const [selectedTemplate, setSelectedTemplate] = useState("");
   const [projectStartDate, setProjectStartDate] = useState("");
   const [projectEndDate, setProjectEndDate] = useState("");
   const [accessRemovalDeadline, setAccessRemovalDeadline] = useState("");
@@ -1345,6 +1394,17 @@ export default function DashboardPage() {
       current.includes(tool)
         ? current.filter((item) => item !== tool)
         : [...current, tool]
+    );
+  };
+
+  // STEP 3 — Add the template selection function
+  const applyOffboardingTemplate = (templateName: string) => {
+    setSelectedTemplate(templateName);
+
+    const templateTools = OFFBOARDING_TEMPLATES[templateName] || [];
+
+    setTools((current) =>
+      Array.from(new Set([...current, ...templateTools]))
     );
   };
 
@@ -2071,6 +2131,8 @@ export default function DashboardPage() {
       setClientStatus("active");
       setProjectName("");
       setTools([]);
+      // STEP 5 — Reset it when saving
+      setSelectedTemplate("");
       setProjectStartDate("");
       setProjectEndDate("");
       setAccessRemovalDeadline("");
@@ -3367,6 +3429,40 @@ export default function DashboardPage() {
                       : "bg-slate-50 border-slate-100 focus:border-[#9BCB3B]"
                   }`}
                 />
+
+                {/* STEP 4 — Add the UI (OFFBOARDING TEMPLATE) */}
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">
+                    Start with a template
+                  </label>
+
+                  <div className="flex flex-wrap gap-2">
+                    {Object.keys(OFFBOARDING_TEMPLATES).map((template) => {
+                      const selected = selectedTemplate === template;
+
+                      return (
+                        <button
+                          key={template}
+                          type="button"
+                          onClick={() => applyOffboardingTemplate(template)}
+                          className={`px-3 py-2 rounded-xl text-xs font-bold border-2 transition ${
+                            selected
+                              ? "border-[#9BCB3B] bg-[#9BCB3B]/10 text-[#6d941f]"
+                              : isDarkMode
+                                ? "border-slate-700 bg-slate-800 text-slate-300 hover:border-slate-500"
+                                : "border-slate-100 bg-slate-50 text-slate-600 hover:border-slate-200"
+                          }`}
+                        >
+                          {template}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <p className="mt-2 text-[10px] font-semibold text-slate-400">
+                    Select a template to pre-select common tools. You can add or remove tools below.
+                  </p>
+                </div>
 
                 {/* TOOL LIBRARY */}
                 <div>
