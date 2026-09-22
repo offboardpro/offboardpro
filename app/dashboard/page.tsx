@@ -1336,6 +1336,8 @@ export default function DashboardPage() {
   const [viewingSubscription, setViewingSubscription] = useState(false); 
   const [isSaving, setIsSaving] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [sortOption, setSortOption] = useState("newest");
   const [isPro, setIsPro] = useState(false); 
   const [isDarkMode, setIsDarkMode] = useState(false); 
   const [showToast, setShowToast] = useState(false);
@@ -1344,6 +1346,9 @@ export default function DashboardPage() {
   
   // 2. STATE FOR INSTRUCTIONS TASK
   const [instructionTask, setInstructionTask] = useState<any>(null);
+
+  // 6B. STATE FOR ACTIVITY MODAL
+  const [activityClient, setActivityClient] = useState<any>(null);
 
   // FORM STATES
   const [clientName, setClientName] = useState("");
@@ -1369,6 +1374,45 @@ export default function DashboardPage() {
 
   // STEP 1 — Completion Summary State
   const [completionSummaryClient, setCompletionSummaryClient] = useState<any>(null);
+
+  // STEP 1 — Add Activity Timeline data helper
+  const addActivityLog = async (
+    clientId: string,
+    activity: {
+      type: string;
+      message: string;
+      taskId?: string;
+      taskTitle?: string;
+      tool?: string;
+      actor?: string;
+    }
+  ) => {
+    try {
+      const client = clients.find((item) => item.id === clientId);
+      if (!client) return;
+
+      const existingLog = Array.isArray(client.activityLog)
+        ? client.activityLog
+        : [];
+
+      const newEntry = {
+        id: crypto.randomUUID(),
+        type: activity.type,
+        message: activity.message,
+        taskId: activity.taskId || null,
+        taskTitle: activity.taskTitle || null,
+        tool: activity.tool || null,
+        actor: activity.actor || user?.displayName || "You",
+        timestamp: new Date().toISOString(),
+      };
+
+      await updateDoc(doc(db, "clients", clientId), {
+        activityLog: [newEntry, ...existingLog].slice(0, 100),
+      });
+    } catch (error) {
+      console.error("Failed to add activity log:", error);
+    }
+  };
 
   // Safely extract instruction object for current instructionTask
   const currentInstruction = useMemo(() => {
@@ -1810,6 +1854,7 @@ export default function DashboardPage() {
     }
   };
 
+  // STEP 2 — Log when offboarding starts
   const startOffboarding = async (id: string) => {
     try {
       const client = clients.find((item) => item.id === id);
@@ -1846,12 +1891,18 @@ export default function DashboardPage() {
         offboardingStartedAt: serverTimestamp(),
         checklist,
       });
+
+      await addActivityLog(id, {
+        type: "offboarding_started",
+        message: "Offboarding started",
+      });
     } catch (error) {
       console.error("Failed to start offboarding:", error);
       alert("Failed to start offboarding. Please try again.");
     }
   };
 
+  // STEP 3 — Log task status changes
   const updateChecklistTask = async (
     clientId: string,
     taskId: string,
@@ -1873,12 +1924,26 @@ export default function DashboardPage() {
       await updateDoc(doc(db, "clients", clientId), {
         checklist: updatedChecklist,
       });
+
+      const changedTask = client.checklist.find(
+        (task: any) => task.id === taskId
+      );
+      if (changedTask) {
+        await addActivityLog(clientId, {
+          type: "task_status_changed",
+          message: `Task marked ${newStatus.replace("_", " ")}`,
+          taskId,
+          taskTitle: changedTask.title,
+          tool: changedTask.tool,
+        });
+      }
     } catch (error) {
       console.error("Failed to update checklist task:", error);
       alert("Failed to update task. Please try again.");
     }
   };
 
+  // STEP 4 — Log assignments
   const assignChecklistTask = async (
     clientId: string,
     taskId: string
@@ -1919,13 +1984,24 @@ export default function DashboardPage() {
       await updateDoc(doc(db, "clients", clientId), {
         checklist: updatedChecklist,
       });
+
+      await addActivityLog(clientId, {
+        type: "task_assigned",
+        message: assignee
+          ? `Task assigned to ${assignee}`
+          : "Task assignment removed",
+        taskId,
+        taskTitle: task.title,
+        tool: task.tool,
+        actor: user?.displayName || "You",
+      });
     } catch (error) {
       console.error("Failed to assign checklist task:", error);
       alert("Failed to assign task. Please try again.");
     }
   };
 
-  // STEP 2 — Upgraded closeClient with Snapshot support
+  // STEP 5 — Log client closure
   const closeClient = async (clientId: string) => {
     try {
       const client = clients.find((item) => item.id === clientId);
@@ -1999,6 +2075,12 @@ export default function DashboardPage() {
           incompleteTasks: incompleteTasks.length,
           assignees,
         },
+      });
+
+      await addActivityLog(clientId, {
+        type: "client_closed",
+        message: "Client offboarding closed",
+        actor: user?.displayName || "You",
       });
 
       setCompletionSummaryClient({
@@ -2161,13 +2243,83 @@ export default function DashboardPage() {
     }
   };
 
-  const filteredClients = clients.filter(client => {
-    const formattedTools = formatToolsDisplay(client.tools);
-    return (
-      client.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      formattedTools.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  });
+  const filteredClients = [...clients]
+    .filter((client) => {
+      const formattedTools = formatToolsDisplay(client.tools);
+
+      const matchesSearch =
+        client.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        formattedTools.toLowerCase().includes(searchTerm.toLowerCase());
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const deadlineDate = client.accessRemovalDeadline
+        ? new Date(client.accessRemovalDeadline)
+        : null;
+
+      const checklist = Array.isArray(client.checklist)
+        ? client.checklist
+        : [];
+
+      const completedTasks = checklist.filter(
+        (task: any) =>
+          task.status === "removed" ||
+          task.status === "not_needed"
+      ).length;
+
+      const progress =
+        checklist.length > 0
+          ? Math.round((completedTasks / checklist.length) * 100)
+          : 0;
+
+      const isOverdue =
+        client.clientStatus !== "closed" &&
+        (client.clientStatus === "offboarding" ||
+          client.clientStatus === "ready_to_close") &&
+        deadlineDate !== null &&
+        deadlineDate < today &&
+        progress < 100;
+
+      const matchesStatus =
+        statusFilter === "all" ||
+        (statusFilter === "overdue"
+          ? isOverdue
+          : client.clientStatus === statusFilter);
+
+      return matchesSearch && matchesStatus;
+    })
+    .sort((a, b) => {
+      if (sortOption === "newest") {
+        return (
+          new Date(b.createdAt?.toDate?.() || b.createdAt || 0).getTime() -
+          new Date(a.createdAt?.toDate?.() || a.createdAt || 0).getTime()
+        );
+      }
+
+      if (sortOption === "oldest") {
+        return (
+          new Date(a.createdAt?.toDate?.() || a.createdAt || 0).getTime() -
+          new Date(b.createdAt?.toDate?.() || b.createdAt || 0).getTime()
+        );
+      }
+
+      if (sortOption === "deadline_soonest") {
+        return (
+          new Date(a.accessRemovalDeadline || "9999-12-31").getTime() -
+          new Date(b.accessRemovalDeadline || "9999-12-31").getTime()
+        );
+      }
+
+      if (sortOption === "deadline_latest") {
+        return (
+          new Date(b.accessRemovalDeadline || "1900-01-01").getTime() -
+          new Date(a.accessRemovalDeadline || "1900-01-01").getTime()
+        );
+      }
+
+      return 0;
+    });
 
   if (loading) {
     return (
@@ -2393,6 +2545,40 @@ export default function DashboardPage() {
           
           <div className="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
             <input type="text" placeholder="Search..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className={`w-full sm:w-64 border-2 rounded-2xl px-4 py-3 text-sm font-bold outline-none transition-all ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white focus:border-[#9BCB3B]' : 'bg-white border-slate-100 focus:border-[#9BCB3B]'}`} />
+            
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className={`border-2 rounded-2xl px-4 py-3 text-xs font-black outline-none ${
+                  isDarkMode
+                    ? "bg-slate-800 border-slate-700 text-white"
+                    : "bg-white border-slate-100 text-slate-600"
+                }`}
+              >
+                <option value="all">All Status</option>
+                <option value="active">Active</option>
+                <option value="ending_soon">Ending Soon</option>
+                <option value="offboarding">Offboarding</option>
+                <option value="ready_to_close">Ready to Close</option>
+                <option value="closed">Closed</option>
+                <option value="overdue">Overdue</option>
+              </select>
+
+              <select
+                value={sortOption}
+                onChange={(e) => setSortOption(e.target.value)}
+                className={`border-2 rounded-2xl px-4 py-3 text-xs font-black outline-none ${
+                  isDarkMode
+                    ? "bg-slate-800 border-slate-700 text-white"
+                    : "bg-white border-slate-100 text-slate-600"
+                }`}
+              >
+                <option value="newest">Newest</option>
+                <option value="oldest">Oldest</option>
+                <option value="deadline_soonest">Deadline Soonest</option>
+                <option value="deadline_latest">Deadline Latest</option>
+              </select></div>
             
             <div className="flex items-center gap-3 w-full sm:w-auto">
               {!isPro && (
@@ -2676,12 +2862,25 @@ export default function DashboardPage() {
                             </span>
                           </td>
                           <td className={`px-8 py-6 text-center font-black text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{client.date}</td>
-                          <td className="px-8 py-6 text-right whitespace-nowrap">
+                          <td className="px-8 py-6 text-right whitespace-nowrap space-x-2">
+                            {/* 6A. ADDED ACTIVITY BUTTON */}
+                            <button
+                              type="button"
+                              onClick={() => setActivityClient(client)}
+                              className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition ${
+                                isDarkMode
+                                  ? "border-slate-700 text-slate-300 hover:bg-slate-800"
+                                  : "border-slate-200 text-slate-600 hover:bg-slate-50"
+                              }`}
+                            >
+                              Activity
+                            </button>
+
                             {(client.clientStatus === "active" || client.clientStatus === "ending_soon") && (
                               <button
                                 type="button"
                                 onClick={() => startOffboarding(client.id)}
-                                className="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-black hover:bg-slate-800 transition mr-3"
+                                className="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-black hover:bg-slate-800 transition"
                               >
                                 Start Offboarding
                               </button>
@@ -2690,7 +2889,7 @@ export default function DashboardPage() {
                               <button
                                 type="button"
                                 onClick={() => closeClient(client.id)}
-                                className="px-4 py-2 rounded-xl bg-[#9BCB3B] text-white text-xs font-black hover:opacity-90 transition mr-3"
+                                className="px-4 py-2 rounded-xl bg-[#9BCB3B] text-white text-xs font-black hover:opacity-90 transition"
                               >
                                 Close Client
                               </button>
@@ -2702,14 +2901,14 @@ export default function DashboardPage() {
                               <button
                                 type="button"
                                 onClick={() => openCompletionSummary(client)}
-                                className="text-[#243F74] dark:text-[#9BCB3B] font-black text-[10px] uppercase tracking-widest mr-5 hover:underline decoration-2"
+                                className="text-[#243F74] dark:text-[#9BCB3B] font-black text-[10px] uppercase tracking-widest hover:underline decoration-2 ml-2"
                               >
                                 View Summary
                               </button>
                             )}
 
-                            {isPro && <button onClick={() => viewPortal(client.id)} className="text-[#9BCB3B] font-black text-[10px] uppercase tracking-widest mr-5 hover:underline decoration-2">View Portal</button>}
-                            <button onClick={() => handleDelete(client.id)} className="text-slate-500 hover:text-red-400 font-black text-[10px] uppercase transition-colors">Remove</button>
+                            {isPro && <button onClick={() => viewPortal(client.id)} className="text-[#9BCB3B] font-black text-[10px] uppercase tracking-widest hover:underline decoration-2 ml-2">View Portal</button>}
+                            <button onClick={() => handleDelete(client.id)} className="text-slate-500 hover:text-red-400 font-black text-[10px] uppercase transition-colors ml-2">Remove</button>
                           </td>
                         </tr>
                       );
@@ -2935,6 +3134,19 @@ export default function DashboardPage() {
                         </div>
                       </div>
                       
+                      {/* 6A. MOBILE ACTIVITY BUTTON */}
+                      <button
+                        type="button"
+                        onClick={() => setActivityClient(client)}
+                        className={`w-full py-2.5 rounded-xl border-2 text-xs font-black uppercase tracking-widest transition text-center ${
+                          isDarkMode
+                            ? "border-slate-700 text-slate-300 hover:bg-slate-800"
+                            : "border-slate-200 text-slate-600 hover:bg-slate-50"
+                        }`}
+                      >
+                        Activity
+                      </button>
+
                       {/* STEP 5 — Mobile View Summary Button */}
                       {(client.clientStatus === "ready_to_close" ||
                         client.clientStatus === "closed") && (
@@ -3307,6 +3519,153 @@ export default function DashboardPage() {
               >
                 Done
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 6C. ADD THE ACTIVITY MODAL */}
+      {activityClient && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
+            onClick={() => setActivityClient(null)}
+          />
+
+          <div
+            className={`relative w-full max-w-2xl max-h-[85vh] overflow-hidden rounded-3xl border shadow-2xl ${
+              isDarkMode
+                ? "bg-slate-950 border-slate-800"
+                : "bg-white border-slate-100"
+            }`}
+          >
+            {/* HEADER */}
+            <div
+              className={`px-6 py-5 border-b ${
+                isDarkMode ? "border-slate-800" : "border-slate-100"
+              }`}
+            >
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-[#9BCB3B]">
+                    Activity
+                  </p>
+
+                  <h2
+                    className={`text-xl font-black mt-1 ${
+                      isDarkMode ? "text-white" : "text-[#243F74]"
+                    }`}
+                  >
+                    {activityClient.name || "Client"}
+                  </h2>
+
+                  {activityClient.projectName && (
+                    <p className="text-xs font-bold text-slate-400 mt-1">
+                      {activityClient.projectName}
+                    </p>
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setActivityClient(null)}
+                  className={`h-10 w-10 rounded-xl flex items-center justify-center text-lg font-bold ${
+                    isDarkMode
+                      ? "bg-slate-800 text-slate-300"
+                      : "bg-slate-100 text-slate-500"
+                  }`}
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+
+            {/* TIMELINE */}
+            <div className="overflow-y-auto max-h-[65vh] p-6">
+              {Array.isArray(activityClient.activityLog) &&
+              activityClient.activityLog.length > 0 ? (
+                <div className="relative">
+                  <div
+                    className={`absolute left-[7px] top-2 bottom-2 w-px ${
+                      isDarkMode ? "bg-slate-800" : "bg-slate-200"
+                    }`}
+                  />
+
+                  <div className="space-y-6">
+                    {activityClient.activityLog.map((activity: any) => (
+                      <div
+                        key={activity.id}
+                        className="relative flex gap-4"
+                      >
+                        <div
+                          className={`relative z-10 mt-1 h-4 w-4 shrink-0 rounded-full border-4 ${
+                            isDarkMode
+                              ? "bg-slate-950 border-[#9BCB3B]"
+                              : "bg-white border-[#9BCB3B]"
+                          }`}
+                        />
+
+                        <div className="min-w-0 flex-1">
+                          <div
+                            className={`rounded-2xl border p-4 ${
+                              isDarkMode
+                                ? "bg-slate-900 border-slate-800"
+                                : "bg-slate-50 border-slate-100"
+                            }`}
+                          >
+                            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                              <div>
+                                <p
+                                  className={`text-sm font-black ${
+                                    isDarkMode
+                                      ? "text-slate-200"
+                                      : "text-slate-700"
+                                  }`}
+                                >
+                                  {activity.message}
+                                </p>
+
+                                {activity.taskTitle && (
+                                  <p className="text-xs font-bold text-slate-400 mt-1">
+                                    {activity.taskTitle}
+                                    {activity.tool
+                                      ? ` • ${activity.tool}`
+                                      : ""}
+                                  </p>
+                                )}
+                              </div>
+
+                              <span className="text-[10px] font-bold text-slate-400 whitespace-nowrap">
+                                {activity.timestamp
+                                  ? new Date(
+                                      activity.timestamp
+                                    ).toLocaleString()
+                                  : "—"}
+                              </span>
+                            </div>
+
+                            {activity.actor && (
+                              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-3">
+                                By {activity.actor}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="py-16 text-center">
+                  <p className="text-sm font-black text-slate-400">
+                    No activity yet
+                  </p>
+
+                  <p className="text-xs font-bold text-slate-400 mt-2">
+                    Client activity will appear here as you work.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>
