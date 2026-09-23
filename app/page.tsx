@@ -1751,7 +1751,7 @@ function OffboardingScrollExperience() {
           LONG SCROLL AREA
       ====================================================== */}
 
-      <div className="relative min-h-[155vh] sm:min-h-[165vh] lg:min-h-[175vh]">
+      <div className="relative min-h-[115vh] sm:min-h-[145vh] lg:min-h-[175vh]">
 
         {/* ===================================================
             STICKY SCREEN
