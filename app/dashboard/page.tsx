@@ -1375,6 +1375,9 @@ export default function DashboardPage() {
   // STEP 1 — Completion Summary State
   const [completionSummaryClient, setCompletionSummaryClient] = useState<any>(null);
 
+  // CLIENT / PROJECT WORKSPACE
+  const [workspaceClient, setWorkspaceClient] = useState<any>(null);
+
   // STEP 1 — Add Activity Timeline data helper
   const addActivityLog = async (
     clientId: string,
@@ -1430,6 +1433,10 @@ export default function DashboardPage() {
   // 3. INSTRUCTION OPENER HELPER
   const openToolInstructions = (task: any) => {
     setInstructionTask(task);
+  };
+
+  const openClientWorkspace = (client: any) => {
+    setWorkspaceClient(client);
   };
 
   // TOOL TOGGLE FUNCTION
@@ -2368,43 +2375,6 @@ export default function DashboardPage() {
       {/* MAIN CONTENT */}
       <main className="flex-grow w-full max-w-7xl mx-auto pt-40 md:pt-48 pb-16 px-4 md:px-8">
         
-        {/* PRO ONLY EMAIL WHITELIST BANNER */}
-        {isPro && (
-          <div className={`mb-8 p-5 rounded-[2rem] border-2 border-dashed flex flex-col md:flex-row items-center justify-between gap-6 transition-all animate-in fade-in slide-in-from-top-4 duration-700 ${isDarkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-blue-50/30 border-blue-100'}`}>
-            <div className="flex items-center gap-4 text-center md:text-left">
-              <div className="w-12 h-12 rounded-2xl bg-blue-100 flex items-center justify-center text-blue-600 flex-shrink-0">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v12a2 2 0 002 2z" />
-                </svg>
-              </div>
-              <div>
-                <p className={`text-xs font-black uppercase tracking-widest mb-1 ${isDarkMode ? 'text-slate-200' : 'text-[#243F74]'}`}>
-                  Ensure Pro Delivery ⚡
-                </p>
-                <p className="text-[11px] font-bold text-slate-400 leading-relaxed">
-                  Add <span className="text-[#9BCB3B] font-black">offboardpro@gmail.com</span> to your contacts to ensure automated alerts land in your primary inbox.
-                </p>
-              </div>
-            </div>
-            <button 
-              onClick={() => alert("Marking our emails as 'Not Spam' ensures you never miss a critical access review!")}
-              className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm ${isDarkMode ? 'bg-slate-800 text-slate-300 border-slate-700' : 'bg-white text-slate-500 border-slate-100'} border`}
-            >
-              Whitelisting Guide
-            </button>
-          </div>
-        )}
-
-        {/* PRO AUTOMATION BADGE */}
-        {isPro && (
-          <div className="flex items-center gap-2 mb-6 p-3 bg-blue-50/50 border border-blue-100 rounded-2xl w-fit animate-in fade-in slide-in-from-left-4 duration-700">
-            <div className="h-2 w-2 rounded-full bg-blue-500 animate-pulse"></div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-blue-600">
-              Pro Automation: Daily 9:00 AM Scan Active
-            </span>
-          </div>
-        )}
-
         {isPro && activeAlerts.length > 0 && (
           <div className="mb-10 animate-in fade-in slide-in-from-top-4 duration-500">
               <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-red-500 mb-3 flex items-center gap-2">
@@ -2415,7 +2385,7 @@ export default function DashboardPage() {
                 Smart Security Alerts
               </h4>
               <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
-                {activeAlerts.map(alert => (
+                {activeAlerts.map((alert: any) => (
                   <div key={alert.id} className={`min-w-[300px] border-2 p-5 rounded-[2rem] flex items-center justify-between transition-all ${isDarkMode ? 'bg-red-500/10 border-red-500/20' : 'bg-red-50 border-red-100 shadow-lg shadow-red-500/5'}`}>
                     <div>
                       <p className={`font-black text-sm italic mb-1 ${isDarkMode ? 'text-red-400' : 'text-[#243F74]'}`}>{alert.name}</p>
@@ -2760,7 +2730,7 @@ export default function DashboardPage() {
                                                   ? "bg-amber-400"
                                                   : task.status === "not_needed"
                                                     ? "bg-slate-400"
-                                                    : task.status === "waiting_client"
+                                                    : task.status === "waiting_client" || task.status === "waiting"
                                                       ? "bg-blue-400"
                                                       : "bg-slate-300"
                                             }`}
@@ -2809,10 +2779,16 @@ export default function DashboardPage() {
                                                 e.target.value
                                               )
                                             }
-                                            className={`rounded-lg border px-2 py-2 text-xs font-bold outline-none focus:border-[#9BCB3B] ${
-                                              isDarkMode
-                                                ? "bg-slate-800 border-slate-700 text-slate-200"
-                                                : "bg-white border-slate-200 text-slate-600"
+                                            className={`px-3 py-2 rounded-xl border text-[10px] font-black uppercase tracking-wider outline-none transition-all ${
+                                              task.status === "removed"
+                                                ? "bg-emerald-50 border-emerald-200 text-emerald-600"
+                                                : task.status === "in_progress"
+                                                  ? "bg-blue-50 border-blue-200 text-blue-600"
+                                                  : task.status === "not_needed"
+                                                    ? "bg-slate-100 border-slate-200 text-slate-500"
+                                                    : task.status === "waiting" || task.status === "waiting_client"
+                                                      ? "bg-amber-50 border-amber-200 text-amber-600"
+                                                      : "bg-slate-50 border-slate-200 text-slate-500"
                                             }`}
                                           >
                                             <option value="pending">Pending</option>
@@ -2906,6 +2882,14 @@ export default function DashboardPage() {
                                 View Summary
                               </button>
                             )}
+
+                            <button
+                              type="button"
+                              onClick={() => openClientWorkspace(client)}
+                              className="text-[#243F74] dark:text-[#9BCB3B] font-black text-[10px] uppercase tracking-widest hover:underline decoration-2 ml-2"
+                            >
+                              Workspace
+                            </button>
 
                             {isPro && <button onClick={() => viewPortal(client.id)} className="text-[#9BCB3B] font-black text-[10px] uppercase tracking-widest hover:underline decoration-2 ml-2">View Portal</button>}
                             <button onClick={() => handleDelete(client.id)} className="text-slate-500 hover:text-red-400 font-black text-[10px] uppercase transition-colors ml-2">Remove</button>
@@ -3033,7 +3017,7 @@ export default function DashboardPage() {
                                           ? "bg-amber-400"
                                           : task.status === "not_needed"
                                             ? "bg-slate-400"
-                                            : task.status === "waiting_client"
+                                            : task.status === "waiting_client" || task.status === "waiting"
                                               ? "bg-blue-400"
                                               : "bg-slate-300"
                                     }`}
@@ -3082,10 +3066,16 @@ export default function DashboardPage() {
                                         e.target.value
                                       )
                                     }
-                                    className={`rounded-lg border px-2 py-2 text-xs font-bold outline-none focus:border-[#9BCB3B] ${
-                                      isDarkMode
-                                        ? "bg-slate-800 border-slate-700 text-slate-200"
-                                        : "bg-white border-slate-200 text-slate-600"
+                                    className={`px-3 py-2 rounded-xl border text-[10px] font-black uppercase tracking-wider outline-none transition-all ${
+                                      task.status === "removed"
+                                        ? "bg-emerald-50 border-emerald-200 text-emerald-600"
+                                        : task.status === "in_progress"
+                                          ? "bg-blue-50 border-blue-200 text-blue-600"
+                                          : task.status === "not_needed"
+                                            ? "bg-slate-100 border-slate-200 text-slate-500"
+                                            : task.status === "waiting" || task.status === "waiting_client"
+                                              ? "bg-amber-50 border-amber-200 text-amber-600"
+                                              : "bg-slate-50 border-slate-200 text-slate-500"
                                     }`}
                                   >
                                     <option value="pending">Pending</option>
@@ -3234,7 +3224,7 @@ export default function DashboardPage() {
                 </h3>
 
                 <ol className="space-y-3">
-                  {currentInstruction.steps.map((step, index) => (
+                  {currentInstruction.steps.map((step: string, index: number) => (
                     <li
                       key={index}
                       className="flex gap-3 text-sm text-slate-700 dark:text-slate-300"
@@ -3270,7 +3260,7 @@ export default function DashboardPage() {
                   </h3>
 
                   <ul className="space-y-2">
-                    {currentInstruction.notes.map((note, index) => (
+                    {currentInstruction.notes.map((note: string, index: number) => (
                       <li
                         key={index}
                         className="flex gap-2 text-sm leading-6 text-slate-600 dark:text-slate-400"
@@ -3666,6 +3656,623 @@ export default function DashboardPage() {
                   </p>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CLIENT / PROJECT WORKSPACE */}
+      {workspaceClient && (
+        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xl flex items-start md:items-center justify-center z-[130] p-0 md:px-4">
+          <div
+            className={`w-full max-w-[1100px] h-full md:h-auto max-h-none md:max-h-[92vh] overflow-y-auto rounded-none md:rounded-[2.5rem] shadow-2xl border-t-[6px] md:border-t-[10px] ${
+              isDarkMode
+                ? "bg-slate-950 border-[#9BCB3B]"
+                : "bg-white border-[#9BCB3B]"
+            }`}
+          >
+            {/* HEADER */}
+            <div className="sticky top-0 z-20 border-b border-slate-200 dark:border-slate-800 bg-inherit px-4 sm:px-6 md:px-8 py-4 md:py-6">
+              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#9BCB3B] mb-2">
+                    Client Workspace
+                  </p>
+
+                  <h2 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white break-words">
+                    {workspaceClient.name}
+                  </h2>
+                  <p className="mt-1 text-sm font-semibold text-slate-500 dark:text-slate-400 break-words">
+                    {workspaceClient.projectName || "Client Workspace"}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setWorkspaceClient(null)}
+                  className="text-slate-400 hover:text-red-500 transition-colors text-2xl font-black"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 mt-5">
+                <span
+                  className={`inline-flex items-center rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-wider ${getClientStatusClasses(
+                    workspaceClient.clientStatus
+                  )}`}
+                >
+                  {getClientStatusLabel(workspaceClient.clientStatus)}
+                </span>
+
+                {workspaceClient.projectEndDate && (
+                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                    End: {workspaceClient.projectEndDate}
+                  </span>
+                )}
+
+                {workspaceClient.accessRemovalDeadline && (
+                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                    Removal Deadline: {workspaceClient.accessRemovalDeadline}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="px-4 sm:px-6 md:px-8 py-4 md:py-6 space-y-6">
+
+              {/* PROGRESS */}
+              {(() => {
+                const workspaceChecklist = Array.isArray(workspaceClient.checklist)
+                  ? workspaceClient.checklist
+                  : [];
+
+                const completedTasks = workspaceChecklist.filter(
+                  (task: any) =>
+                    task.status === "removed" ||
+                    task.status === "not_needed"
+                ).length;
+
+                const remainingTasks =
+                  workspaceChecklist.length - completedTasks;
+
+                const deadlineDate = workspaceClient.accessRemovalDeadline
+                  ? new Date(workspaceClient.accessRemovalDeadline)
+                  : null;
+
+                const isOverdue =
+                  workspaceClient.clientStatus !== "closed" &&
+                  deadlineDate !== null &&
+                  deadlineDate < new Date() &&
+                  remainingTasks > 0;
+
+                const progress =
+                  workspaceChecklist.length > 0
+                    ? Math.round(
+                        (completedTasks / workspaceChecklist.length) * 100
+                      )
+                    : 0;
+
+                return (
+                  <div className="space-y-4">
+                    {/* PROGRESS BAR */}
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                          Offboarding Progress
+                        </span>
+
+                        <span
+                          className={`text-2xl md:text-3xl font-black ${
+                            progress === 100
+                              ? "text-emerald-500"
+                              : isDarkMode
+                                ? "text-white"
+                                : "text-[#243F74]"
+                          }`}
+                        >
+                          {progress}%
+                        </span>
+                      </div>
+
+                      <div
+                        className={`h-2.5 md:h-3 rounded-full overflow-hidden ${
+                          isDarkMode ? "bg-slate-800" : "bg-slate-100"
+                        }`}
+                      >
+                        <div
+                          className={`h-full rounded-full transition-all duration-500 ${
+                            progress === 100
+                              ? "bg-emerald-500"
+                              : "bg-[#9BCB3B]"
+                          }`}
+                          style={{ width: `${progress}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* STATS */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      <div
+                        className={`p-4 rounded-2xl border ${
+                          isDarkMode
+                            ? "bg-slate-900 border-slate-800"
+                            : "bg-slate-50 border-slate-100"
+                        }`}
+                      >
+                        <p className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-slate-400">
+                          Completed
+                        </p>
+                        <p className="text-xl font-black mt-1">
+                          {completedTasks}
+                        </p>
+                      </div>
+
+                      <div
+                        className={`p-4 rounded-2xl border ${
+                          isDarkMode
+                            ? "bg-slate-900 border-slate-800"
+                            : "bg-slate-50 border-slate-100"
+                        }`}
+                      >
+                        <p className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-slate-400">
+                          Remaining
+                        </p>
+                        <p className="text-xl font-black mt-1">
+                          {remainingTasks}
+                        </p>
+                      </div>
+
+                      <div
+                        className={`p-4 rounded-2xl border ${
+                          isOverdue
+                            ? "bg-red-50 border-red-100"
+                            : isDarkMode
+                              ? "bg-slate-900 border-slate-800"
+                              : "bg-slate-50 border-slate-100"
+                        }`}
+                      >
+                        <p
+                          className={`text-[9px] md:text-[10px] font-black uppercase tracking-widest ${
+                            isOverdue ? "text-red-500" : "text-slate-400"
+                          }`}
+                        >
+                          Deadline
+                        </p>
+
+                        <p
+                          className={`text-sm font-black mt-1 ${
+                            isOverdue
+                              ? "text-red-500"
+                              : isDarkMode
+                                ? "text-white"
+                                : "text-[#243F74]"
+                          }`}
+                        >
+                          {isOverdue
+                            ? "Overdue"
+                            : deadlineDate
+                              ? deadlineDate.toLocaleDateString()
+                              : "Not set"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* TOOLS */}
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <h3
+                    className={`text-lg font-black italic ${
+                      isDarkMode
+                        ? "text-white"
+                        : "text-[#243F74]"
+                    }`}
+                  >
+                    Tools
+                  </h3>
+
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                    {Array.isArray(workspaceClient.tools)
+                      ? workspaceClient.tools.length
+                      : 0}{" "}
+                    tracked
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {(Array.isArray(workspaceClient.tools)
+                    ? workspaceClient.tools
+                    : []
+                  ).map((tool: string) => (
+                    <div
+                      key={tool}
+                      className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 dark:border-slate-800 p-3 md:p-4"
+                    >
+                      <span className="min-w-0 flex-1 text-xs md:text-sm font-black text-slate-800 dark:text-white break-words">
+                        {tool}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          openToolInstructions({
+                            tool,
+                            title: `Remove ${tool} access`,
+                          })
+                        }
+                        className="shrink-0 text-[9px] md:text-[10px] font-black uppercase tracking-widest text-[#243F74] dark:text-[#9BCB3B] hover:underline"
+                      >
+                        View Instructions
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                <p className="text-[10px] font-semibold text-slate-400 mt-2">
+                  Click a tool to open its removal instructions.
+                </p>
+              </div>
+
+              {/* CHECKLIST */}
+              {Array.isArray(workspaceClient.checklist) &&
+                workspaceClient.checklist.length > 0 && (
+                  <div className="space-y-6">
+                    {Array.from(
+                      new Set(
+                        workspaceClient.checklist.map(
+                          (task: any) => task.tool || "General"
+                        )
+                      )
+                    ).map((toolName: unknown) => {
+                      const tool = toolName as string;
+                      const toolTasks = workspaceClient.checklist.filter(
+                        (task: any) => (task.tool || "General") === tool
+                      );
+
+                      const completedCount = toolTasks.filter(
+                        (task: any) =>
+                          task.status === "removed" ||
+                          task.status === "not_needed"
+                      ).length;
+
+                      return (
+                        <div key={tool} className="rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+                          {/* TOOL HEADER */}
+                          <div
+                            className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 py-3 bg-slate-50 dark:bg-slate-900"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div
+                                className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm font-black ${
+                                  isDarkMode
+                                    ? "bg-slate-800 text-[#9BCB3B]"
+                                    : "bg-[#9BCB3B]/10 text-[#6d941f]"
+                                }`}
+                              >
+                                {tool.charAt(0).toUpperCase()}
+                              </div>
+
+                              <div>
+                                <h4
+                                  className={`text-sm font-black ${
+                                    isDarkMode
+                                      ? "text-white"
+                                      : "text-[#243F74]"
+                                  }`}
+                                >
+                                  {tool}
+                                </h4>
+
+                                <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">
+                                  {completedCount}/{toolTasks.length} completed
+                                </p>
+                              </div>
+                            </div>
+
+                            <span
+                              className={`text-[9px] font-black uppercase tracking-widest ${
+                                completedCount === toolTasks.length
+                                  ? "text-emerald-500"
+                                  : "text-slate-400"
+                              }`}
+                            >
+                              {completedCount === toolTasks.length
+                                ? "Complete"
+                                : `${toolTasks.length - completedCount} remaining`}
+                            </span>
+                          </div>
+
+                          {/* NEXT TASK INDICATOR */}
+                          {(() => {
+                            const nextTask = toolTasks.find(
+                              (task: any) =>
+                                task.status !== "removed" &&
+                                task.status !== "not_needed"
+                            );
+
+                            if (!nextTask) return null;
+
+                            return (
+                              <div
+                                className={`mx-4 my-3 px-4 py-3 rounded-2xl border ${
+                                  isDarkMode
+                                    ? "bg-blue-500/10 border-blue-500/20"
+                                    : "bg-blue-50 border-blue-100"
+                                }`}
+                              >
+                                <p className="text-[9px] font-black uppercase tracking-widest text-blue-500 mb-1">
+                                  Next Task
+                                </p>
+
+                                <p
+                                  className={`text-xs font-bold ${
+                                    isDarkMode ? "text-slate-200" : "text-slate-700"
+                                  }`}
+                                >
+                                  {nextTask.title}
+                                </p>
+                              </div>
+                            );
+                          })()}
+
+                          {/* TOOL TASKS */}
+                          <div>
+                            {toolTasks.map((task: any) => (
+                              <div
+                                key={task.id}
+                                className="flex flex-col sm:flex-row sm:items-center gap-3 px-4 py-4 border-t border-slate-100 dark:border-slate-800"
+                              >
+                                <div className="flex-1 min-w-0">
+                                  <div className="min-w-0 flex-1">
+                                    <span
+                                      className={`text-xs md:text-sm font-bold text-slate-800 dark:text-white break-words ${
+                                        task.status === "removed" || task.status === "not_needed"
+                                          ? "line-through text-slate-400 dark:text-slate-500"
+                                          : ""
+                                      }`}
+                                    >
+                                      {task.title}
+                                    </span>
+
+                                    <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 mt-1">
+                                      {task.tool}
+                                    </p>
+
+                                    {task.assignee && (
+                                      <p className="text-[10px] font-bold text-blue-500 mt-2">
+                                        Assigned to: {task.assignee}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+
+                                <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                                  <select
+                                    value={task.status}
+                                    onChange={(e) =>
+                                      updateChecklistTask(
+                                        workspaceClient.id,
+                                        task.id,
+                                        e.target.value
+                                      )
+                                    }
+                                    className={`w-full sm:w-auto min-w-0 px-3 py-2 rounded-xl border text-[10px] font-black uppercase tracking-wider outline-none transition-all ${
+                                      task.status === "removed"
+                                        ? "bg-emerald-50 border-emerald-200 text-emerald-600"
+                                        : task.status === "in_progress"
+                                          ? "bg-blue-50 border-blue-200 text-blue-600"
+                                          : task.status === "not_needed"
+                                            ? "bg-slate-100 border-slate-200 text-slate-500"
+                                            : task.status === "waiting" || task.status === "waiting_client"
+                                              ? "bg-amber-50 border-amber-200 text-amber-600"
+                                              : "bg-slate-50 border-slate-200 text-slate-500"
+                                    }`}
+                                  >
+                                    <option value="pending">Pending</option>
+                                    <option value="in_progress">
+                                      In Progress
+                                    </option>
+                                    <option value="removed">Removed</option>
+                                    <option value="not_needed">
+                                      Not Needed
+                                    </option>
+                                    <option value="waiting_client">
+                                      Waiting for Client
+                                    </option>
+                                  </select>
+
+                                  {task.status !== "removed" && task.status !== "not_needed" && (
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        updateChecklistTask(
+                                          workspaceClient.id,
+                                          task.id,
+                                          "removed"
+                                        )
+                                      }
+                                      className={`shrink-0 text-[9px] md:text-[10px] font-black uppercase tracking-widest px-3 py-2 rounded-xl transition-all ${
+                                        isDarkMode
+                                          ? "bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20"
+                                          : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
+                                      }`}
+                                    >
+                                      Mark Removed
+                                    </button>
+                                  )}
+
+                                  {task.status === "removed" && (
+                                    <span className="shrink-0 text-[9px] md:text-[10px] font-black uppercase tracking-widest text-emerald-500">
+                                      ✓ Removed
+                                    </span>
+                                  )}
+
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      openToolInstructions(task)
+                                    }
+                                    className="shrink-0 text-[9px] md:text-[10px] font-black uppercase tracking-widest rounded-lg border border-[#9BCB3B]/40 px-3 py-2 text-[#6d941f] hover:bg-[#9BCB3B]/10 transition"
+                                  >
+                                    Instructions
+                                  </button>
+
+                                  {isPro && (
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        assignChecklistTask(
+                                          workspaceClient.id,
+                                          task.id
+                                        )
+                                      }
+                                      className="shrink-0 text-[9px] md:text-[10px] font-black uppercase tracking-widest rounded-lg border border-blue-200 px-3 py-2 text-blue-600 hover:bg-blue-50 transition"
+                                    >
+                                      {task.assignee
+                                        ? "Reassign"
+                                        : "Assign"}
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+              {/* ACTIVITY */}
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <h3
+                    className={`text-lg font-black italic ${
+                      isDarkMode
+                        ? "text-white"
+                        : "text-[#243F74]"
+                    }`}
+                  >
+                    Activity
+                  </h3>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActivityClient(workspaceClient);
+                      setWorkspaceClient(null);
+                    }}
+                    className="text-[10px] font-black uppercase tracking-widest text-[#9BCB3B] hover:underline"
+                  >
+                    View Full Timeline
+                  </button>
+                </div>
+
+                {Array.isArray(workspaceClient.activityLog) &&
+                workspaceClient.activityLog.length > 0 ? (
+                  <div className="space-y-2">
+                    {workspaceClient.activityLog
+                      .slice(0, 5)
+                      .map((activity: any) => (
+                        <div
+                          key={activity.id}
+                          className={`rounded-2xl border p-4 ${
+                            isDarkMode
+                              ? "bg-slate-900 border-slate-800"
+                              : "bg-slate-50 border-slate-100"
+                          }`}
+                        >
+                          <p
+                            className={`text-sm font-black ${
+                              isDarkMode
+                                ? "text-slate-200"
+                                : "text-slate-700"
+                            }`}
+                          >
+                            {activity.message}
+                          </p>
+
+                          <p className="text-[10px] font-bold text-slate-400 mt-1">
+                            {activity.timestamp
+                              ? new Date(
+                                  activity.timestamp
+                                ).toLocaleString()
+                              : "—"}
+                          </p>
+                        </div>
+                      ))}
+                  </div>
+                ) : (
+                  <div
+                    className={`rounded-2xl border-2 border-dashed p-8 text-center ${
+                      isDarkMode
+                        ? "border-slate-800"
+                        : "border-slate-200"
+                    }`}
+                  >
+                    <p className="text-sm font-black text-slate-400">
+                      No activity yet
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* ACTIONS */}
+              <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 w-full pt-2 border-t border-slate-200 dark:border-slate-800">
+                {(workspaceClient.clientStatus === "active" ||
+                  workspaceClient.clientStatus === "ending_soon") && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      startOffboarding(workspaceClient.id)
+                    }
+                    className="w-full sm:w-auto px-5 py-3 rounded-xl bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition"
+                  >
+                    Start Offboarding
+                  </button>
+                )}
+
+                {(workspaceClient.clientStatus === "offboarding" ||
+                  workspaceClient.clientStatus === "ready_to_close") && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      closeClient(workspaceClient.id)
+                    }
+                    className="w-full sm:w-auto px-5 py-3 rounded-xl bg-[#9BCB3B] text-white text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition"
+                  >
+                    Close Client
+                  </button>
+                )}
+
+                {(workspaceClient.clientStatus === "ready_to_close" ||
+                  workspaceClient.clientStatus === "closed") && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      openCompletionSummary(workspaceClient);
+                      setWorkspaceClient(null);
+                    }}
+                    className="w-full sm:w-auto px-5 py-3 rounded-xl border border-[#243F74] text-[#243F74] dark:border-[#9BCB3B] dark:text-[#9BCB3B] text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 dark:hover:bg-slate-900 transition"
+                  >
+                    View Completion Summary
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => setWorkspaceClient(null)}
+                  className={`w-full sm:w-auto px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest ${
+                    isDarkMode
+                      ? "bg-slate-800 text-slate-300"
+                      : "bg-slate-100 text-slate-500"
+                  }`}
+                >
+                  Close Workspace
+                </button>
+              </div>
             </div>
           </div>
         </div>
