@@ -460,7 +460,7 @@ export default function Home() {
         {/* ==================================================
             HERO SECTION
             ================================================== */}
-        <section className="py-10 sm:py-12 md:py-16 lg:py-20 px-4 sm:px-6 relative text-center">
+        <section className="pt-6 sm:pt-8 md:pt-10 lg:pt-12 pb-10 sm:pb-12 md:pb-16 lg:pb-20 px-4 sm:px-6 relative text-center">
           <div className="w-full max-w-6xl mx-auto relative">
             <div
               aria-hidden="true"
