@@ -489,7 +489,7 @@ export default function Home() {
                 transform: isVisible ? "translateY(0)" : "translateY(-20px)",
                 transition: "all 1.2s cubic-bezier(0.22, 1, 0.36, 1)",
               }}
-              className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black leading-tight tracking-tight mb-6 md:mb-8 italic"
+              className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black leading-tight tracking-normal mb-6 md:mb-8 italic"
             >
               Never forget to remove <br className="hidden sm:block" /> client access again.
             </h1>
@@ -592,7 +592,7 @@ export default function Home() {
             <div className="w-full max-w-6xl mx-auto">
               <Kicker>WHO IT'S FOR</Kicker>
               <h2
-                className="text-brand-navy text-3xl sm:text-4xl md:text-5xl font-black tracking-tight mb-12 md:mb-16 text-center italic"
+                className="text-brand-navy text-3xl sm:text-4xl md:text-5xl font-black tracking-normal mb-12 md:mb-16 text-center italic"
               >
                 Built for client-based businesses.
               </h2>
@@ -703,7 +703,7 @@ export default function Home() {
             <div className="w-full max-w-6xl mx-auto">
               <Kicker>THE PROCESS</Kicker>
               <h2
-                className="text-brand-navy text-3xl sm:text-4xl md:text-5xl font-black tracking-tight mb-4 text-center italic"
+                className="text-brand-navy text-3xl sm:text-4xl md:text-5xl font-black tracking-normal mb-4 text-center italic"
               >
                 From project ending to access removed.
               </h2>
@@ -831,7 +831,7 @@ export default function Home() {
             <div className="w-full max-w-6xl mx-auto">
               <Kicker>PLATFORM FEATURES</Kicker>
               <h2
-                className="text-brand-navy text-3xl sm:text-4xl md:text-5xl font-black tracking-tight mb-4 text-center italic"
+                className="text-brand-navy text-3xl sm:text-4xl md:text-5xl font-black tracking-normal mb-4 text-center italic"
               >
                 Everything you need for a clean client offboarding.
               </h2>
@@ -950,7 +950,7 @@ export default function Home() {
             <div className="w-full max-w-6xl mx-auto">
               <Kicker>TOOL GUIDES</Kicker>
               <h2
-                className="text-brand-navy text-3xl sm:text-4xl md:text-5xl font-black tracking-tight mb-4 text-center italic"
+                className="text-brand-navy text-3xl sm:text-4xl md:text-5xl font-black tracking-normal mb-4 text-center italic"
               >
                 Know what needs to be removed.
               </h2>
@@ -1053,7 +1053,7 @@ export default function Home() {
             <div className="w-full max-w-6xl mx-auto">
               <Kicker>STAY ON TRACK</Kicker>
               <h2
-                className="text-brand-navy text-3xl sm:text-4xl md:text-5xl font-black tracking-tight mb-4 text-center italic"
+                className="text-brand-navy text-3xl sm:text-4xl md:text-5xl font-black tracking-normal mb-4 text-center italic"
               >
                 Don't rely on memory.
               </h2>
@@ -1116,7 +1116,7 @@ export default function Home() {
             <div className="w-full max-w-6xl mx-auto">
               <Kicker>SECURITY & TRUST</Kicker>
               <h2
-                className="text-brand-navy text-3xl sm:text-4xl md:text-5xl font-black tracking-tight mb-12 md:mb-16 text-center italic"
+                className="text-brand-navy text-3xl sm:text-4xl md:text-5xl font-black tracking-normal mb-12 md:mb-16 text-center italic"
               >
                 Built for secure client handovers.
               </h2>
@@ -1166,7 +1166,7 @@ export default function Home() {
               {/* Heading */}
               <div className="text-center mb-12 md:mb-16">
                 <h2
-                  className="text-brand-navy text-3xl sm:text-4xl md:text-5xl font-black tracking-tight mb-4 italic leading-tight"
+                  className="text-brand-navy text-3xl sm:text-4xl md:text-5xl font-black tracking-normal mb-4 italic leading-tight"
                 >
                   Simple pricing. Built around your workflow.
                 </h2>
@@ -1337,7 +1337,7 @@ export default function Home() {
             <div className="w-full max-w-6xl mx-auto">
               <Kicker>GETTING STARTED</Kicker>
               <h2
-                className="text-brand-navy text-3xl sm:text-4xl md:text-5xl font-black tracking-tight mb-12 md:mb-16 text-center italic"
+                className="text-brand-navy text-3xl sm:text-4xl md:text-5xl font-black tracking-normal mb-12 md:mb-16 text-center italic"
               >
                 What happens after you sign up?
               </h2>
@@ -1374,7 +1374,7 @@ export default function Home() {
             <div className="w-full max-w-3xl mx-auto">
               <Kicker>GOT QUESTIONS?</Kicker>
               <h2
-                className="text-brand-navy text-3xl sm:text-4xl md:text-5xl font-black tracking-tight mb-12 md:mb-16 text-center italic"
+                className="text-brand-navy text-3xl sm:text-4xl md:text-5xl font-black tracking-normal mb-12 md:mb-16 text-center italic"
               >
                 Frequently Asked Questions
               </h2>
@@ -1421,7 +1421,7 @@ export default function Home() {
                 aria-hidden="true"
                 className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-80 h-80 bg-brand-green/15 blur-[110px] rounded-full animate-float-slow"
               />
-              <h2 className="relative text-3xl sm:text-4xl md:text-5xl font-black mb-4 italic tracking-tight leading-snug">
+              <h2 className="relative text-3xl sm:text-4xl md:text-5xl font-black mb-4 italic tracking-normal leading-snug">
                 Close every client project properly.
               </h2>
               <p className="relative text-slate-300 text-base sm:text-lg md:text-xl leading-relaxed font-medium mb-8 md:mb-10 max-w-xl mx-auto">
@@ -1779,7 +1779,7 @@ function OffboardingScrollExperience() {
               </p>
 
               <h2
-                className="text-brand-navy text-[2rem] leading-[1.05] sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight italic"
+                className="text-brand-navy text-[2rem] leading-[1.05] sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-normal italic"
               >
                 Watch the offboarding happen.
               </h2>
@@ -1967,7 +1967,7 @@ function OffboardingScrollExperience() {
                         </p>
 
                         <h3
-                          className="text-brand-navy text-xl sm:text-2xl md:text-3xl font-black tracking-tight truncate"
+                          className="text-brand-navy text-xl sm:text-2xl md:text-3xl font-black tracking-normal truncate"
                         >
                           Acme Digital
                         </h3>
