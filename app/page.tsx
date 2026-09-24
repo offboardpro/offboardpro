@@ -218,7 +218,7 @@ function Header() {
                   style={{ backgroundColor: "#243F74" }}
                   className="text-white px-8 py-3.5 rounded-full font-bold shadow-lg shadow-[#243F74]/20 hover:scale-105 active:scale-95 transition-all"
                 >
-                  Get Started
+                  Start Free
                 </Link>
               </div>
             ))}
@@ -291,7 +291,7 @@ function Header() {
                   href="/signup"
                   className="w-full text-center py-4 rounded-xl bg-[#243F74] text-white font-black shadow-lg shadow-[#243F74]/20"
                 >
-                  Get Started
+                  Start Free
                 </Link>
                 <Link
                   onClick={toggleMenu}
@@ -464,7 +464,7 @@ export default function Home() {
         {/* ==================================================
             HERO SECTION
             ================================================== */}
-        <section className="py-14 sm:py-16 md:py-24 lg:py-28 px-4 sm:px-6 relative text-center">
+        <section className="py-10 sm:py-12 md:py-16 lg:py-20 px-4 sm:px-6 relative text-center">
           <div className="w-full max-w-6xl mx-auto relative">
             <div
               aria-hidden="true"
@@ -539,7 +539,7 @@ export default function Home() {
                             style={{ backgroundColor: "#243F74" }}
                             className="w-full sm:w-auto text-white px-10 md:px-14 py-4 md:py-5 rounded-full text-base md:text-lg font-bold hover:scale-105 transition-all shadow-xl shadow-[#243F74]/20 active:scale-95"
                           >
-                            Start Offboarding
+                            Start Free
                           </button>
                         </Link>
                         <Link href="#how-it-works" className="w-full sm:w-auto">
@@ -564,7 +564,7 @@ export default function Home() {
             AUDIENCE STRIP
             ================================================== */}
         <Reveal>
-          <div className="py-14 sm:py-16 md:py-24 lg:py-28 px-4 sm:px-6">
+          <div className="py-12 sm:py-14 md:py-20 lg:py-24 px-4 sm:px-6">
             <div className="w-full max-w-6xl mx-auto overflow-hidden">
               <p className="text-center text-slate-400 text-[10px] md:text-xs font-black uppercase tracking-[0.3em] mb-8 md:mb-12 italic">
                 BUILT FOR PEOPLE WHO MANAGE CLIENT PROJECTS
@@ -594,7 +594,7 @@ export default function Home() {
             WHO IT'S FOR
             ================================================== */}
         <Reveal>
-          <div className="py-14 sm:py-16 md:py-24 lg:py-28 px-4 sm:px-6 text-left">
+          <div className="py-12 sm:py-14 md:py-20 lg:py-24 px-4 sm:px-6 text-left">
             <div className="w-full max-w-6xl mx-auto">
               <Kicker>WHO IT'S FOR</Kicker>
               <h2
@@ -641,7 +641,7 @@ export default function Home() {
             PROBLEM
             ================================================== */}
         <Reveal>
-          <div className="py-14 sm:py-16 md:py-24 lg:py-28 px-4 sm:px-6 text-left">
+          <div className="py-12 sm:py-14 md:py-20 lg:py-24 px-4 sm:px-6 text-left">
             <div className="w-full max-w-6xl mx-auto">
               <div className="bg-slate-900 text-white p-5 sm:p-6 md:p-8 rounded-[2rem] shadow-2xl relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-[#9BCB3B]/10 blur-[100px] -translate-y-1/2 translate-x-1/2"></div>
@@ -705,7 +705,7 @@ export default function Home() {
         <Reveal>
           <div
             id="how-it-works"
-            className="py-14 sm:py-16 md:py-24 lg:py-28 px-4 sm:px-6 border-t border-slate-50 scroll-mt-24 text-left"
+            className="py-12 sm:py-14 md:py-20 lg:py-24 px-4 sm:px-6 border-t border-slate-50 scroll-mt-24 text-left"
           >
             <div className="w-full max-w-6xl mx-auto">
               <Kicker>THE PROCESS</Kicker>
@@ -837,7 +837,7 @@ export default function Home() {
             FEATURES SECTION
             ================================================== */}
         <Reveal>
-          <section id="features" className="py-14 sm:py-16 md:py-24 lg:py-28 px-4 sm:px-6 scroll-mt-24 text-left">
+          <section id="features" className="py-12 sm:py-14 md:py-20 lg:py-24 px-4 sm:px-6 scroll-mt-24 text-left">
             <div className="w-full max-w-6xl mx-auto">
               <Kicker>PLATFORM FEATURES</Kicker>
               <h2
@@ -910,7 +910,7 @@ export default function Home() {
             WORKSPACE SECTION
             ================================================== */}
         <Reveal>
-          <section className="py-14 sm:py-16 md:py-24 lg:py-28 px-4 sm:px-6 text-left">
+          <section className="py-12 sm:py-14 md:py-20 lg:py-24 px-4 sm:px-6 text-left">
             <div className="w-full max-w-6xl mx-auto">
               <div className="bg-slate-900 text-white p-5 sm:p-6 md:p-8 rounded-[2rem] shadow-2xl relative overflow-hidden">
                 <div className="absolute -top-10 -left-10 w-56 h-56 bg-[#9BCB3B]/10 blur-[100px] rounded-full"></div>
@@ -958,7 +958,7 @@ export default function Home() {
             TOOL INSTRUCTIONS SECTION
             ================================================== */}
         <Reveal>
-          <section className="py-14 sm:py-16 md:py-24 lg:py-28 px-4 sm:px-6 text-left">
+          <section className="py-12 sm:py-14 md:py-20 lg:py-24 px-4 sm:px-6 text-left">
             <div className="w-full max-w-6xl mx-auto">
               <Kicker>TOOL GUIDES</Kicker>
               <h2
@@ -1023,7 +1023,7 @@ export default function Home() {
             TEAM ASSIGNMENTS
             ================================================== */}
         <Reveal>
-          <section className="py-14 sm:py-16 md:py-24 lg:py-28 px-4 sm:px-6 text-left">
+          <section className="py-12 sm:py-14 md:py-20 lg:py-24 px-4 sm:px-6 text-left">
             <div className="w-full max-w-6xl mx-auto">
               <div className="bg-[#243F74] text-white p-5 sm:p-6 md:p-8 rounded-[2rem] shadow-xl relative overflow-hidden">
                 <div className="absolute -bottom-10 -right-10 w-56 h-56 bg-[#9BCB3B]/10 blur-[100px] rounded-full"></div>
@@ -1062,7 +1062,7 @@ export default function Home() {
             REMINDER TIMELINE
             ================================================== */}
         <Reveal>
-          <section className="py-14 sm:py-16 md:py-24 lg:py-28 px-4 sm:px-6 text-left">
+          <section className="py-12 sm:py-14 md:py-20 lg:py-24 px-4 sm:px-6 text-left">
             <div className="w-full max-w-6xl mx-auto">
               <Kicker>STAY ON TRACK</Kicker>
               <h2
@@ -1125,7 +1125,7 @@ export default function Home() {
         <Reveal>
           <div
             id="security"
-            className="py-14 sm:py-16 md:py-24 lg:py-28 px-4 sm:px-6 border-t border-slate-50 scroll-mt-24 text-left"
+            className="py-12 sm:py-14 md:py-20 lg:py-24 px-4 sm:px-6 border-t border-slate-50 scroll-mt-24 text-left"
           >
             <div className="w-full max-w-6xl mx-auto">
               <Kicker>SECURITY & TRUST</Kicker>
@@ -1175,7 +1175,7 @@ export default function Home() {
         <Reveal>
           <div
             id="pricing"
-            className="py-14 sm:py-16 md:py-24 lg:py-28 border-t border-slate-100 bg-slate-50/30 px-4 sm:px-6 scroll-mt-24"
+            className="py-12 sm:py-14 md:py-20 lg:py-24 border-t border-slate-100 bg-slate-50/30 px-4 sm:px-6 scroll-mt-24"
           >
             <div className="w-full max-w-6xl mx-auto">
 
@@ -1352,7 +1352,7 @@ export default function Home() {
             AFTER SIGNUP
             ================================================== */}
         <Reveal>
-          <section className="py-14 sm:py-16 md:py-24 lg:py-28 px-4 sm:px-6 text-left">
+          <section className="py-12 sm:py-14 md:py-20 lg:py-24 px-4 sm:px-6 text-left">
             <div className="w-full max-w-6xl mx-auto">
               <Kicker>GETTING STARTED</Kicker>
               <h2
@@ -1390,7 +1390,7 @@ export default function Home() {
             FAQ SECTION
             ================================================== */}
         <Reveal>
-          <section id="faq" className="py-14 sm:py-16 md:py-24 lg:py-28 px-4 sm:px-6 scroll-mt-24 text-left">
+          <section id="faq" className="py-12 sm:py-14 md:py-20 lg:py-24 px-4 sm:px-6 scroll-mt-24 text-left">
             <div className="w-full max-w-3xl mx-auto">
               <Kicker>GOT QUESTIONS?</Kicker>
               <h2
@@ -1433,7 +1433,7 @@ export default function Home() {
             FINAL CTA
             ================================================== */}
         <Reveal>
-          <section className="py-14 sm:py-16 md:py-24 lg:py-28 px-4 sm:px-6">
+          <section className="py-12 sm:py-14 md:py-20 lg:py-24 px-4 sm:px-6">
             <div
               id="cta"
               style={{ backgroundColor: "#243F74" }}
