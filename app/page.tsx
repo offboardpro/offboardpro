@@ -1619,7 +1619,17 @@ function OffboardingScrollExperience() {
     const computeSpacerHeight = () => {
       const w = window.innerWidth;
       const h = window.innerHeight;
-      const multiplier = w < 640 ? 1.15 : w < 1024 ? 1.45 : 1.75;
+
+      const isTouchDevice =
+        window.matchMedia("(pointer: coarse)").matches ||
+        navigator.maxTouchPoints > 0;
+
+      const multiplier = isTouchDevice
+        ? 1.15
+        : w < 1024
+          ? 1.45
+          : 1.75;
+
       setSpacerHeight(Math.round(h * multiplier));
     };
 
