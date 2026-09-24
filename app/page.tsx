@@ -1620,15 +1620,16 @@ function OffboardingScrollExperience() {
       const w = window.innerWidth;
       const h = window.innerHeight;
 
-      const isTouchDevice =
-        window.matchMedia("(pointer: coarse)").matches ||
+      const isMobileDevice =
+        /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
         navigator.maxTouchPoints > 0;
 
-      const multiplier = isTouchDevice
-        ? 1.15
-        : w < 1024
-          ? 1.45
-          : 1.75;
+      if (isMobileDevice) {
+        setSpacerHeight(Math.round(h * 1.05));
+        return;
+      }
+
+      const multiplier = w < 1024 ? 1.45 : 1.75;
 
       setSpacerHeight(Math.round(h * multiplier));
     };
@@ -1756,7 +1757,7 @@ function OffboardingScrollExperience() {
       ====================================================== */}
 
       <div
-        className="relative min-h-[115vh]"
+        className="relative"
         style={spacerHeight ? { minHeight: `${spacerHeight}px` } : undefined}
       >
 
