@@ -954,7 +954,7 @@ export default function Home() {
               >
                 Know what needs to be removed.
               </h2>
-              <p className="text-slate-500 text-center max-w-2xl mx-auto mb-12 text-sm sm:text-base leading-relaxed font-medium">
+              <p className="text-slate-500 text-center max-w-2xl mx-auto mb-12 md:mb-16 text-sm sm:text-base leading-relaxed font-medium">
                 Every selected tool can have its own access-removal instructions, so your checklist isn't just a list of names — it helps you understand what to do next.
               </p>
 
@@ -1057,7 +1057,7 @@ export default function Home() {
               >
                 Don't rely on memory.
               </h2>
-              <p className="text-slate-500 text-center max-w-2xl mx-auto mb-10 text-sm sm:text-base leading-relaxed font-medium">
+              <p className="text-slate-500 text-center max-w-2xl mx-auto mb-12 md:mb-16 text-sm sm:text-base leading-relaxed font-medium">
                 Pro users can receive automated email reminders around access-removal deadlines so important offboarding dates stay visible.
               </p>
 
@@ -1116,7 +1116,7 @@ export default function Home() {
             <div className="w-full max-w-6xl mx-auto">
               <Kicker>SECURITY & TRUST</Kicker>
               <h2
-                className="text-brand-navy text-3xl sm:text-4xl md:text-5xl font-black tracking-tight mb-12 text-center italic"
+                className="text-brand-navy text-3xl sm:text-4xl md:text-5xl font-black tracking-tight mb-12 md:mb-16 text-center italic"
               >
                 Built for secure client handovers.
               </h2>
@@ -1164,7 +1164,7 @@ export default function Home() {
             <div className="w-full max-w-6xl mx-auto">
 
               {/* Heading */}
-              <div className="text-center mb-10 sm:mb-14 md:mb-16">
+              <div className="text-center mb-12 md:mb-16">
                 <h2
                   className="text-brand-navy text-3xl sm:text-4xl md:text-5xl font-black tracking-tight mb-4 italic leading-tight"
                 >
@@ -1337,7 +1337,7 @@ export default function Home() {
             <div className="w-full max-w-6xl mx-auto">
               <Kicker>GETTING STARTED</Kicker>
               <h2
-                className="text-brand-navy text-3xl sm:text-4xl md:text-5xl font-black tracking-tight mb-12 text-center italic"
+                className="text-brand-navy text-3xl sm:text-4xl md:text-5xl font-black tracking-tight mb-12 md:mb-16 text-center italic"
               >
                 What happens after you sign up?
               </h2>
@@ -1374,7 +1374,7 @@ export default function Home() {
             <div className="w-full max-w-3xl mx-auto">
               <Kicker>GOT QUESTIONS?</Kicker>
               <h2
-                className="text-brand-navy text-3xl sm:text-4xl md:text-5xl font-black tracking-tight mb-10 md:mb-16 text-center italic"
+                className="text-brand-navy text-3xl sm:text-4xl md:text-5xl font-black tracking-tight mb-12 md:mb-16 text-center italic"
               >
                 Frequently Asked Questions
               </h2>
