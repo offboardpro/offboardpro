@@ -1613,6 +1613,23 @@ export default function Home() {
 
 function OffboardingScrollExperience() {
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [spacerHeight, setSpacerHeight] = useState(0);
+
+  useEffect(() => {
+    const computeSpacerHeight = () => {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      const multiplier = w < 640 ? 1.15 : w < 1024 ? 1.45 : 1.75;
+      setSpacerHeight(Math.round(h * multiplier));
+    };
+
+    computeSpacerHeight();
+    window.addEventListener("resize", computeSpacerHeight);
+
+    return () => {
+      window.removeEventListener("resize", computeSpacerHeight);
+    };
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -1728,7 +1745,10 @@ function OffboardingScrollExperience() {
           LONG SCROLL AREA
       ====================================================== */}
 
-      <div className="relative min-h-[115vh] sm:min-h-[145vh] lg:min-h-[175vh]">
+      <div
+        className="relative min-h-[115vh]"
+        style={spacerHeight ? { minHeight: `${spacerHeight}px` } : undefined}
+      >
 
         {/* ===================================================
             STICKY SCREEN
