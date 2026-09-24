@@ -6,7 +6,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 // 1. Import Firebase Auth, Firestore, and your config
 import { auth, db } from "@/lib/firebase"; 
-import { createUserWithEmailAndPassword, updateProfile, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import {
+  createUserWithEmailAndPassword,
+  updateProfile,
+  GoogleAuthProvider,
+  signInWithPopup,
+} from "firebase/auth";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 
 export default function SignUpPage() {
@@ -15,31 +20,39 @@ export default function SignUpPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   // --- HELPER: Sync User Data to Firestore ---
   const syncUserToFirestore = async (user: any, customName?: string) => {
-  const userRef = doc(db, "users", user.uid);
+    const userRef = doc(db, "users", user.uid);
 
-  await setDoc(userRef, {
-    uid: user.uid,
-    email: user.email,
-    displayName: customName || user.displayName || "User",
-    photoURL: user.photoURL || null,
-    createdAt: serverTimestamp(),
-  }, { merge: true });
-};
+    await setDoc(
+      userRef,
+      {
+        uid: user.uid,
+        email: user.email,
+        displayName: customName || user.displayName || "User",
+        photoURL: user.photoURL || null,
+        createdAt: serverTimestamp(),
+      },
+      { merge: true }
+    );
+  };
 
   // --- HELPER: Trigger Welcome Email ---
-  const triggerWelcomeEmail = async (userEmail: string | null, userName: string | null) => {
+  const triggerWelcomeEmail = async (
+    userEmail: string | null,
+    userName: string | null
+  ) => {
     if (!userEmail) return;
-    
+
     try {
       fetch("/api/welcome", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          email: userEmail, 
-          name: userName || "Freelancer" 
+        body: JSON.stringify({
+          email: userEmail,
+          name: userName || "Freelancer",
         }),
       });
     } catch (err) {
@@ -50,28 +63,72 @@ export default function SignUpPage() {
   // 2. Real Email/Password Sign Up
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    setErrorMessage("");
+
+    const trimmedName = name.trim();
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (trimmedName.length < 2) {
+      setErrorMessage("Please enter your full name.");
+      return;
+    }
+
+    if (password.length < 6) {
+      setErrorMessage("Password must be at least 6 characters.");
+      return;
+    }
+
     setLoading(true);
-    
+
     try {
-      // Create the user in Firebase
-      const userCredential = await createUserWithEmailAndPassword(auth, email.trim().toLowerCase(), password);
-      
-      // Save the user's Display Name in Firebase Auth
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        normalizedEmail,
+        password
+      );
+
       await updateProfile(userCredential.user, {
-        displayName: name
+        displayName: trimmedName,
       });
 
-      // AUTO-SYNC: Save user to Firestore collection
-      await syncUserToFirestore(userCredential.user, name);
+      await syncUserToFirestore({
+        ...userCredential.user,
+        displayName: trimmedName,
+      });
 
-      // TRIGGER WELCOME EMAIL
-      triggerWelcomeEmail(userCredential.user.email, name);
+      await triggerWelcomeEmail(normalizedEmail, trimmedName);
 
-      // UPDATED: Redirect to Home instead of Dashboard
       router.push("/");
     } catch (error: any) {
-      console.error(error);
-      alert(error.message); 
+      console.error("Signup Error:", error);
+
+      switch (error.code) {
+        case "auth/email-already-in-use":
+          setErrorMessage(
+            "An account with this email already exists. Try logging in instead."
+          );
+          break;
+
+        case "auth/invalid-email":
+          setErrorMessage("Please enter a valid email address.");
+          break;
+
+        case "auth/weak-password":
+          setErrorMessage("Password must be at least 6 characters.");
+          break;
+
+        case "auth/network-request-failed":
+          setErrorMessage(
+            "Network error. Please check your connection and try again."
+          );
+          break;
+
+        default:
+          setErrorMessage(
+            "Unable to create your account right now. Please try again."
+          );
+      }
     } finally {
       setLoading(false);
     }
@@ -79,20 +136,47 @@ export default function SignUpPage() {
 
   // 3. Real Google Sign Up
   const handleGoogleSignUp = async () => {
+    setErrorMessage("");
+    setLoading(true);
+
     const provider = new GoogleAuthProvider();
+
     try {
       const result = await signInWithPopup(auth, provider);
-      
-      // AUTO-SYNC: Save user to Firestore collection
+
       await syncUserToFirestore(result.user);
 
-      // TRIGGER WELCOME EMAIL FOR GOOGLE USER
-      triggerWelcomeEmail(result.user.email, result.user.displayName);
+      await triggerWelcomeEmail(
+        result.user.email || "",
+        result.user.displayName || "User"
+      );
 
-      // UPDATED: Redirect to Home instead of Dashboard
       router.push("/");
     } catch (error: any) {
-      alert(error.message);
+      console.error("Google Signup Error:", error);
+
+      switch (error.code) {
+        case "auth/popup-closed-by-user":
+          setErrorMessage("Google sign-up was cancelled.");
+          break;
+
+        case "auth/popup-blocked":
+          setErrorMessage(
+            "Your browser blocked the Google sign-in popup. Please allow popups and try again."
+          );
+          break;
+
+        case "auth/network-request-failed":
+          setErrorMessage(
+            "Network error. Please check your connection and try again."
+          );
+          break;
+
+        default:
+          setErrorMessage("Unable to sign up with Google. Please try again.");
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -102,18 +186,29 @@ export default function SignUpPage() {
       <div className="hidden lg:flex flex-col justify-between p-16 bg-slate-50 border-r border-slate-100 relative overflow-hidden">
         {/* Decorative background glow */}
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#9BCB3B]/10 rounded-full -ml-48 -mb-48 blur-3xl animate-pulse" />
-        
+
         <Link href="/" className="relative z-10">
-          <Image src="/logo.png" alt="OffboardPro" width={180} height={60} className="object-contain" priority />
+          <Image
+            src="/logo.png"
+            alt="OffboardPro"
+            width={180}
+            height={60}
+            className="object-contain"
+            priority
+          />
         </Link>
 
         <div className="relative z-10 animate-in fade-in slide-in-from-left-6 duration-700">
-          <h2 style={{ color: '#243F74' }} className="text-5xl md:text-6xl font-black leading-tight mb-6 tracking-tighter italic">
-            Start your <br /> 
-            <span style={{ color: '#9BCB3B' }}>secure journey.</span>
+          <h2
+            style={{ color: "#243F74" }}
+            className="text-5xl md:text-6xl font-black leading-tight mb-6 tracking-tighter italic"
+          >
+            Start your <br />
+            <span style={{ color: "#9BCB3B" }}>secure journey.</span>
           </h2>
           <p className="text-slate-500 text-lg max-w-md leading-relaxed font-medium">
-            Join thousands of freelancers who prioritize client security and professional offboarding.
+            Join thousands of freelancers who prioritize client security and
+            professional offboarding.
           </p>
         </div>
 
@@ -125,81 +220,112 @@ export default function SignUpPage() {
       {/* Right Side: Sign Up Form (Responsive) */}
       <div className="flex items-center justify-center p-6 md:p-16 bg-white relative">
         <div className="w-full max-w-md animate-in fade-in zoom-in duration-500">
-          
           {/* Mobile Logo Indicator */}
           <div className="mb-12 lg:hidden flex flex-col items-center">
-              <Image 
-                src="/logo.png" 
-                alt="Logo" 
-                width={130} 
-                height={40} 
-                className="mb-4 object-contain" 
-              />
-              <div className="h-1 w-10 bg-[#9BCB3B] rounded-full" />
+            <Image
+              src="/logo.png"
+              alt="Logo"
+              width={130}
+              height={40}
+              className="mb-4 object-contain"
+            />
+            <div className="h-1 w-10 bg-[#9BCB3B] rounded-full" />
           </div>
 
-          <h1 style={{ color: '#243F74' }} className="text-4xl font-black tracking-tight mb-2 italic text-center md:text-left">Create Account</h1>
-          <p className="text-slate-400 font-medium mb-10 text-center md:text-left text-sm md:text-base">Get started for free today.</p>
+          <h1
+            style={{ color: "#243F74" }}
+            className="text-4xl font-black tracking-tight mb-2 italic text-center md:text-left"
+          >
+            Create Account
+          </h1>
+          <p className="text-slate-400 font-medium mb-10 text-center md:text-left text-sm md:text-base">
+            Get started for free today.
+          </p>
 
           <form onSubmit={handleSignUp} className="space-y-6">
             {/* GOOGLE SIGN UP */}
-            <button 
+            <button
               type="button"
               onClick={handleGoogleSignUp}
-              className="w-full py-4 px-6 border border-slate-200 rounded-2xl flex items-center justify-center gap-3 text-slate-600 font-bold text-sm hover:bg-slate-50 hover:border-slate-400 transition-all active:scale-[0.98] shadow-sm group"
+              disabled={loading}
+              className="w-full py-4 px-6 border border-slate-200 rounded-2xl flex items-center justify-center gap-3 text-slate-600 font-bold text-sm hover:bg-slate-50 hover:border-slate-400 transition-all active:scale-[0.98] shadow-sm group disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" alt="Google" className="w-5 h-5 object-contain group-hover:rotate-12 transition-transform" />
+              <img
+                src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png"
+                alt="Google"
+                className="w-5 h-5 object-contain group-hover:rotate-12 transition-transform"
+              />
               Sign up with Google
             </button>
 
             <div className="relative py-2 flex items-center gap-4">
               <div className="flex-grow border-t border-slate-100"></div>
-              <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest whitespace-nowrap">or use email</span>
+              <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest whitespace-nowrap">
+                or use email
+              </span>
               <div className="flex-grow border-t border-slate-100"></div>
             </div>
 
             <div className="space-y-4">
               <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-2 ml-1">Full Name</label>
-                <input 
-                  type="text" 
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-2 ml-1">
+                  Full Name
+                </label>
+                <input
+                  type="text"
                   required
+                  autoComplete="name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="John Doe" 
-                  className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 text-slate-700 outline-none focus:border-[#9BCB3B] focus:bg-white transition-all font-bold placeholder:text-slate-300 shadow-inner" 
+                  placeholder="John Doe"
+                  className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 text-slate-700 outline-none focus:border-[#9BCB3B] focus:bg-white transition-all font-bold placeholder:text-slate-300 shadow-inner"
                 />
               </div>
 
               <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-2 ml-1">Email Address</label>
-                <input 
-                  type="email" 
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-2 ml-1">
+                  Email Address
+                </label>
+                <input
+                  type="email"
                   required
+                  autoComplete="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@company.com" 
-                  className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 text-slate-700 outline-none focus:border-[#9BCB3B] focus:bg-white transition-all font-bold placeholder:text-slate-300 shadow-inner" 
+                  placeholder="name@company.com"
+                  className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 text-slate-700 outline-none focus:border-[#9BCB3B] focus:bg-white transition-all font-bold placeholder:text-slate-300 shadow-inner"
                 />
               </div>
 
               <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-2 ml-1">Password</label>
-                <input 
-                  type="password" 
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-2 ml-1">
+                  Password
+                </label>
+                <input
+                  type="password"
                   required
+                  autoComplete="new-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Create a strong password" 
-                  className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 text-slate-700 outline-none focus:border-[#9BCB3B] focus:bg-white transition-all font-bold placeholder:text-slate-300 shadow-inner" 
+                  placeholder="Create a strong password"
+                  className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 text-slate-700 outline-none focus:border-[#9BCB3B] focus:bg-white transition-all font-bold placeholder:text-slate-300 shadow-inner"
                 />
               </div>
             </div>
 
-            <button 
+            {errorMessage && (
+              <div
+                role="alert"
+                className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600"
+              >
+                {errorMessage}
+              </div>
+            )}
+
+            <button
               type="submit"
               disabled={loading}
-              style={{ backgroundColor: '#243F74' }}
+              style={{ backgroundColor: "#243F74" }}
               className="w-full py-5 rounded-2xl text-white font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-[#243F74]/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? "Creating Account..." : "Create Free Account"}
@@ -207,7 +333,14 @@ export default function SignUpPage() {
           </form>
 
           <p className="text-center mt-12 text-sm font-bold text-slate-400">
-            Already have an account? <Link href="/login" style={{ color: '#9BCB3B' }} className="hover:text-[#243F74] transition-colors font-black ml-1">Log in</Link>
+            Already have an account?{" "}
+            <Link
+              href="/login"
+              style={{ color: "#9BCB3B" }}
+              className="hover:text-[#243F74] transition-colors font-black ml-1"
+            >
+              Log in
+            </Link>
           </p>
         </div>
       </div>
