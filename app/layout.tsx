@@ -2,7 +2,15 @@ import type { Metadata, Viewport } from "next";
 import Script from "next/script"; // 1. Added Razorpay Script support
 import { SpeedInsights } from "@vercel/speed-insights/next"; // 3. Added Speed Insights
 import { Analytics } from "@vercel/analytics/next"; // <--- ADDED ANALYTICS IMPORT
+import { Inter } from "next/font/google";
 import "./globals.css";
+
+// FONT SETUP — self-hosted via next/font so it renders identically across browsers
+const inter = Inter({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-sans",
+});
 
 // BRANDED METADATA
 export const metadata: Metadata = {
@@ -32,8 +40,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="scroll-smooth">
-      <body className="antialiased bg-white text-slate-900">
+    <html lang="en" className={`scroll-smooth ${inter.variable}`}>
+      <body className="antialiased bg-white text-slate-900 font-sans">
         {children}
 
         {/* 2. Razorpay Checkout Script - Loaded with 'lazyOnload' to keep your initial load fast */}
