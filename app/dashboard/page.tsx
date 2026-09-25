@@ -1328,6 +1328,78 @@ const getClientStatusClasses = (status?: string) => {
   }
 };
 
+// Small standalone component for the prompt-replacement dialog — keeps its
+// own input state so typing doesn't re-render the whole dashboard.
+function PromptDialogBody({
+  isDarkMode,
+  dialog,
+  onClose,
+}: {
+  isDarkMode: boolean;
+  dialog: {
+    title: string;
+    message?: string;
+    defaultValue?: string;
+    placeholder?: string;
+    onSubmit: (value: string) => void;
+  };
+  onClose: () => void;
+}) {
+  const [value, setValue] = useState(dialog.defaultValue || "");
+
+  const submit = () => {
+    dialog.onSubmit(value);
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/50 p-4">
+      <div className={`w-full max-w-sm rounded-2xl p-6 shadow-2xl ${isDarkMode ? 'bg-slate-900 border border-slate-700' : 'bg-white'}`}>
+        <h3 className={`text-lg font-black italic mb-2 ${isDarkMode ? 'text-white' : 'text-[#243F74]'}`}>
+          {dialog.title}
+        </h3>
+        {dialog.message && (
+          <p className={`text-sm font-semibold mb-4 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+            {dialog.message}
+          </p>
+        )}
+        <input
+          type="text"
+          autoFocus
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") submit();
+            if (e.key === "Escape") onClose();
+          }}
+          placeholder={dialog.placeholder}
+          className={`w-full border-2 rounded-xl px-4 py-3 font-bold outline-none text-sm mb-6 ${
+            isDarkMode
+              ? "bg-slate-800 border-slate-700 text-white focus:border-[#9BCB3B]"
+              : "bg-white border-slate-100 focus:border-[#9BCB3B]"
+          }`}
+        />
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className={`flex-1 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-colors ${isDarkMode ? 'bg-slate-800 text-slate-400 hover:bg-slate-700' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'}`}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={submit}
+            className="flex-1 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest text-white shadow-lg bg-[#243F74] shadow-[#243F74]/30 hover:opacity-90 transition-all active:scale-95"
+          >
+            Save
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function DashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
@@ -1343,6 +1415,28 @@ export default function DashboardPage() {
   const [showToast, setShowToast] = useState(false);
   const [loading, setLoading] = useState(true); 
   const [subscriptionData, setSubscriptionData] = useState<any>(null); 
+
+  // --- CUSTOM DIALOG SYSTEM (replaces browser alert/confirm/prompt) ---
+  const [infoToast, setInfoToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    message: string;
+    confirmLabel?: string;
+    danger?: boolean;
+    onConfirm: () => void;
+  } | null>(null);
+  const [promptDialog, setPromptDialog] = useState<{
+    title: string;
+    message?: string;
+    defaultValue?: string;
+    placeholder?: string;
+    onSubmit: (value: string) => void;
+  } | null>(null);
+
+  const showInfoToast = (message: string, type: "success" | "error" = "success") => {
+    setInfoToast({ message, type });
+    setTimeout(() => setInfoToast(null), 3500);
+  };
   
   // 2. STATE FOR INSTRUCTIONS TASK
   const [instructionTask, setInstructionTask] = useState<any>(null);
@@ -1784,7 +1878,7 @@ export default function DashboardPage() {
         c.name, 
         formatToolsDisplay(c.tools), 
         c.date, 
-        c.status === 'completed' ? 'SECURED' : 'PENDING'
+        getClientStatusLabel(c.clientStatus).toUpperCase()
       ]),
       headStyles: { fillColor: [36, 63, 116] },
     });
@@ -1799,11 +1893,24 @@ export default function DashboardPage() {
       c.name,
       formatToolsDisplay(c.tools),
       c.date,
-      c.status,
+      getClientStatusLabel(c.clientStatus),
       c.notes || ""
     ]);
 
-    const content = [headers, ...csvData].map(e => e.join(",")).join("\n");
+    // Escape each cell per CSV spec: wrap in quotes, double any internal quotes.
+    // Without this, any value containing a comma (e.g. a joined tools list),
+    // a quote, or a newline silently corrupts the column structure.
+    const escapeCsvCell = (value: any) => {
+      const str = String(value ?? "");
+      if (/[",\n]/.test(str)) {
+        return `"${str.replace(/"/g, '""')}"`;
+      }
+      return str;
+    };
+
+    const content = [headers, ...csvData]
+      .map(row => row.map(escapeCsvCell).join(","))
+      .join("\n");
     const blob = new Blob([content], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -1812,53 +1919,63 @@ export default function DashboardPage() {
     link.click();
   };
 
-  const handleBulkDelete = async () => {
+  const handleBulkDelete = () => {
     if (!isPro || clients.length === 0) return;
-    const confirmBulk = confirm("Are you sure you want to delete ALL clients? This cannot be undone.");
-    if (confirmBulk) {
-      try {
-        const batch = writeBatch(db);
-        clients.forEach((client) => {
-          batch.delete(doc(db, "clients", client.id));
-        });
-        await batch.commit();
-        alert("All data cleared successfully.");
-      } catch (e) {
-        console.error("Bulk delete error", e);
-      }
-    }
+    setConfirmDialog({
+      title: "Delete all clients?",
+      message: "Are you sure you want to delete ALL clients? This cannot be undone.",
+      confirmLabel: "Delete All",
+      danger: true,
+      onConfirm: async () => {
+        try {
+          const batch = writeBatch(db);
+          clients.forEach((client) => {
+            batch.delete(doc(db, "clients", client.id));
+          });
+          await batch.commit();
+          showInfoToast("All data cleared successfully.");
+        } catch (e) {
+          console.error("Bulk delete error", e);
+          showInfoToast("Failed to delete clients. Please try again.", "error");
+        }
+      },
+    });
   };
 
-  const handleDeleteAccount = async () => {
+  const handleDeleteAccount = () => {
     if (!user) return;
-    const confirmDelete = confirm("CRITICAL: This will permanently wipe your account and all projects. This cannot be undone. Proceed?");
-    
-    if (confirmDelete) {
-      try {
-        setLoading(true);
-        const provider = new GoogleAuthProvider();
-        await reauthenticateWithPopup(user, provider);
-        
-        const q = query(collection(db, "clients"), where("userId", "==", user.uid));
-        const querySnapshot = await getDocs(q);
-        const batch = writeBatch(db);
-        querySnapshot.forEach((doc) => batch.delete(doc.ref));
-        
-        batch.delete(doc(db, "users", user.uid));
-        await batch.commit();
+    setConfirmDialog({
+      title: "Delete your account?",
+      message: "CRITICAL: This will permanently wipe your account and all projects. This cannot be undone.",
+      confirmLabel: "Delete Account",
+      danger: true,
+      onConfirm: async () => {
+        try {
+          setLoading(true);
+          const provider = new GoogleAuthProvider();
+          await reauthenticateWithPopup(user, provider);
 
-        await deleteUser(user);
-        router.push("/");
-      } catch (error: any) {
-        console.error(error);
-        if (error.code === "auth/requires-recent-login") {
-           alert("Session expired. Please log out and log back in to verify your identity for deletion.");
-        } else {
-           alert("Account deletion failed. Please try again later.");
+          const q = query(collection(db, "clients"), where("userId", "==", user.uid));
+          const querySnapshot = await getDocs(q);
+          const batch = writeBatch(db);
+          querySnapshot.forEach((doc) => batch.delete(doc.ref));
+
+          batch.delete(doc(db, "users", user.uid));
+          await batch.commit();
+
+          await deleteUser(user);
+          router.push("/");
+        } catch (error: any) {
+          console.error(error);
+          if (error.code === "auth/requires-recent-login") {
+            showInfoToast("Session expired. Please log out and log back in to verify your identity for deletion.", "error");
+          } else {
+            showInfoToast("Account deletion failed. Please try again later.", "error");
+          }
+          setLoading(false);
         }
-        setLoading(false);
-      }
-    }
+      },
+    });
   };
 
   // STEP 2 — Log when offboarding starts
@@ -1867,7 +1984,7 @@ export default function DashboardPage() {
       const client = clients.find((item) => item.id === id);
 
       if (!client) {
-        alert("Client not found.");
+        showInfoToast("Client not found.", "error");
         return;
       }
 
@@ -1905,7 +2022,7 @@ export default function DashboardPage() {
       });
     } catch (error) {
       console.error("Failed to start offboarding:", error);
-      alert("Failed to start offboarding. Please try again.");
+      showInfoToast("Failed to start offboarding. Please try again.", "error");
     }
   };
 
@@ -1946,12 +2063,12 @@ export default function DashboardPage() {
       }
     } catch (error) {
       console.error("Failed to update checklist task:", error);
-      alert("Failed to update task. Please try again.");
+      showInfoToast("Failed to update task. Please try again.", "error");
     }
   };
 
   // STEP 4 — Log assignments
-  const assignChecklistTask = async (
+  const assignChecklistTask = (
     clientId: string,
     taskId: string
   ) => {
@@ -1969,147 +2086,154 @@ export default function DashboardPage() {
 
     const currentAssignee = task.assignee || "";
 
-    const assignee = window
-      .prompt(
-        "Assign this task to a team member (name or email):",
-        currentAssignee
-      )
-      ?.trim();
+    setPromptDialog({
+      title: "Assign task",
+      message: "Assign this task to a team member (name or email).",
+      defaultValue: currentAssignee,
+      placeholder: "Name or email",
+      onSubmit: async (value) => {
+        const assignee = value.trim();
 
-    if (assignee === undefined) return;
+        try {
+          const updatedChecklist = client.checklist.map((item: any) =>
+            item.id === taskId
+              ? {
+                  ...item,
+                  assignee: assignee || null,
+                }
+              : item
+          );
 
-    try {
-      const updatedChecklist = client.checklist.map((item: any) =>
-        item.id === taskId
-          ? {
-              ...item,
-              assignee: assignee || null,
-            }
-          : item
-      );
+          await updateDoc(doc(db, "clients", clientId), {
+            checklist: updatedChecklist,
+          });
 
-      await updateDoc(doc(db, "clients", clientId), {
-        checklist: updatedChecklist,
-      });
-
-      await addActivityLog(clientId, {
-        type: "task_assigned",
-        message: assignee
-          ? `Task assigned to ${assignee}`
-          : "Task assignment removed",
-        taskId,
-        taskTitle: task.title,
-        tool: task.tool,
-        actor: user?.displayName || "You",
-      });
-    } catch (error) {
-      console.error("Failed to assign checklist task:", error);
-      alert("Failed to assign task. Please try again.");
-    }
+          await addActivityLog(clientId, {
+            type: "task_assigned",
+            message: assignee
+              ? `Task assigned to ${assignee}`
+              : "Task assignment removed",
+            taskId,
+            taskTitle: task.title,
+            tool: task.tool,
+            actor: user?.displayName || "You",
+          });
+        } catch (error) {
+          console.error("Failed to assign checklist task:", error);
+          showInfoToast("Failed to assign task. Please try again.", "error");
+        }
+      },
+    });
   };
 
   // STEP 5 — Log client closure
-  const closeClient = async (clientId: string) => {
-    try {
-      const client = clients.find((item) => item.id === clientId);
+  const closeClient = (clientId: string) => {
+    const client = clients.find((item) => item.id === clientId);
 
-      if (!client) return;
+    if (!client) return;
 
-      const checklist = Array.isArray(client.checklist)
-        ? client.checklist
-        : [];
+    const checklist = Array.isArray(client.checklist)
+      ? client.checklist
+      : [];
 
-      const incompleteTasks = checklist.filter(
-        (task: any) =>
-          task.status !== "removed" &&
-          task.status !== "not_needed"
-      );
+    const incompleteTasks = checklist.filter(
+      (task: any) =>
+        task.status !== "removed" &&
+        task.status !== "not_needed"
+    );
 
-      if (incompleteTasks.length > 0) {
-        const shouldClose = window.confirm(
-          `${incompleteTasks.length} offboarding task${
-            incompleteTasks.length === 1 ? "" : "s"
-          } still need attention.\n\nAre you sure you want to close this client anyway?`
+    const performClose = async (closeReason: string) => {
+      try {
+        const removedTasks = checklist.filter(
+          (task: any) => task.status === "removed"
+        ).length;
+
+        const notNeededTasks = checklist.filter(
+          (task: any) => task.status === "not_needed"
+        ).length;
+
+        const assignees = Array.from(
+          new Set(
+            checklist
+              .map((task: any) => task.assignee)
+              .filter(Boolean)
+          )
         );
 
-        if (!shouldClose) return;
+        await updateDoc(doc(db, "clients", clientId), {
+          clientStatus: "closed",
+          closedAt: serverTimestamp(),
+          closeReason,
+
+          completionSnapshot: {
+            clientName: client.name || "",
+            projectName: client.projectName || "",
+            tools: Array.isArray(client.tools)
+              ? client.tools
+              : [],
+            totalTasks: checklist.length,
+            removedTasks,
+            notNeededTasks,
+            incompleteTasks: incompleteTasks.length,
+            assignees,
+          },
+        });
+
+        await addActivityLog(clientId, {
+          type: "client_closed",
+          message: "Client offboarding closed",
+          actor: user?.displayName || "You",
+        });
+
+        setCompletionSummaryClient({
+          ...client,
+          clientStatus: "closed",
+          closeReason,
+          completionSnapshot: {
+            clientName: client.name || "",
+            projectName: client.projectName || "",
+            tools: Array.isArray(client.tools)
+              ? client.tools
+              : [],
+            totalTasks: checklist.length,
+            removedTasks,
+            notNeededTasks,
+            incompleteTasks: incompleteTasks.length,
+            assignees,
+          },
+        });
+      } catch (error) {
+        console.error("Failed to close client:", error);
+        showInfoToast("Failed to close client. Please try again.", "error");
       }
+    };
 
-      let closeReason = "";
-
-      if (incompleteTasks.length > 0) {
-        closeReason =
-          window.prompt(
-            "Why are you closing this client with incomplete tasks?"
-          )?.trim() || "";
-
-        if (!closeReason) {
-          alert("Please provide a reason before closing the client.");
-          return;
-        }
-      }
-
-      const removedTasks = checklist.filter(
-        (task: any) => task.status === "removed"
-      ).length;
-
-      const notNeededTasks = checklist.filter(
-        (task: any) => task.status === "not_needed"
-      ).length;
-
-      const assignees = Array.from(
-        new Set(
-          checklist
-            .map((task: any) => task.assignee)
-            .filter(Boolean)
-        )
-      );
-
-      await updateDoc(doc(db, "clients", clientId), {
-        clientStatus: "closed",
-        closedAt: serverTimestamp(),
-        closeReason,
-
-        completionSnapshot: {
-          clientName: client.name || "",
-          projectName: client.projectName || "",
-          tools: Array.isArray(client.tools)
-            ? client.tools
-            : [],
-          totalTasks: checklist.length,
-          removedTasks,
-          notNeededTasks,
-          incompleteTasks: incompleteTasks.length,
-          assignees,
+    if (incompleteTasks.length > 0) {
+      setConfirmDialog({
+        title: "Tasks still incomplete",
+        message: `${incompleteTasks.length} offboarding task${
+          incompleteTasks.length === 1 ? "" : "s"
+        } still need attention. Are you sure you want to close this client anyway?`,
+        confirmLabel: "Close Anyway",
+        danger: true,
+        onConfirm: () => {
+          setPromptDialog({
+            title: "Reason for closing early",
+            message: "Why are you closing this client with incomplete tasks?",
+            placeholder: "Enter a reason",
+            onSubmit: (value) => {
+              const closeReason = value.trim();
+              if (!closeReason) {
+                showInfoToast("Please provide a reason before closing the client.", "error");
+                return;
+              }
+              performClose(closeReason);
+            },
+          });
         },
       });
-
-      await addActivityLog(clientId, {
-        type: "client_closed",
-        message: "Client offboarding closed",
-        actor: user?.displayName || "You",
-      });
-
-      setCompletionSummaryClient({
-        ...client,
-        clientStatus: "closed",
-        closeReason,
-        completionSnapshot: {
-          clientName: client.name || "",
-          projectName: client.projectName || "",
-          tools: Array.isArray(client.tools)
-            ? client.tools
-            : [],
-          totalTasks: checklist.length,
-          removedTasks,
-          notNeededTasks,
-          incompleteTasks: incompleteTasks.length,
-          assignees,
-        },
-      });
-    } catch (error) {
-      console.error("Failed to close client:", error);
-      alert("Failed to close client. Please try again.");
+    } else {
+      performClose("");
     }
   };
 
@@ -2163,7 +2287,7 @@ export default function DashboardPage() {
     const portalUrl = `${window.location.origin}/shared/${id}`;
     window.open(portalUrl, "_blank");
     navigator.clipboard.writeText(portalUrl);
-    alert("Client Portal link copied to clipboard!");
+    showInfoToast("Client Portal link copied to clipboard!");
   };
 
   const handleLogout = async () => {
@@ -2177,7 +2301,7 @@ export default function DashboardPage() {
   const handleSave = async () => {
     if (!user) return;
     if (!isPro && clients.length >= 3) {
-      alert("Starter plan is limited to 3 clients.");
+      showInfoToast("Starter plan is limited to 3 clients.", "error");
       router.push("/pricing");
       return;
     }
@@ -2191,7 +2315,7 @@ export default function DashboardPage() {
       accessRemovalDeadline === "" ||
       accessReviewDate === ""
     ) {
-      alert("Please complete all required fields and select at least one tool.");
+      showInfoToast("Please complete all required fields and select at least one tool.", "error");
       return;
     }
 
@@ -2236,18 +2360,28 @@ export default function DashboardPage() {
       setTimeout(() => setShowToast(false), 3000);
     } catch (error) {
       console.error("Save Error:", error);
-      alert("Failed to save client.");
+      showInfoToast("Failed to save client.", "error");
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleDelete = async (id: string) => {
-    try {
-      await deleteDoc(doc(db, "clients", id));
-    } catch (error) {
-      console.error("Delete error:", error);
-    }
+  const handleDelete = (id: string) => {
+    const client = clients.find((item) => item.id === id);
+    setConfirmDialog({
+      title: "Delete this client?",
+      message: `This will permanently delete ${client?.name || "this client"} and all of their offboarding data. This cannot be undone.`,
+      confirmLabel: "Delete Client",
+      danger: true,
+      onConfirm: async () => {
+        try {
+          await deleteDoc(doc(db, "clients", id));
+        } catch (error) {
+          console.error("Delete error:", error);
+          showInfoToast("Failed to delete client. Please try again.", "error");
+        }
+      },
+    });
   };
 
   const filteredClients = [...clients]
@@ -3008,9 +3142,9 @@ export default function DashboardPage() {
                                 key={task.id}
                                 className={`rounded-xl border p-3 ${isDarkMode ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-100'}`}
                               >
-                                <div className="flex items-center gap-3">
+                                <div className="flex items-start gap-3">
                                   <div
-                                    className={`h-2.5 w-2.5 rounded-full shrink-0 ${
+                                    className={`mt-1 h-2.5 w-2.5 rounded-full shrink-0 ${
                                       task.status === "removed"
                                         ? "bg-[#9BCB3B]"
                                         : task.status === "in_progress"
@@ -3035,7 +3169,7 @@ export default function DashboardPage() {
                                       {task.title}
                                     </p>
 
-                                    <div className="flex items-center gap-2 mt-0.5">
+                                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                                       <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                                         {task.tool}
                                       </p>
@@ -3056,37 +3190,37 @@ export default function DashboardPage() {
                                       )}
                                     </div>
                                   </div>
-
-                                  <select
-                                    value={task.status}
-                                    onChange={(e) =>
-                                      updateChecklistTask(
-                                        client.id,
-                                        task.id,
-                                        e.target.value
-                                      )
-                                    }
-                                    className={`px-3 py-2 rounded-xl border text-[10px] font-black uppercase tracking-wider outline-none transition-all ${
-                                      task.status === "removed"
-                                        ? "bg-emerald-50 border-emerald-200 text-emerald-600"
-                                        : task.status === "in_progress"
-                                          ? "bg-blue-50 border-blue-200 text-blue-600"
-                                          : task.status === "not_needed"
-                                            ? "bg-slate-100 border-slate-200 text-slate-500"
-                                            : task.status === "waiting" || task.status === "waiting_client"
-                                              ? "bg-amber-50 border-amber-200 text-amber-600"
-                                              : "bg-slate-50 border-slate-200 text-slate-500"
-                                    }`}
-                                  >
-                                    <option value="pending">Pending</option>
-                                    <option value="in_progress">In Progress</option>
-                                    <option value="removed">Removed</option>
-                                    <option value="not_needed">Not Needed</option>
-                                    <option value="waiting_client">
-                                      Waiting for Client
-                                    </option>
-                                  </select>
                                 </div>
+
+                                <select
+                                  value={task.status}
+                                  onChange={(e) =>
+                                    updateChecklistTask(
+                                      client.id,
+                                      task.id,
+                                      e.target.value
+                                    )
+                                  }
+                                  className={`w-full mt-3 px-3 py-2.5 rounded-xl border text-[10px] font-black uppercase tracking-wider outline-none transition-all ${
+                                    task.status === "removed"
+                                      ? "bg-emerald-50 border-emerald-200 text-emerald-600"
+                                      : task.status === "in_progress"
+                                        ? "bg-blue-50 border-blue-200 text-blue-600"
+                                        : task.status === "not_needed"
+                                          ? "bg-slate-100 border-slate-200 text-slate-500"
+                                          : task.status === "waiting" || task.status === "waiting_client"
+                                            ? "bg-amber-50 border-amber-200 text-amber-600"
+                                            : "bg-slate-50 border-slate-200 text-slate-500"
+                                  }`}
+                                >
+                                  <option value="pending">Pending</option>
+                                  <option value="in_progress">In Progress</option>
+                                  <option value="removed">Removed</option>
+                                  <option value="not_needed">Not Needed</option>
+                                  <option value="waiting_client">
+                                    Waiting for Client
+                                  </option>
+                                </select>
 
                                 {isPro && (
                                   <button
@@ -3179,6 +3313,67 @@ export default function DashboardPage() {
           </>
         )}
       </main>
+
+      {/* INFO TOAST (replaces alert()) */}
+      {infoToast && (
+        <div
+          className={`fixed top-24 right-4 md:right-10 z-[110] px-5 py-3 rounded-xl font-black text-xs shadow-2xl flex items-center gap-2 animate-in fade-in slide-in-from-top-4 duration-300 ${
+            infoToast.type === "error"
+              ? "bg-red-500 text-white"
+              : "bg-[#9BCB3B] text-white"
+          }`}
+        >
+          <span>{infoToast.type === "error" ? "⚠" : "✓"}</span>
+          <span className="normal-case font-bold">{infoToast.message}</span>
+        </div>
+      )}
+
+      {/* CONFIRM DIALOG (replaces confirm()) */}
+      {confirmDialog && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/50 p-4">
+          <div className={`w-full max-w-sm rounded-2xl p-6 shadow-2xl ${isDarkMode ? 'bg-slate-900 border border-slate-700' : 'bg-white'}`}>
+            <h3 className={`text-lg font-black italic mb-2 ${isDarkMode ? 'text-white' : 'text-[#243F74]'}`}>
+              {confirmDialog.title}
+            </h3>
+            <p className={`text-sm font-semibold mb-6 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+              {confirmDialog.message}
+            </p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setConfirmDialog(null)}
+                className={`flex-1 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-colors ${isDarkMode ? 'bg-slate-800 text-slate-400 hover:bg-slate-700' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'}`}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const action = confirmDialog.onConfirm;
+                  setConfirmDialog(null);
+                  action();
+                }}
+                className={`flex-1 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest text-white shadow-lg transition-all active:scale-95 ${
+                  confirmDialog.danger
+                    ? "bg-red-500 shadow-red-500/30 hover:bg-red-600"
+                    : "bg-[#243F74] shadow-[#243F74]/30 hover:opacity-90"
+                }`}
+              >
+                {confirmDialog.confirmLabel || "Confirm"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PROMPT DIALOG (replaces prompt()) */}
+      {promptDialog && (
+        <PromptDialogBody
+          isDarkMode={isDarkMode}
+          dialog={promptDialog}
+          onClose={() => setPromptDialog(null)}
+        />
+      )}
 
       {/* TOOL INSTRUCTIONS MODAL */}
       {instructionTask && currentInstruction && (
@@ -4348,9 +4543,15 @@ export default function DashboardPage() {
                     ) : (
                       <button 
                         onClick={() => {
-                          if(confirm("Are you sure you want to cancel? You will lose Pro access at the end of your billing cycle.")) {
-                             alert("Cancellation request received. Our team will process this within 24 hours.");
-                          }
+                          setConfirmDialog({
+                            title: "Cancel your subscription?",
+                            message: "Are you sure you want to cancel? You will lose Pro access at the end of your billing cycle.",
+                            confirmLabel: "Cancel Subscription",
+                            danger: true,
+                            onConfirm: () => {
+                              showInfoToast("Cancellation request received. Our team will process this within 24 hours.");
+                            },
+                          });
                         }}
                         className="w-full py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest text-red-400 hover:bg-red-50 transition-all border-2 border-transparent hover:border-red-100"
                       >
