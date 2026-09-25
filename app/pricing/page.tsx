@@ -504,8 +504,7 @@ export default function PricingPage() {
               {[
                 "Unlimited clients",
                 "Automated email reminders",
-                "Deadline reminders",
-                "Needs Your Attention",
+                "Automated reminder sequence",
                 "Task assignments",
                 "Team member responsibility",
               ].map((feature) => (
