@@ -2713,9 +2713,28 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-white">
-        <div className="w-10 h-10 border-4 border-slate-100 border-t-[#243F74] rounded-full animate-spin mb-4"></div>
-        <p className="text-slate-400 font-black text-[10px] uppercase tracking-[0.2em] animate-pulse">Syncing Dashboard...</p>
+      <div className={`min-h-screen flex flex-col items-center justify-center gap-6 ${isDarkMode ? 'bg-[#0F172A]' : 'bg-white'}`}>
+        <div className="animate-pulse">
+          <Image
+            src="/logo.png"
+            alt="OffboardPro"
+            width={150}
+            height={150}
+            priority
+            unoptimized
+            className="object-contain w-[130px] h-auto"
+          />
+        </div>
+        <div className="flex items-center gap-2.5">
+          {[0, 1, 2].map((i) => (
+            <div
+              key={i}
+              className="w-2.5 h-2.5 rounded-full animate-checklist-tick"
+              style={{ animationDelay: `${i * 0.25}s` }}
+            />
+          ))}
+        </div>
+        <p className="text-slate-400 font-black text-[10px] uppercase tracking-[0.2em]">Securing Your Workspace...</p>
       </div>
     );
   }

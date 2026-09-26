@@ -24,6 +24,7 @@
   --animate-slide-up: slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
   --animate-slide-down: slide-down 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
   --animate-slide-in-right: slide-in-right 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-checklist-tick: checklist-tick 1.2s ease-in-out infinite;
 }
 
 @keyframes fade-in {
@@ -49,6 +50,13 @@
 @keyframes slide-in-right {
   from { opacity: 0; transform: translateX(14px); }
   to { opacity: 1; transform: translateX(0); }
+}
+
+/* Loading-state dots that "tick off" one by one, like checklist items
+   being completed — the loading animation for the dashboard sync screen. */
+@keyframes checklist-tick {
+  0%, 100% { background-color: #e2e8f0; transform: scale(1); }
+  40% { background-color: #9BCB3B; transform: scale(1.25); }
 }
 
 /* Respect users who've asked for reduced motion */
