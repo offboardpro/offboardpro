@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -10,7 +10,8 @@ import {
   signOut, 
   deleteUser, 
   GoogleAuthProvider, 
-  reauthenticateWithPopup 
+  reauthenticateWithPopup,
+  updateProfile
 } from "firebase/auth";
 import { 
   collection, 
@@ -1353,8 +1354,8 @@ function PromptDialogBody({
   };
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/50 p-4">
-      <div className={`w-full max-w-sm rounded-2xl p-6 shadow-2xl ${isDarkMode ? 'bg-slate-900 border border-slate-700' : 'bg-white'}`}>
+    <div className="fixed inset-0 animate-fade-in z-[120] flex items-center justify-center bg-black/50 p-4">
+      <div className={`w-full max-w-sm rounded-2xl p-6 shadow-2xl animate-scale-in ${isDarkMode ? 'bg-slate-900 border border-slate-700' : 'bg-white'}`}>
         <h3 className={`text-lg font-black italic mb-2 ${isDarkMode ? 'text-white' : 'text-[#243F74]'}`}>
           {dialog.title}
         </h3>
@@ -1400,6 +1401,211 @@ function PromptDialogBody({
   );
 }
 
+const TASK_STATUS_OPTIONS = [
+  { value: "pending", label: "Pending" },
+  { value: "in_progress", label: "In Progress" },
+  { value: "removed", label: "Removed" },
+  { value: "not_needed", label: "Not Needed" },
+  { value: "waiting_client", label: "Waiting for Client" },
+];
+
+function getStatusColorClasses(status: string) {
+  return status === "removed"
+    ? "bg-emerald-50 border-emerald-200 text-emerald-600"
+    : status === "in_progress"
+      ? "bg-blue-50 border-blue-200 text-blue-600"
+      : status === "not_needed"
+        ? "bg-slate-100 border-slate-200 text-slate-500"
+        : status === "waiting" || status === "waiting_client"
+          ? "bg-amber-50 border-amber-200 text-amber-600"
+          : "bg-slate-50 border-slate-200 text-slate-500";
+}
+
+// Custom-styled replacement for the native <select>, which on mobile opens
+// an unstyled OS picker sheet that doesn't match the rest of the app.
+function StatusDropdown({
+  value,
+  onChange,
+  isDarkMode,
+  widthClassName = "",
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  isDarkMode: boolean;
+  widthClassName?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [open]);
+
+  const currentLabel =
+    TASK_STATUS_OPTIONS.find((option) => option.value === value)?.label ||
+    "Pending";
+
+  return (
+    <div ref={containerRef} className={`relative ${widthClassName}`}>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl border text-[10px] font-black uppercase tracking-wider outline-none transition-all ${getStatusColorClasses(value)}`}
+      >
+        <span className="truncate">{currentLabel}</span>
+        <svg
+          className={`w-3 h-3 shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {open && (
+        <div
+          className={`absolute z-30 mt-1.5 w-full min-w-[170px] rounded-xl border shadow-xl overflow-hidden animate-scale-in ${
+            isDarkMode ? "bg-slate-900 border-slate-700" : "bg-white border-slate-100"
+          }`}
+        >
+          {TASK_STATUS_OPTIONS.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => {
+                onChange(option.value);
+                setOpen(false);
+              }}
+              className={`w-full text-left px-3 py-2.5 text-[10px] font-black uppercase tracking-wider transition-colors flex items-center justify-between ${
+                option.value === value
+                  ? isDarkMode
+                    ? "bg-slate-800 text-[#9BCB3B]"
+                    : "bg-slate-50 text-[#243F74]"
+                  : isDarkMode
+                    ? "text-slate-400 hover:bg-slate-800"
+                    : "text-slate-500 hover:bg-slate-50"
+              }`}
+            >
+              <span>{option.label}</span>
+              {option.value === value && <span>✓</span>}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Generic custom dropdown for plain filter/sort selects (no per-option
+// color coding) — same native-picker problem as StatusDropdown above.
+function FilterDropdown({
+  value,
+  options,
+  onChange,
+  isDarkMode,
+}: {
+  value: string;
+  options: { value: string; label: string }[];
+  onChange: (value: string) => void;
+  isDarkMode: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [open]);
+
+  const currentLabel =
+    options.find((option) => option.value === value)?.label ||
+    options[0]?.label ||
+    "";
+
+  return (
+    <div ref={containerRef} className="relative w-full sm:w-auto">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className={`w-full sm:w-auto flex items-center justify-between gap-2 border-2 rounded-2xl px-4 py-3 text-xs font-black outline-none transition-all ${
+          isDarkMode
+            ? "bg-slate-800 border-slate-700 text-white"
+            : "bg-white border-slate-100 text-slate-600"
+        }`}
+      >
+        <span className="truncate">{currentLabel}</span>
+        <svg
+          className={`w-3 h-3 shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {open && (
+        <div
+          className={`absolute z-30 mt-1.5 w-full sm:min-w-[190px] rounded-2xl border shadow-xl overflow-hidden animate-scale-in ${
+            isDarkMode ? "bg-slate-900 border-slate-700" : "bg-white border-slate-100"
+          }`}
+        >
+          {options.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => {
+                onChange(option.value);
+                setOpen(false);
+              }}
+              className={`w-full text-left px-4 py-2.5 text-xs font-black transition-colors flex items-center justify-between ${
+                option.value === value
+                  ? isDarkMode
+                    ? "bg-slate-800 text-[#9BCB3B]"
+                    : "bg-slate-50 text-[#243F74]"
+                  : isDarkMode
+                    ? "text-slate-300 hover:bg-slate-800"
+                    : "text-slate-600 hover:bg-slate-50"
+              }`}
+            >
+              <span>{option.label}</span>
+              {option.value === value && <span>✓</span>}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function DashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
@@ -1412,6 +1618,39 @@ export default function DashboardPage() {
   const [sortOption, setSortOption] = useState("newest");
   const [isPro, setIsPro] = useState(false); 
   const [isDarkMode, setIsDarkMode] = useState(false); 
+  const [displayNameInput, setDisplayNameInput] = useState("");
+  const [isSavingName, setIsSavingName] = useState(false);
+
+  const toggleDarkMode = () => {
+    setIsDarkMode((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem("offboardpro-theme", next ? "dark" : "light");
+      } catch {
+        // localStorage unavailable — theme just won't persist this session
+      }
+      return next;
+    });
+  };
+
+  const handleSaveDisplayName = async () => {
+    if (!user) return;
+    const trimmed = displayNameInput.trim();
+    if (!trimmed) {
+      showInfoToast("Name can't be empty.", "error");
+      return;
+    }
+    setIsSavingName(true);
+    try {
+      await updateProfile(user, { displayName: trimmed });
+      showInfoToast("Name updated.");
+    } catch (error) {
+      console.error("Failed to update display name:", error);
+      showInfoToast("Failed to update name. Please try again.", "error");
+    } finally {
+      setIsSavingName(false);
+    }
+  };
   const [showToast, setShowToast] = useState(false);
   const [loading, setLoading] = useState(true); 
   const [subscriptionData, setSubscriptionData] = useState<any>(null); 
@@ -1744,11 +1983,21 @@ export default function DashboardPage() {
       setLoading(false);
     }, 5000);
 
+    // Load persisted theme preference. Previously isDarkMode was pure
+    // in-memory state, so it silently reset to light mode on every reload.
+    try {
+      const savedTheme = localStorage.getItem("offboardpro-theme");
+      if (savedTheme === "dark") setIsDarkMode(true);
+    } catch {
+      // localStorage unavailable (e.g. private browsing) — fall back to light mode
+    }
+
     const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
       if (!currentUser) {
         router.replace("/");
       } else {
         setUser(currentUser);
+        setDisplayNameInput(currentUser.displayName || "");
 
         const userRef = doc(db, "users", currentUser.uid);
         const unsubscribeUser = onSnapshot(userRef, (docSnap) => {
@@ -1863,7 +2112,7 @@ export default function DashboardPage() {
     };
   }, [router]);
 
-  const generatePDF = () => {
+  const generatePDF = (clientsToExport: any[] = filteredClients) => {
     if (!isPro) return;
     const docPdf = new jsPDF();
     docPdf.setFontSize(18);
@@ -1874,7 +2123,7 @@ export default function DashboardPage() {
     autoTable(docPdf, {
       startY: 35,
       head: [['Client Name', 'Tools/Access', 'Review Date', 'Status']],
-      body: filteredClients.map(c => [
+      body: clientsToExport.map(c => [
         c.name, 
         formatToolsDisplay(c.tools), 
         c.date, 
@@ -1886,10 +2135,10 @@ export default function DashboardPage() {
     docPdf.save(`OffboardPro_Report_${new Date().getTime()}.pdf`);
   };
 
-  const exportCSV = () => {
+  const exportCSV = (clientsToExport: any[] = filteredClients) => {
     if (!isPro) return;
     const headers = ["Client Name", "Tools", "Review Date", "Status", "Notes"];
-    const csvData = filteredClients.map(c => [
+    const csvData = clientsToExport.map(c => [
       c.name,
       formatToolsDisplay(c.tools),
       c.date,
@@ -2493,7 +2742,7 @@ export default function DashboardPage() {
         <div className="flex items-center gap-3">
             {isPro && (
               <button 
-                onClick={() => setIsDarkMode(!isDarkMode)}
+                onClick={toggleDarkMode}
                 className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all shadow-sm ${isDarkMode ? 'bg-slate-800 text-yellow-400 border-slate-700' : 'bg-slate-50 text-slate-400 border-slate-100'} border`}
               >
                 {isDarkMode ? "☀️" : "🌙"}
@@ -2510,7 +2759,7 @@ export default function DashboardPage() {
       <main className="flex-grow w-full max-w-7xl mx-auto pt-40 md:pt-48 pb-16 px-4 md:px-8">
         
         {isPro && activeAlerts.length > 0 && (
-          <div className="mb-10 animate-in fade-in slide-in-from-top-4 duration-500">
+          <div className="mb-10 animate-slide-down">
               <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-red-500 mb-3 flex items-center gap-2">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
@@ -2533,7 +2782,7 @@ export default function DashboardPage() {
 
         {/* NEEDS YOUR ATTENTION */}
         {isPro && attentionItems.length > 0 && (
-          <section className="mb-10 animate-in fade-in slide-in-from-top-4 duration-500">
+          <section className="mb-10 animate-slide-down">
             <div className="flex items-end justify-between mb-4">
               <div>
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1">
@@ -2651,38 +2900,32 @@ export default function DashboardPage() {
             <input type="text" placeholder="Search..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className={`w-full sm:w-64 border-2 rounded-2xl px-4 py-3 text-sm font-bold outline-none transition-all ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white focus:border-[#9BCB3B]' : 'bg-white border-slate-100 focus:border-[#9BCB3B]'}`} />
             
             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-              <select
+              <FilterDropdown
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className={`border-2 rounded-2xl px-4 py-3 text-xs font-black outline-none ${
-                  isDarkMode
-                    ? "bg-slate-800 border-slate-700 text-white"
-                    : "bg-white border-slate-100 text-slate-600"
-                }`}
-              >
-                <option value="all">All Status</option>
-                <option value="active">Active</option>
-                <option value="ending_soon">Ending Soon</option>
-                <option value="offboarding">Offboarding</option>
-                <option value="ready_to_close">Ready to Close</option>
-                <option value="closed">Closed</option>
-                <option value="overdue">Overdue</option>
-              </select>
+                onChange={setStatusFilter}
+                isDarkMode={isDarkMode}
+                options={[
+                  { value: "all", label: "All Status" },
+                  { value: "active", label: "Active" },
+                  { value: "ending_soon", label: "Ending Soon" },
+                  { value: "offboarding", label: "Offboarding" },
+                  { value: "ready_to_close", label: "Ready to Close" },
+                  { value: "closed", label: "Closed" },
+                  { value: "overdue", label: "Overdue" },
+                ]}
+              />
 
-              <select
+              <FilterDropdown
                 value={sortOption}
-                onChange={(e) => setSortOption(e.target.value)}
-                className={`border-2 rounded-2xl px-4 py-3 text-xs font-black outline-none ${
-                  isDarkMode
-                    ? "bg-slate-800 border-slate-700 text-white"
-                    : "bg-white border-slate-100 text-slate-600"
-                }`}
-              >
-                <option value="newest">Newest</option>
-                <option value="oldest">Oldest</option>
-                <option value="deadline_soonest">Deadline Soonest</option>
-                <option value="deadline_latest">Deadline Latest</option>
-              </select></div>
+                onChange={setSortOption}
+                isDarkMode={isDarkMode}
+                options={[
+                  { value: "newest", label: "Newest" },
+                  { value: "oldest", label: "Oldest" },
+                  { value: "deadline_soonest", label: "Deadline Soonest" },
+                  { value: "deadline_latest", label: "Deadline Latest" },
+                ]}
+              /></div>
             
             <div className="flex items-center gap-3 w-full sm:w-auto">
               {!isPro && (
@@ -2710,17 +2953,17 @@ export default function DashboardPage() {
 
         {/* PRO TOOLS ACTIONS */}
         {isPro && (
-          <div className="flex flex-wrap items-center gap-4 mb-8 p-5 rounded-[2rem] border-2 bg-slate-500/5 border-slate-500/10 transition-all animate-in fade-in duration-700">
+          <div className="flex flex-wrap items-center gap-4 mb-8 p-5 rounded-[2rem] border-2 bg-slate-500/5 border-slate-500/10 transition-all animate-fade-in">
             <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 mr-2">Admin Tools:</span>
-            <button onClick={generatePDF} className="bg-[#243F74] text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg shadow-[#243F74]/20">📄 Export PDF</button>
-            <button onClick={exportCSV} className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all border-2 ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-100 text-[#243F74]'}`}>📊 Export CSV</button>
+            <button onClick={() => generatePDF()} className="bg-[#243F74] text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg shadow-[#243F74]/20">📄 Export PDF</button>
+            <button onClick={() => exportCSV()} className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all border-2 ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-100 text-[#243F74]'}`}>📊 Export CSV</button>
             <button onClick={handleBulkDelete} className="bg-red-50 text-red-500 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest ml-auto hover:bg-red-500 hover:text-white transition-all border-2 border-red-100">🗑 Clear All</button>
           </div>
         )}
 
         {/* STATS CARDS */}
         {isPro && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-10 animate-in slide-in-from-bottom-4 duration-700">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-10 animate-slide-up">
             <div className={`p-6 md:p-8 rounded-[2rem] border-2 text-center transition-colors ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'}`}>
               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">Client Tools Tracked</span>
               <span className={`text-2xl md:text-3xl font-black italic ${isDarkMode ? 'text-white' : 'text-[#243F74]'}`}>{clients.length === 0 ? "0" : clients.length}</span>
@@ -2904,35 +3147,17 @@ export default function DashboardPage() {
                                             </div>
                                           </div>
 
-                                          <select
+                                          <StatusDropdown
                                             value={task.status}
-                                            onChange={(e) =>
+                                            onChange={(newStatus) =>
                                               updateChecklistTask(
                                                 client.id,
                                                 task.id,
-                                                e.target.value
+                                                newStatus
                                               )
                                             }
-                                            className={`px-3 py-2 rounded-xl border text-[10px] font-black uppercase tracking-wider outline-none transition-all ${
-                                              task.status === "removed"
-                                                ? "bg-emerald-50 border-emerald-200 text-emerald-600"
-                                                : task.status === "in_progress"
-                                                  ? "bg-blue-50 border-blue-200 text-blue-600"
-                                                  : task.status === "not_needed"
-                                                    ? "bg-slate-100 border-slate-200 text-slate-500"
-                                                    : task.status === "waiting" || task.status === "waiting_client"
-                                                      ? "bg-amber-50 border-amber-200 text-amber-600"
-                                                      : "bg-slate-50 border-slate-200 text-slate-500"
-                                            }`}
-                                          >
-                                            <option value="pending">Pending</option>
-                                            <option value="in_progress">In Progress</option>
-                                            <option value="removed">Removed</option>
-                                            <option value="not_needed">Not Needed</option>
-                                            <option value="waiting_client">
-                                              Waiting for Client
-                                            </option>
-                                          </select>
+                                            isDarkMode={isDarkMode}
+                                          />
 
                                           {isPro && (
                                             <button
@@ -3192,35 +3417,18 @@ export default function DashboardPage() {
                                   </div>
                                 </div>
 
-                                <select
+                                <StatusDropdown
                                   value={task.status}
-                                  onChange={(e) =>
+                                  onChange={(newStatus) =>
                                     updateChecklistTask(
                                       client.id,
                                       task.id,
-                                      e.target.value
+                                      newStatus
                                     )
                                   }
-                                  className={`w-full mt-3 px-3 py-2.5 rounded-xl border text-[10px] font-black uppercase tracking-wider outline-none transition-all ${
-                                    task.status === "removed"
-                                      ? "bg-emerald-50 border-emerald-200 text-emerald-600"
-                                      : task.status === "in_progress"
-                                        ? "bg-blue-50 border-blue-200 text-blue-600"
-                                        : task.status === "not_needed"
-                                          ? "bg-slate-100 border-slate-200 text-slate-500"
-                                          : task.status === "waiting" || task.status === "waiting_client"
-                                            ? "bg-amber-50 border-amber-200 text-amber-600"
-                                            : "bg-slate-50 border-slate-200 text-slate-500"
-                                  }`}
-                                >
-                                  <option value="pending">Pending</option>
-                                  <option value="in_progress">In Progress</option>
-                                  <option value="removed">Removed</option>
-                                  <option value="not_needed">Not Needed</option>
-                                  <option value="waiting_client">
-                                    Waiting for Client
-                                  </option>
-                                </select>
+                                  isDarkMode={isDarkMode}
+                                  widthClassName="w-full mt-3"
+                                />
 
                                 {isPro && (
                                   <button
@@ -3317,7 +3525,7 @@ export default function DashboardPage() {
       {/* INFO TOAST (replaces alert()) */}
       {infoToast && (
         <div
-          className={`fixed top-24 right-4 md:right-10 z-[110] px-5 py-3 rounded-xl font-black text-xs shadow-2xl flex items-center gap-2 animate-in fade-in slide-in-from-top-4 duration-300 ${
+          className={`fixed top-24 right-4 md:right-10 z-[110] px-5 py-3 rounded-xl font-black text-xs shadow-2xl flex items-center gap-2 animate-slide-down ${
             infoToast.type === "error"
               ? "bg-red-500 text-white"
               : "bg-[#9BCB3B] text-white"
@@ -3330,8 +3538,8 @@ export default function DashboardPage() {
 
       {/* CONFIRM DIALOG (replaces confirm()) */}
       {confirmDialog && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/50 p-4">
-          <div className={`w-full max-w-sm rounded-2xl p-6 shadow-2xl ${isDarkMode ? 'bg-slate-900 border border-slate-700' : 'bg-white'}`}>
+        <div className="fixed inset-0 animate-fade-in z-[120] flex items-center justify-center bg-black/50 p-4">
+          <div className={`w-full max-w-sm rounded-2xl p-6 shadow-2xl animate-scale-in ${isDarkMode ? 'bg-slate-900 border border-slate-700' : 'bg-white'}`}>
             <h3 className={`text-lg font-black italic mb-2 ${isDarkMode ? 'text-white' : 'text-[#243F74]'}`}>
               {confirmDialog.title}
             </h3>
@@ -3377,8 +3585,8 @@ export default function DashboardPage() {
 
       {/* TOOL INSTRUCTIONS MODAL */}
       {instructionTask && currentInstruction && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-2xl dark:bg-slate-900">
+        <div className="fixed inset-0 animate-fade-in z-[100] flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-2xl animate-scale-in dark:bg-slate-900">
             {/* Header */}
             <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white px-6 py-5 dark:border-slate-700 dark:bg-slate-900">
               <div>
@@ -3499,9 +3707,9 @@ export default function DashboardPage() {
 
       {/* STEP 6 — COMPLETION SUMMARY MODAL */}
       {completionSummaryClient && (
-        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xl flex items-center justify-center z-[120] px-4">
+        <div className="fixed inset-0 animate-fade-in bg-slate-900/70 backdrop-blur-xl flex items-center justify-center z-[120] px-4">
           <div
-            className={`w-full max-w-[620px] max-h-[90vh] overflow-y-auto rounded-[2.5rem] p-8 md:p-10 shadow-2xl border-t-[10px] ${
+            className={`w-full max-w-[620px] max-h-[90vh] overflow-y-auto rounded-[2.5rem] p-8 md:p-10 shadow-2xl border-t-[10px] animate-scale-in ${
               isDarkMode
                 ? "bg-slate-900 border-[#9BCB3B]"
                 : "bg-white border-[#9BCB3B]"
@@ -3711,14 +3919,14 @@ export default function DashboardPage() {
 
       {/* 6C. ADD THE ACTIVITY MODAL */}
       {activityClient && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div className="fixed inset-0 animate-fade-in z-[100] flex items-center justify-center p-4">
           <div
             className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
             onClick={() => setActivityClient(null)}
           />
 
           <div
-            className={`relative w-full max-w-2xl max-h-[85vh] overflow-hidden rounded-3xl border shadow-2xl ${
+            className={`relative w-full max-w-2xl max-h-[85vh] overflow-hidden rounded-3xl border shadow-2xl animate-scale-in ${
               isDarkMode
                 ? "bg-slate-950 border-slate-800"
                 : "bg-white border-slate-100"
@@ -3858,9 +4066,9 @@ export default function DashboardPage() {
 
       {/* CLIENT / PROJECT WORKSPACE */}
       {workspaceClient && (
-        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xl flex items-start md:items-center justify-center z-[130] p-0 md:px-4">
+        <div className="fixed inset-0 animate-fade-in bg-slate-900/70 backdrop-blur-xl flex items-start md:items-center justify-center z-[130] p-0 md:px-4">
           <div
-            className={`w-full max-w-[1100px] h-full md:h-auto max-h-none md:max-h-[92vh] overflow-y-auto rounded-none md:rounded-[2.5rem] shadow-2xl border-t-[6px] md:border-t-[10px] ${
+            className={`w-full max-w-[1100px] h-full md:h-auto max-h-none md:max-h-[92vh] overflow-y-auto rounded-none md:rounded-[2.5rem] shadow-2xl border-t-[6px] md:border-t-[10px] animate-scale-in ${
               isDarkMode
                 ? "bg-slate-950 border-[#9BCB3B]"
                 : "bg-white border-[#9BCB3B]"
@@ -4244,39 +4452,18 @@ export default function DashboardPage() {
                                 </div>
 
                                 <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-                                  <select
+                                  <StatusDropdown
                                     value={task.status}
-                                    onChange={(e) =>
+                                    onChange={(newStatus) =>
                                       updateChecklistTask(
                                         workspaceClient.id,
                                         task.id,
-                                        e.target.value
+                                        newStatus
                                       )
                                     }
-                                    className={`w-full sm:w-auto min-w-0 px-3 py-2 rounded-xl border text-[10px] font-black uppercase tracking-wider outline-none transition-all ${
-                                      task.status === "removed"
-                                        ? "bg-emerald-50 border-emerald-200 text-emerald-600"
-                                        : task.status === "in_progress"
-                                          ? "bg-blue-50 border-blue-200 text-blue-600"
-                                          : task.status === "not_needed"
-                                            ? "bg-slate-100 border-slate-200 text-slate-500"
-                                            : task.status === "waiting" || task.status === "waiting_client"
-                                              ? "bg-amber-50 border-amber-200 text-amber-600"
-                                              : "bg-slate-50 border-slate-200 text-slate-500"
-                                    }`}
-                                  >
-                                    <option value="pending">Pending</option>
-                                    <option value="in_progress">
-                                      In Progress
-                                    </option>
-                                    <option value="removed">Removed</option>
-                                    <option value="not_needed">
-                                      Not Needed
-                                    </option>
-                                    <option value="waiting_client">
-                                      Waiting for Client
-                                    </option>
-                                  </select>
+                                    isDarkMode={isDarkMode}
+                                    widthClassName="w-full sm:w-auto min-w-0"
+                                  />
 
                                   {task.status !== "removed" && task.status !== "not_needed" && (
                                     <button
@@ -4475,8 +4662,8 @@ export default function DashboardPage() {
 
       {/* SETTINGS MODAL */}
       {isSettingsOpen && (
-        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xl flex items-center justify-center z-[100] px-4">
-            <div className={`w-full max-w-[380px] rounded-[2.5rem] p-8 md:p-10 shadow-2xl border-t-[10px] transition-all animate-in zoom-in duration-300 ${isDarkMode ? 'bg-slate-900 border-[#9BCB3B]' : 'bg-white border-[#243F74]'}`}>
+        <div className="fixed inset-0 animate-fade-in bg-slate-900/70 backdrop-blur-xl flex items-center justify-center z-[100] px-4">
+            <div className={`w-full max-w-[380px] max-h-[88vh] overflow-y-auto rounded-[2.5rem] p-8 md:p-10 shadow-2xl border-t-[10px] transition-all animate-scale-in ${isDarkMode ? 'bg-slate-900 border-[#9BCB3B]' : 'bg-white border-[#243F74]'}`}>
               
               {!viewingSubscription ? (
                 <>
@@ -4484,32 +4671,140 @@ export default function DashboardPage() {
                       <h2 className={`text-2xl font-black italic ${isDarkMode ? 'text-white' : 'text-[#243F74]'}`}>Settings</h2>
                       <button onClick={() => setIsSettingsOpen(false)} className="text-slate-400 hover:text-red-500 transition-colors text-2xl font-black">✕</button>
                   </div>
-                  <div className="space-y-4">
-                    <div className={`p-4 rounded-2xl text-left border-2 ${isDarkMode ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-50 border-slate-100'}`}>
-                      <span className="text-[10px] font-black uppercase tracking-widest block mb-1 opacity-60 text-slate-400">Account</span>
-                      <p className={`text-sm font-black truncate ${isDarkMode ? 'text-slate-200' : 'text-slate-600'}`}>{user?.email}</p>
-                    </div>
+                  <div className="space-y-6">
 
-                    <button 
-                      onClick={() => setViewingSubscription(true)}
-                      className={`w-full p-4 rounded-2xl border-2 flex items-center justify-between transition-all group ${isDarkMode ? 'bg-slate-800/50 border-slate-700 hover:border-[#9BCB3B]' : 'bg-white border-slate-100 shadow-sm hover:border-[#243F74]'}`}
-                    >
-                      <div className="text-left">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-0.5">Subscription</span>
-                        <h3 className={`text-lg font-black italic ${isDarkMode ? 'text-[#9BCB3B]' : 'text-[#243F74]'}`}>{isPro ? "Professional" : "Free Starter"}</h3>
+                    {/* PROFILE */}
+                    <div>
+                      <span className="text-[10px] font-black uppercase tracking-widest block mb-2 opacity-60 text-slate-400">Profile</span>
+                      <div className={`p-4 rounded-2xl text-left border-2 space-y-3 ${isDarkMode ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-50 border-slate-100'}`}>
+                        <div>
+                          <span className="text-[9px] font-black uppercase tracking-widest block mb-1 opacity-50 text-slate-400">Email</span>
+                          <p className={`text-sm font-black truncate ${isDarkMode ? 'text-slate-200' : 'text-slate-600'}`}>{user?.email}</p>
+                        </div>
+                        {user?.metadata?.creationTime && (
+                          <div>
+                            <span className="text-[9px] font-black uppercase tracking-widest block mb-1 opacity-50 text-slate-400">Member Since</span>
+                            <p className={`text-sm font-black ${isDarkMode ? 'text-slate-200' : 'text-slate-600'}`}>
+                              {new Date(user.metadata.creationTime).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                            </p>
+                          </div>
+                        )}
+                        <div>
+                          <span className="text-[9px] font-black uppercase tracking-widest block mb-1 opacity-50 text-slate-400">Display Name</span>
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              value={displayNameInput}
+                              onChange={(e) => setDisplayNameInput(e.target.value)}
+                              placeholder="Your name"
+                              className={`flex-1 min-w-0 border-2 rounded-xl px-3 py-2.5 font-bold outline-none text-sm ${isDarkMode ? 'bg-slate-900 border-slate-700 text-white focus:border-[#9BCB3B]' : 'bg-white border-slate-200 focus:border-[#9BCB3B]'}`}
+                            />
+                            <button
+                              onClick={handleSaveDisplayName}
+                              disabled={isSavingName}
+                              className="shrink-0 px-4 rounded-xl bg-[#243F74] text-white font-black text-[10px] uppercase tracking-widest shadow-lg shadow-[#243F74]/20 active:scale-95 transition-all disabled:opacity-50"
+                            >
+                              {isSavingName ? "..." : "Save"}
+                            </button>
+                          </div>
+                          <p className="text-[9px] font-bold text-slate-400 mt-1.5">Shown on activity logs (e.g. "Assigned by ...")</p>
+                        </div>
                       </div>
-                      <span className="text-xl group-hover:translate-x-1 transition-transform">→</span>
-                    </button>
-
-                    <div className="grid grid-cols-2 gap-4 pt-2">
-                      <button onClick={handleLogout} className="py-4 rounded-2xl bg-slate-100 text-slate-600 font-black text-[10px] uppercase tracking-widest transition-colors hover:bg-slate-200">Log Out</button>
-                      <button onClick={handleDeleteAccount} className="py-4 rounded-2xl bg-red-50 text-red-500 font-black text-[10px] uppercase tracking-widest hover:bg-red-500 border-2 border-red-100 hover:text-white transition-all shadow-lg shadow-red-500/10">Delete</button>
                     </div>
+
+                    {/* PREFERENCES */}
+                    <div>
+                      <span className="text-[10px] font-black uppercase tracking-widest block mb-2 opacity-60 text-slate-400">Preferences</span>
+                      <button
+                        onClick={toggleDarkMode}
+                        className={`w-full p-4 rounded-2xl border-2 flex items-center justify-between transition-all ${isDarkMode ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-100 shadow-sm'}`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="text-lg">{isDarkMode ? "🌙" : "☀️"}</span>
+                          <span className={`text-sm font-black ${isDarkMode ? 'text-slate-200' : 'text-slate-600'}`}>
+                            {isDarkMode ? "Dark Mode" : "Light Mode"}
+                          </span>
+                        </div>
+                        <div className={`w-10 h-5 rounded-full relative transition-all duration-300 ${isDarkMode ? 'bg-[#9BCB3B]' : 'bg-slate-300'}`}>
+                          <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all duration-300 ${isDarkMode ? 'right-1' : 'left-1'}`}></div>
+                        </div>
+                      </button>
+                    </div>
+
+                    {/* SUBSCRIPTION */}
+                    <div>
+                      <span className="text-[10px] font-black uppercase tracking-widest block mb-2 opacity-60 text-slate-400">Billing</span>
+                      <button 
+                        onClick={() => setViewingSubscription(true)}
+                        className={`w-full p-4 rounded-2xl border-2 flex items-center justify-between transition-all group ${isDarkMode ? 'bg-slate-800/50 border-slate-700 hover:border-[#9BCB3B]' : 'bg-white border-slate-100 shadow-sm hover:border-[#243F74]'}`}
+                      >
+                        <div className="text-left">
+                          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-0.5">Subscription</span>
+                          <h3 className={`text-lg font-black italic ${isDarkMode ? 'text-[#9BCB3B]' : 'text-[#243F74]'}`}>{isPro ? "Professional" : "Free Starter"}</h3>
+                        </div>
+                        <span className="text-xl group-hover:translate-x-1 transition-transform">→</span>
+                      </button>
+                    </div>
+
+                    {/* DATA */}
+                    {isPro && (
+                      <div>
+                        <span className="text-[10px] font-black uppercase tracking-widest block mb-2 opacity-60 text-slate-400">Data</span>
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            onClick={() => generatePDF(clients)}
+                            disabled={clients.length === 0}
+                            className={`py-3 rounded-2xl border-2 font-black text-[10px] uppercase tracking-widest transition-all disabled:opacity-40 ${isDarkMode ? 'bg-slate-800/50 border-slate-700 text-slate-200 hover:border-[#9BCB3B]' : 'bg-white border-slate-100 shadow-sm text-slate-600 hover:border-[#243F74]'}`}
+                          >
+                            📄 Export PDF
+                          </button>
+                          <button
+                            onClick={() => exportCSV(clients)}
+                            disabled={clients.length === 0}
+                            className={`py-3 rounded-2xl border-2 font-black text-[10px] uppercase tracking-widest transition-all disabled:opacity-40 ${isDarkMode ? 'bg-slate-800/50 border-slate-700 text-slate-200 hover:border-[#9BCB3B]' : 'bg-white border-slate-100 shadow-sm text-slate-600 hover:border-[#243F74]'}`}
+                          >
+                            📊 Export CSV
+                          </button>
+                        </div>
+                        <p className="text-[9px] font-bold text-slate-400 mt-1.5">Exports every client, ignoring current search/filter.</p>
+                      </div>
+                    )}
+
+                    {/* HELP */}
+                    <div>
+                      <span className="text-[10px] font-black uppercase tracking-widest block mb-2 opacity-60 text-slate-400">Help</span>
+                      <a
+                        href="mailto:support@offboardpro.com"
+                        className={`w-full p-4 rounded-2xl border-2 flex items-center justify-between transition-all ${isDarkMode ? 'bg-slate-800/50 border-slate-700 hover:border-[#9BCB3B]' : 'bg-white border-slate-100 shadow-sm hover:border-[#243F74]'}`}
+                      >
+                        <span className={`text-sm font-black ${isDarkMode ? 'text-slate-200' : 'text-slate-600'}`}>Contact Support</span>
+                        <span className="text-xl">→</span>
+                      </a>
+                    </div>
+
+                    {/* DANGER ZONE */}
+                    <div>
+                      <span className="text-[10px] font-black uppercase tracking-widest block mb-2 opacity-60 text-red-400">Danger Zone</span>
+                      <div className="space-y-2">
+                        <button
+                          onClick={handleBulkDelete}
+                          disabled={!isPro || clients.length === 0}
+                          className="w-full py-3.5 rounded-2xl bg-red-50 text-red-500 font-black text-[10px] uppercase tracking-widest hover:bg-red-100 border-2 border-red-100 transition-all disabled:opacity-40"
+                        >
+                          Clear All Client Data
+                        </button>
+                        <button onClick={handleDeleteAccount} className="w-full py-3.5 rounded-2xl bg-red-500 text-white font-black text-[10px] uppercase tracking-widest hover:bg-red-600 transition-all shadow-lg shadow-red-500/20">
+                          Delete Account
+                        </button>
+                      </div>
+                    </div>
+
+                    <button onClick={handleLogout} className="w-full py-4 rounded-2xl bg-slate-100 text-slate-600 font-black text-[10px] uppercase tracking-widest transition-colors hover:bg-slate-200">Log Out</button>
                   </div>
-                  <button onClick={() => setIsSettingsOpen(false)} className="mt-8 text-slate-400 text-xs font-black uppercase block w-full transition-colors tracking-widest text-center">Close</button>
+                  <button onClick={() => setIsSettingsOpen(false)} className="mt-6 text-slate-400 text-xs font-black uppercase block w-full transition-colors tracking-widest text-center">Close</button>
                 </>
               ) : (
-                <div className="animate-in slide-in-from-right-4 duration-300">
+                <div className="animate-slide-in-right">
                   <div className="flex items-center gap-3 mb-6">
                     <button onClick={() => setViewingSubscription(false)} className="text-slate-400 text-lg">←</button>
                     <h2 className={`text-2xl font-black italic ${isDarkMode ? 'text-white' : 'text-[#243F74]'}`}>Billing</h2>
@@ -4571,8 +4866,8 @@ export default function DashboardPage() {
 
       {/* ADD CLIENT MODAL */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xl flex items-center justify-center z-[100] px-4">
-            <div className={`w-full max-w-[540px] rounded-[2.5rem] p-8 md:p-10 shadow-2xl border-t-[10px] transition-all animate-in zoom-in duration-300 max-h-[90vh] overflow-y-auto ${isDarkMode ? 'bg-slate-900 border-[#9BCB3B]' : 'bg-white border-[#9BCB3B]'}`}>
+        <div className="fixed inset-0 animate-fade-in bg-slate-900/70 backdrop-blur-xl flex items-center justify-center z-[100] px-4">
+            <div className={`w-full max-w-[540px] rounded-[2.5rem] p-8 md:p-10 shadow-2xl border-t-[10px] transition-all animate-scale-in max-h-[90vh] overflow-y-auto ${isDarkMode ? 'bg-slate-900 border-[#9BCB3B]' : 'bg-white border-[#9BCB3B]'}`}>
               
               <h2 className={`text-3xl font-black italic mb-6 ${isDarkMode ? 'text-white' : 'text-[#243F74]'}`}>Add Client Project</h2>
               
@@ -4824,23 +5119,23 @@ export default function DashboardPage() {
 
                 {/* EMAIL REMINDER PRO SECTION */}
                 {isPro ? (
-                  <div className="p-4 bg-blue-50/50 border border-blue-100 rounded-2xl flex items-center justify-between">
+                  <div className={`p-4 border rounded-2xl flex items-center justify-between ${isDarkMode ? 'bg-blue-500/10 border-blue-500/30' : 'bg-blue-50/50 border-blue-100'}`}>
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-blue-100 rounded-xl">
-                        <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div className={`p-2 rounded-xl ${isDarkMode ? 'bg-blue-500/20' : 'bg-blue-100'}`}>
+                        <svg className={`w-4 h-4 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                         </svg>
                       </div>
                       <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-blue-700">Email Alerts</p>
-                        <p className="text-[9px] font-bold text-blue-500 uppercase">
-                          {emailEnabled ? "Active at 9:00 AM" : "Reminders Muted"}
+                        <p className={`text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'text-blue-300' : 'text-blue-700'}`}>Email Alerts</p>
+                        <p className={`text-[9px] font-bold uppercase ${isDarkMode ? 'text-blue-400/80' : 'text-blue-500'}`}>
+                          {emailEnabled ? "Reminders active" : "Reminders muted"}
                         </p>
                       </div>
                     </div>
                     <button 
                       onClick={() => setEmailEnabled(!emailEnabled)}
-                      className={`w-10 h-5 rounded-full relative transition-all duration-300 ${emailEnabled ? 'bg-blue-600' : 'bg-slate-300'}`}
+                      className={`w-10 h-5 rounded-full relative transition-all duration-300 ${emailEnabled ? 'bg-blue-600' : isDarkMode ? 'bg-slate-700' : 'bg-slate-300'}`}
                     >
                       <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all duration-300 ${emailEnabled ? 'right-1' : 'left-1'}`}></div>
                     </button>
