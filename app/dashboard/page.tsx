@@ -2193,35 +2193,51 @@ export default function DashboardPage() {
 
   const handleDeleteAccount = () => {
     if (!user) return;
+
+    const wipeAccountData = async () => {
+      const q = query(collection(db, "clients"), where("userId", "==", user.uid));
+      const querySnapshot = await getDocs(q);
+      const batch = writeBatch(db);
+      querySnapshot.forEach((doc) => batch.delete(doc.ref));
+
+      batch.delete(doc(db, "users", user.uid));
+      await batch.commit();
+
+      await deleteUser(user);
+      router.push("/");
+    };
+
     setConfirmDialog({
       title: "Delete your account?",
       message: "CRITICAL: This will permanently wipe your account and all projects. This cannot be undone.",
       confirmLabel: "Delete Account",
       danger: true,
       onConfirm: async () => {
+        setLoading(true);
         try {
-          setLoading(true);
-          const provider = new GoogleAuthProvider();
-          await reauthenticateWithPopup(user, provider);
-
-          const q = query(collection(db, "clients"), where("userId", "==", user.uid));
-          const querySnapshot = await getDocs(q);
-          const batch = writeBatch(db);
-          querySnapshot.forEach((doc) => batch.delete(doc.ref));
-
-          batch.delete(doc(db, "users", user.uid));
-          await batch.commit();
-
-          await deleteUser(user);
-          router.push("/");
+          // Try the deletion directly first — no forced Google popup. Firebase
+          // only actually requires re-authentication when the session is
+          // stale, which is the exception, not the common case.
+          await wipeAccountData();
         } catch (error: any) {
-          console.error(error);
           if (error.code === "auth/requires-recent-login") {
-            showInfoToast("Session expired. Please log out and log back in to verify your identity for deletion.", "error");
+            // This is the one case Firebase genuinely won't allow us to skip:
+            // the session really is too old to authorize a destructive action,
+            // so a fresh sign-in confirmation is required before retrying.
+            try {
+              const provider = new GoogleAuthProvider();
+              await reauthenticateWithPopup(user, provider);
+              await wipeAccountData();
+            } catch (reauthError) {
+              console.error(reauthError);
+              showInfoToast("Identity verification was cancelled or failed. Your account was not deleted.", "error");
+              setLoading(false);
+            }
           } else {
+            console.error(error);
             showInfoToast("Account deletion failed. Please try again later.", "error");
+            setLoading(false);
           }
-          setLoading(false);
         }
       },
     });
@@ -4829,20 +4845,39 @@ export default function DashboardPage() {
                     <h2 className={`text-2xl font-black italic ${isDarkMode ? 'text-white' : 'text-[#243F74]'}`}>Billing</h2>
                   </div>
 
-                  <div className={`p-5 rounded-3xl border-2 mb-6 ${isDarkMode ? 'bg-slate-800/30 border-slate-700' : 'bg-slate-50 border-slate-100'}`}>
-                    <div className="mb-4">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-1">Current Plan</span>
-                      <div className="flex items-center justify-between">
-                        <h4 className={`text-xl font-black italic ${isDarkMode ? 'text-white' : 'text-[#243F74]'}`}>{subscriptionData?.plan}</h4>
-                        <span className="bg-[#9BCB3B]/10 text-[#9BCB3B] text-[9px] px-2 py-1 rounded-md font-black">ACTIVE</span>
+                  <div className={`relative overflow-hidden p-6 rounded-3xl mb-6 ${isPro ? 'bg-gradient-to-br from-[#243F74] to-[#182b52]' : (isDarkMode ? 'bg-slate-800/30 border-2 border-slate-700' : 'bg-slate-50 border-2 border-slate-100')}`}>
+                    {isPro && (
+                      <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-[#9BCB3B]/20 blur-2xl" />
+                    )}
+
+                    <div className="relative mb-5">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className={`text-[10px] font-black uppercase tracking-widest ${isPro ? 'text-white/50' : 'text-slate-400'}`}>Current Plan</span>
+                        {isPro && (
+                          <span className="bg-[#9BCB3B] text-white text-[9px] px-2.5 py-1 rounded-full font-black uppercase tracking-widest flex items-center gap-1">
+                            ✦ Active
+                          </span>
+                        )}
                       </div>
+                      <h4 className={`text-2xl font-black italic flex items-center gap-2 ${isPro ? 'text-white' : (isDarkMode ? 'text-white' : 'text-[#243F74]')}`}>
+                        {isPro && <span className="text-[#9BCB3B]">👑</span>}
+                        {subscriptionData?.plan}
+                      </h4>
+                      {isPro && subscriptionData?.expiry && subscriptionData.expiry !== "N/A" && (
+                        <p className="text-xs font-bold text-white/60 mt-1">Renews {subscriptionData.expiry}</p>
+                      )}
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4 border-t border-slate-200 dark:border-slate-700 pt-4">
-                      <div>
-                        <span className="text-[9px] font-black uppercase text-slate-400 block">Provider</span>
-                        <p className={`text-xs font-black ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Razorpay</p>
-                      </div>
+                    <div className={`relative space-y-2 pt-4 border-t ${isPro ? 'border-white/10' : 'border-slate-200 dark:border-slate-700'}`}>
+                      {(isPro
+                        ? ["Unlimited client projects", "Automated email reminders", "Shareable client portal links", "PDF & CSV exports"]
+                        : ["Up to 3 client projects", "Manual offboarding checklist"]
+                      ).map((perk) => (
+                        <div key={perk} className="flex items-center gap-2">
+                          <span className={`text-xs ${isPro ? 'text-[#9BCB3B]' : 'text-slate-400'}`}>✓</span>
+                          <span className={`text-xs font-bold ${isPro ? 'text-white/80' : (isDarkMode ? 'text-slate-300' : 'text-slate-500')}`}>{perk}</span>
+                        </div>
+                      ))}
                     </div>
                   </div>
 
