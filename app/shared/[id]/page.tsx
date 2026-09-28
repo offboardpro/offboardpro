@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import Image from "next/image";
+import Link from "next/link";
 
 // Mirrors the same status vocabulary used in the dashboard, so a client
 // sees the same words their offboarding manager sees.
@@ -162,9 +163,9 @@ export default function SharedPortalPage() {
       {/* HEADER */}
       <header className="border-b border-slate-100 bg-white">
         <div className="max-w-3xl mx-auto px-5 sm:px-8 py-5 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <Link href="/dashboard" className="flex items-center gap-2">
             <Image src="/logo.png" alt="OffboardPro" width={130} height={130} priority unoptimized className="object-contain w-[110px] h-auto" />
-          </div>
+          </Link>
           <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 border border-slate-200 rounded-full px-3 py-1.5">
             Client Portal
           </span>
@@ -281,9 +282,9 @@ export default function SharedPortalPage() {
       </main>
 
       <footer className="text-center py-8">
-        <p className="text-[10px] font-black uppercase tracking-widest text-slate-300">
+        <Link href="/dashboard" className="text-[10px] font-black uppercase tracking-widest text-slate-300 hover:text-slate-400 transition-colors">
           Powered by OffboardPro
-        </p>
+        </Link>
       </footer>
     </div>
   );
