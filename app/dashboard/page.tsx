@@ -2735,9 +2735,10 @@ export default function DashboardPage() {
             src="/logo.png"
             alt="OffboardPro"
             width={150}
-            height={150}
+            height={48}
+            sizes="130px"
+            quality={90}
             priority
-            unoptimized
             className="object-contain w-[130px] h-auto"
           />
         </div>

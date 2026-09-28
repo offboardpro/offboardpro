@@ -164,7 +164,7 @@ export default function SharedPortalPage() {
       <header className="border-b border-slate-100 bg-white">
         <div className="max-w-3xl mx-auto px-5 sm:px-8 py-5 flex items-center justify-between">
           <Link href="/dashboard" className="flex items-center gap-2">
-            <Image src="/logo.png" alt="OffboardPro" width={130} height={130} priority unoptimized className="object-contain w-[110px] h-auto" />
+            <Image src="/logo.png" alt="OffboardPro" width={130} height={41} sizes="110px" quality={90} priority className="object-contain w-[110px] h-auto" />
           </Link>
           <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 border border-slate-200 rounded-full px-3 py-1.5">
             Client Portal

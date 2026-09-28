@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { auth, db } from "@/lib/firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { doc, onSnapshot } from "firebase/firestore";
@@ -92,30 +91,137 @@ function Kicker({
   );
 }
 
-function Header() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [user, setUser] = useState<any>(null);
-  const [isPro, setIsPro] = useState(false);
-  const [authLoading, setAuthLoading] = useState(true);
+// Shared auth + Pro state.
+//
+// Firebase takes a moment to restore the session after page load. Waiting for
+// it before rendering anything meant the header, hero and pricing buttons
+// popped in late. Instead we render immediately, using a small hint saved on
+// the last visit ("free" / "pro" / none) so returning users see the right
+// buttons on first paint, and everyone else sees Start Free / Login at once.
+// Once Firebase answers, its result always wins.
+const AUTH_HINT_KEY = "offboardpro-auth-hint";
+type AuthHint = "none" | "free" | "pro";
 
-  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+function readAuthHint(): AuthHint {
+  try {
+    const value = localStorage.getItem(AUTH_HINT_KEY);
+    return value === "free" || value === "pro" ? value : "none";
+  } catch {
+    return "none";
+  }
+}
+
+function writeAuthHint(hint: AuthHint) {
+  try {
+    if (hint === "none") localStorage.removeItem(AUTH_HINT_KEY);
+    else localStorage.setItem(AUTH_HINT_KEY, hint);
+  } catch {
+    // storage unavailable (private mode) — hint just won't persist
+  }
+}
+
+function useAuthPro() {
+  const [user, setUser] = useState<any>(null);
+  const [proLive, setProLive] = useState(false);
+  const [proReady, setProReady] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [hint, setHint] = useState<AuthHint>("none");
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    setHint(readAuthHint());
+    let unsubPro: (() => void) | undefined;
+
+    const unsubAuth = onAuthStateChanged(auth, (currentUser) => {
+      unsubPro?.();
+      unsubPro = undefined;
       setUser(currentUser);
-      setAuthLoading(false);
+
       if (currentUser) {
-        const userRef = doc(db, "users", currentUser.uid);
-        const unsubPro = onSnapshot(userRef, (docSnap) => {
-          if (docSnap.exists()) {
-            setIsPro(docSnap.data().isPro || false);
+        if (readAuthHint() === "none") writeAuthHint("free");
+        unsubPro = onSnapshot(
+          doc(db, "users", currentUser.uid),
+          (docSnap) => {
+            const pro = docSnap.exists() && !!docSnap.data().isPro;
+            setProLive(pro);
+            setProReady(true);
+            writeAuthHint(pro ? "pro" : "free");
+          },
+          () => {
+            setProLive(false);
+            setProReady(true);
           }
-        });
-        return () => unsubPro();
+        );
+      } else {
+        setProLive(false);
+        setProReady(true);
+        writeAuthHint("none");
       }
+
+      setAuthLoading(false);
     });
-    return () => unsubscribe();
+
+    return () => {
+      unsubPro?.();
+      unsubAuth();
+    };
   }, []);
+
+  // `signedIn` is true for a confirmed user, or (while Firebase is still
+  // starting up) when last visit's hint says we probably are.
+  const signedIn = !!user || (authLoading && hint !== "none");
+  const isPro = proReady ? proLive : hint === "pro";
+
+  return { user, signedIn, isPro, authLoading };
+}
+
+// Smooth-scrolls to an on-page section when the href contains a hash whose
+// target exists. Returns true if it handled the click. `scroll-smooth` on a
+// wrapper div doesn't affect window scrolling, so plain hash links jump.
+function smoothScrollToHash(e: React.MouseEvent, href: string) {
+  const hashIndex = href.indexOf("#");
+  if (hashIndex === -1) return false;
+  const id = href.slice(hashIndex + 1);
+  if (!id) return false;
+  const target = document.getElementById(id);
+  if (!target) return false;
+  e.preventDefault();
+  target.scrollIntoView({ behavior: "smooth", block: "start" });
+  window.history.replaceState(null, "", `#${id}`);
+  return true;
+}
+
+function AnchorLink({
+  href,
+  className,
+  onClick,
+  children,
+}: {
+  href: string;
+  className?: string;
+  onClick?: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      className={className}
+      onClick={(e) => {
+        smoothScrollToHash(e, href);
+        onClick?.();
+      }}
+    >
+      {children}
+    </Link>
+  );
+}
+
+const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
+
+function Header() {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user, signedIn, isPro } = useAuthPro();
+
+  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
   const handleLogout = async () => {
     try {
@@ -139,14 +245,22 @@ function Header() {
     <header className="sticky top-0 z-[100] w-full bg-white/90 backdrop-blur-md border-b border-slate-50 px-4 sm:px-6 md:px-10 py-4 md:py-6">
       <div className="w-full max-w-6xl mx-auto flex items-center justify-between">
         <div className="w-[110px] md:w-[170px] flex items-center justify-start">
-          <Link href="/">
+          <Link
+            href="/"
+            onClick={(e) => {
+              e.preventDefault();
+              scrollToTop();
+              setIsMenuOpen(false);
+            }}
+          >
             <Image
               src="/logo.png"
               alt="OffboardPro"
               width={170}
-              height={170}
+              height={54}
+              sizes="(min-width: 768px) 170px, 110px"
+              quality={90}
               priority
-              unoptimized
               className="object-contain"
             />
           </Link>
@@ -154,24 +268,24 @@ function Header() {
 
         <nav className="hidden lg:flex items-center gap-8 text-sm font-bold text-slate-400">
           {navLinks.map((link) => (
-            <Link
+            <AnchorLink
               key={link.name}
               href={link.href}
               className="hover:text-brand-navy transition-colors"
             >
               {link.name}
-            </Link>
+            </AnchorLink>
           ))}
 
-          {!authLoading &&
-            (user ? (
-              <div className="flex items-center gap-6 animate-in fade-in duration-500">
-                <Link
-                  href="/dashboard"
-                  className="bg-brand-green text-white px-8 py-3.5 rounded-full font-bold shadow-lg shadow-brand-green/20 hover:scale-105 active:scale-95 transition-all"
-                >
-                  Go to Dashboard
-                </Link>
+          {signedIn ? (
+            <div className="flex items-center gap-6 animate-fade-in">
+              <Link
+                href="/dashboard"
+                className="bg-brand-green text-white px-8 py-3.5 rounded-full font-bold shadow-lg shadow-brand-green/20 hover:scale-105 active:scale-95 transition-all"
+              >
+                Go to Dashboard
+              </Link>
+              {user && (
                 <div className="flex items-center gap-3 pl-6 border-l border-slate-100 group relative cursor-pointer">
                   <div className="text-right hidden sm:block text-slate-600">
                     <p
@@ -188,6 +302,7 @@ function Header() {
                     <img
                       src={user.photoURL}
                       alt="User"
+                      referrerPolicy="no-referrer"
                       className="w-9 h-9 rounded-full border-2 border-brand-green object-cover"
                     />
                   ) : (
@@ -196,30 +311,36 @@ function Header() {
                     </div>
                   )}
 
-                  <button
-                    onClick={handleLogout}
-                    className="absolute -bottom-12 right-0 bg-white border border-slate-100 py-2 px-4 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all text-red-500 text-xs font-black uppercase tracking-widest"
-                  >
-                    Logout
-                  </button>
+                  {/* pt-3 bridges the gap under the avatar so the menu doesn't
+                      vanish while the pointer travels down to Logout; the
+                      focus-within rule makes it reachable by keyboard too. */}
+                  <div className="absolute right-0 top-full pt-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible group-focus-within:opacity-100 group-focus-within:visible transition-all">
+                    <button
+                      onClick={handleLogout}
+                      className="bg-white border border-slate-100 py-2 px-4 rounded-xl shadow-xl text-red-500 text-xs font-black uppercase tracking-widest whitespace-nowrap"
+                    >
+                      Logout
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <div className="flex items-center gap-8 animate-in fade-in duration-500">
-                <Link
-                  href="/login"
-                  className="hover:text-brand-navy transition-colors"
-                >
-                  Login
-                </Link>
-                <Link
-                  href="/signup"
-                  className="bg-brand-navy text-white px-8 py-3.5 rounded-full font-bold shadow-lg shadow-brand-navy/20 hover:scale-105 active:scale-95 transition-all"
-                >
-                  Start Free
-                </Link>
-              </div>
-            ))}
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center gap-8 animate-fade-in">
+              <Link
+                href="/login"
+                className="hover:text-brand-navy transition-colors"
+              >
+                Login
+              </Link>
+              <Link
+                href="/signup"
+                className="bg-brand-navy text-white px-8 py-3.5 rounded-full font-bold shadow-lg shadow-brand-navy/20 hover:scale-105 active:scale-95 transition-all"
+              >
+                Start Free
+              </Link>
+            </div>
+          )}
         </nav>
 
         <button
@@ -254,19 +375,18 @@ function Header() {
         <div className="bg-white border border-slate-100 rounded-[2.5rem] shadow-2xl shadow-slate-200/60 p-5 flex flex-col gap-4">
           <div className="flex flex-col gap-1">
             {navLinks.map((link) => (
-              <Link
+              <AnchorLink
                 key={link.name}
-                onClick={toggleMenu}
+                onClick={() => setIsMenuOpen(false)}
                 href={link.href}
                 className="text-brand-navy font-black text-lg italic p-3 hover:bg-slate-50 rounded-xl transition-colors"
               >
                 {link.name}
-              </Link>
+              </AnchorLink>
             ))}
           </div>
           <div className="h-px bg-slate-100 w-full my-1" />
-          {!authLoading &&
-            (user ? (
+          {signedIn ? (
               <div className="flex flex-col gap-3">
                 <Link
                   onClick={toggleMenu}
@@ -282,7 +402,7 @@ function Header() {
                   Logout Account
                 </button>
               </div>
-            ) : (
+          ) : (
               <div className="flex flex-col gap-2">
                 <Link
                   onClick={toggleMenu}
@@ -299,7 +419,7 @@ function Header() {
                   Login
                 </Link>
               </div>
-            ))}
+          )}
         </div>
       </div>
     </header>
@@ -343,39 +463,36 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
 }
 
 export default function Home() {
-  const router = useRouter();
   const [isVisible, setIsVisible] = useState(false);
-  const [showScrollBtn, setShowScrollBtn] = useState(false);
-  const [user, setUser] = useState<any>(null);
-  const [isPro, setIsPro] = useState(false);
-  const [authLoading, setAuthLoading] = useState(true);
+  const [canScrollUp, setCanScrollUp] = useState(false);
+  const [canScrollDown, setCanScrollDown] = useState(true);
+  const { signedIn, isPro } = useAuthPro();
 
   useEffect(() => {
     setIsVisible(true);
-    const handleScroll = () => setShowScrollBtn(window.scrollY > 400);
 
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setAuthLoading(false);
-      if (currentUser) {
-        const userRef = doc(db, "users", currentUser.uid);
-        const unsubPro = onSnapshot(userRef, (docSnap) => {
-          if (docSnap.exists()) {
-            setIsPro(docSnap.data().isPro || false);
-          }
-        });
-        return () => unsubPro();
-      }
-    });
+    const updateScrollButtons = () => {
+      const scrolled = window.scrollY;
+      const maxScroll =
+        document.documentElement.scrollHeight - window.innerHeight;
+      setCanScrollUp(scrolled > 400);
+      setCanScrollDown(maxScroll - scrolled > 400);
+    };
 
-    window.addEventListener("scroll", handleScroll);
+    updateScrollButtons();
+    window.addEventListener("scroll", updateScrollButtons, { passive: true });
+    window.addEventListener("resize", updateScrollButtons);
     return () => {
-      window.removeEventListener("scroll", handleScroll);
-      unsubscribe();
+      window.removeEventListener("scroll", updateScrollButtons);
+      window.removeEventListener("resize", updateScrollButtons);
     };
   }, []);
 
-  const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
+  const scrollToBottom = () =>
+    window.scrollTo({
+      top: document.documentElement.scrollHeight,
+      behavior: "smooth",
+    });
 
   const marqueeItems = [
     "Freelancers",
@@ -430,31 +547,53 @@ export default function Home() {
         }
       `}</style>
 
-      <button
-        onClick={scrollToTop}
-        style={{
-          backgroundColor: "#243F74",
-          opacity: showScrollBtn ? 1 : 0,
-          pointerEvents: showScrollBtn ? "auto" : "none",
-          transition: "all 0.5s cubic-bezier(0.22, 1, 0.36, 1)",
-        }}
-        className="fixed bottom-8 right-8 z-[150] p-4 rounded-full text-white shadow-2xl hover:scale-110 active:scale-95 transition-all"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-6 w-6"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={3}
+      {/* SCROLL CONTROLS — up appears once you've scrolled down, down
+          appears until you're near the footer, so both show mid-page. */}
+      <div className="fixed bottom-6 right-4 sm:bottom-8 sm:right-8 z-[150] flex flex-col gap-2">
+        <button
+          type="button"
+          onClick={scrollToTop}
+          aria-label="Scroll to top"
+          className={`p-3.5 rounded-full bg-brand-navy text-white shadow-2xl hover:scale-110 active:scale-95 transition-all duration-500 ${
+            canScrollUp
+              ? "opacity-100 translate-y-0"
+              : "opacity-0 translate-y-2 pointer-events-none"
+          }`}
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M5 15l7-7 7 7"
-          />
-        </svg>
-      </button>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={3}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
+          </svg>
+        </button>
+
+        <button
+          type="button"
+          onClick={scrollToBottom}
+          aria-label="Scroll to bottom"
+          className={`p-3.5 rounded-full bg-brand-navy text-white shadow-2xl hover:scale-110 active:scale-95 transition-all duration-500 ${
+            canScrollDown
+              ? "opacity-100 translate-y-0"
+              : "opacity-0 -translate-y-2 pointer-events-none"
+          }`}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={3}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+      </div>
 
       <main className="overflow-x-clip">
         {/* ==================================================
@@ -506,50 +645,36 @@ export default function Home() {
             </p>
 
             <div className="mt-6 md:mt-8 mb-12 md:mb-16 flex flex-col items-center gap-4">
-              {!authLoading && (
-                <div className="animate-in fade-in zoom-in-95 duration-700 flex flex-col items-center gap-4 w-full">
-                  <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto justify-center">
-                    {user ? (
-                      <>
-                        <Link href="/dashboard" className="w-full sm:w-auto">
-                          <button
-                            className="bg-brand-navy w-full sm:w-auto text-white px-10 md:px-14 py-4 md:py-5 rounded-full text-base md:text-lg font-bold hover:scale-105 transition-all shadow-xl shadow-brand-navy/20 active:scale-95"
-                          >
-                            Go to Dashboard
-                          </button>
-                        </Link>
-                        <Link
-                          href={isPro ? "#features" : "#pricing"}
-                          className="w-full sm:w-auto"
-                        >
-                          <button className="w-full sm:w-auto border-2 border-slate-200 text-brand-navy px-8 py-4 md:py-5 rounded-full text-base md:text-lg font-bold hover:bg-slate-50 transition-all active:scale-95">
-                            {isPro ? "View Pro Features" : "Explore Pro"}
-                          </button>
-                        </Link>
-                      </>
-                    ) : (
-                      <>
-                        <Link href="/signup" className="w-full sm:w-auto">
-                          <button
-                            className="bg-brand-navy w-full sm:w-auto text-white px-10 md:px-14 py-4 md:py-5 rounded-full text-base md:text-lg font-bold hover:scale-105 transition-all shadow-xl shadow-brand-navy/20 active:scale-95"
-                          >
-                            Start Free
-                          </button>
-                        </Link>
-                        <Link href="#how-it-works" className="w-full sm:w-auto">
-                          <button className="w-full sm:w-auto border-2 border-slate-200 text-brand-navy px-8 py-4 md:py-5 rounded-full text-base md:text-lg font-bold hover:bg-slate-50 transition-all active:scale-95">
-                            See How It Works
-                          </button>
-                        </Link>
-                      </>
-                    )}
-                  </div>
+              <div className="flex flex-col items-center gap-4 w-full">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto justify-center">
+                  {signedIn ? (
+                    <>
+                      <Link href="/dashboard" className="block w-full sm:w-auto text-center bg-brand-navy text-white px-10 md:px-14 py-4 md:py-5 rounded-full text-base md:text-lg font-bold hover:scale-105 transition-all shadow-xl shadow-brand-navy/20 active:scale-95">
+                        Go to Dashboard
+                      </Link>
+                      <AnchorLink
+                        href={isPro ? "#features" : "#pricing"}
+                        className="block w-full sm:w-auto text-center border-2 border-slate-200 text-brand-navy px-8 py-4 md:py-5 rounded-full text-base md:text-lg font-bold hover:bg-slate-50 transition-all active:scale-95"
+                      >
+                        {isPro ? "View Pro Features" : "Explore Pro"}
+                      </AnchorLink>
+                    </>
+                  ) : (
+                    <>
+                      <Link href="/signup" className="block w-full sm:w-auto text-center bg-brand-navy text-white px-10 md:px-14 py-4 md:py-5 rounded-full text-base md:text-lg font-bold hover:scale-105 transition-all shadow-xl shadow-brand-navy/20 active:scale-95">
+                        Start Free
+                      </Link>
+                      <AnchorLink href="#how-it-works" className="block w-full sm:w-auto text-center border-2 border-slate-200 text-brand-navy px-8 py-4 md:py-5 rounded-full text-base md:text-lg font-bold hover:bg-slate-50 transition-all active:scale-95">
+                        See How It Works
+                      </AnchorLink>
+                    </>
+                  )}
+                </div>
 
                   <p className="text-slate-400 text-[10px] md:text-xs font-black uppercase tracking-widest mt-2 italic">
                     No passwords stored. No complicated setup.
                   </p>
-                </div>
-              )}
+              </div>
             </div>
           </div>
         </section>
@@ -1172,8 +1297,9 @@ export default function Home() {
                 </h2>
 
                 <p className="text-slate-400 text-sm sm:text-base md:text-lg font-medium max-w-2xl mx-auto leading-relaxed">
-                  Start with the core offboarding workflow for free. Upgrade when you
-                  need more clients, automation, and team coordination.
+                  {isPro
+                    ? "You're on the Pro plan. Here's everything that's included with your subscription."
+                    : "Start with the core offboarding workflow for free. Upgrade when you need more clients, automation, and team coordination."}
                 </p>
               </div>
 
@@ -1234,16 +1360,14 @@ export default function Home() {
 
                   </ul>
 
-                  {!authLoading && (
-                    <div className="mt-auto">
-                      <Link
-                        href={user ? "/dashboard" : "/signup"}
-                        className="block w-full py-4 sm:py-5 rounded-2xl border-2 border-slate-200 text-brand-navy font-black hover:bg-slate-50 transition-all text-center uppercase text-xs tracking-[0.15em]"
-                      >
-                        {user ? "View Dashboard" : "Start Free"}
-                      </Link>
-                    </div>
-                  )}
+                  <div className="mt-auto">
+                    <Link
+                      href={signedIn ? "/dashboard" : "/signup"}
+                      className="block w-full py-4 sm:py-5 rounded-2xl border-2 border-slate-200 text-brand-navy font-black hover:bg-slate-50 transition-all text-center uppercase text-xs tracking-[0.15em]"
+                    >
+                      {signedIn ? "View Dashboard" : "Start Free"}
+                    </Link>
+                  </div>
                 </div>
 
 
@@ -1251,7 +1375,7 @@ export default function Home() {
                 <div className="bg-white border-2 border-brand-green rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-8 md:p-10 lg:p-12 flex flex-col shadow-xl shadow-brand-green/10 relative overflow-hidden">
 
                   <div className="absolute top-0 right-0 px-5 sm:px-6 py-2 bg-brand-green text-white text-[10px] font-black uppercase rounded-bl-2xl tracking-widest">
-                    Recommended
+                    {isPro ? "✓ Your Plan" : "Recommended"}
                   </div>
 
                   <div className="mb-6">
@@ -1306,23 +1430,32 @@ export default function Home() {
 
                   </ul>
 
-                  {!authLoading && (
                     <div className="mt-auto">
-                      <Link
-                        href={user ? "/pricing" : "/signup"}
-                        className="block w-full py-4 sm:py-5 rounded-2xl bg-brand-navy text-white font-black hover:bg-[#1d335e] transition-all text-center uppercase text-xs tracking-[0.15em] shadow-lg"
-                      >
-                        {user ? "Upgrade to Pro" : "Get Pro"}
-                      </Link>
+                      {isPro ? (
+                        <Link
+                          href="/dashboard"
+                          className="block w-full py-4 sm:py-5 rounded-2xl bg-brand-green text-white font-black hover:opacity-90 transition-all text-center uppercase text-xs tracking-[0.15em] shadow-lg shadow-brand-green/20"
+                        >
+                          Go to Dashboard
+                        </Link>
+                      ) : (
+                        <Link
+                          href={signedIn ? "/pricing" : "/signup"}
+                          className="block w-full py-4 sm:py-5 rounded-2xl bg-brand-navy text-white font-black hover:bg-[#1d335e] transition-all text-center uppercase text-xs tracking-[0.15em] shadow-lg"
+                        >
+                          {signedIn ? "Upgrade to Pro" : "Get Pro"}
+                        </Link>
+                      )}
                     </div>
-                  )}
 
                 </div>
               </div>
 
               {/* Small reassurance */}
               <p className="text-center text-xs text-slate-400 font-semibold mt-8">
-                Upgrade when you need more clients, automation, and team coordination.
+                {isPro
+                  ? "Thanks for being a Pro member — your plan is active."
+                  : "Upgrade when you need more clients, automation, and team coordination."}
               </p>
 
             </div>
@@ -1427,17 +1560,14 @@ export default function Home() {
               <p className="relative text-slate-300 text-base sm:text-lg md:text-xl leading-relaxed font-medium mb-8 md:mb-10 max-w-xl mx-auto">
                 Track the access. Complete the checklist. Remove what needs to go. Close the project.
               </p>
-              {!authLoading && (
-                <div className="relative animate-in fade-in zoom-in-95 duration-700">
-                  <Link href={user ? "/dashboard" : "/signup"}>
-                    <button
-                      className="bg-brand-green w-full sm:w-auto text-white px-10 md:px-20 py-4 md:py-6 rounded-full text-lg md:text-2xl font-black hover:scale-105 transition-all shadow-2xl shadow-brand-green/30 active:scale-95"
-                    >
-                      {user ? "Go to Dashboard" : "Start Free"}
-                    </button>
-                  </Link>
-                </div>
-              )}
+              <div className="relative">
+                <Link
+                  href={signedIn ? "/dashboard" : "/signup"}
+                  className="inline-block w-full sm:w-auto text-center bg-brand-green text-white px-10 md:px-20 py-4 md:py-6 rounded-full text-lg md:text-2xl font-black hover:scale-105 transition-all shadow-2xl shadow-brand-green/30 active:scale-95"
+                >
+                  {signedIn ? "Go to Dashboard" : "Start Free"}
+                </Link>
+              </div>
             </div>
           </section>
         </Reveal>
@@ -1455,13 +1585,21 @@ export default function Home() {
             {/* BRAND */}
             <div className="sm:col-span-2 lg:col-span-1">
 
-              <Link href="/" className="inline-block mb-5">
+              <Link
+                href="/"
+                onClick={(e) => {
+                  e.preventDefault();
+                  scrollToTop();
+                }}
+                className="inline-block mb-5"
+              >
                 <Image
                   src="/logo.png"
                   alt="OffboardPro"
                   width={150}
-                  height={40}
-                  unoptimized
+                  height={48}
+                  sizes="150px"
+                  quality={90}
                   className="object-contain"
                 />
               </Link>
@@ -1481,33 +1619,33 @@ export default function Home() {
 
               <div className="flex flex-col gap-3">
 
-                <Link
+                <AnchorLink
                   href="/#how-it-works"
                   className="text-sm font-semibold text-slate-500 hover:text-brand-navy transition-colors"
                 >
                   How It Works
-                </Link>
+                </AnchorLink>
 
-                <Link
+                <AnchorLink
                   href="/#features"
                   className="text-sm font-semibold text-slate-500 hover:text-brand-navy transition-colors"
                 >
                   Features
-                </Link>
+                </AnchorLink>
 
-                <Link
+                <AnchorLink
                   href="/#pricing"
                   className="text-sm font-semibold text-slate-500 hover:text-brand-navy transition-colors"
                 >
                   Pricing
-                </Link>
+                </AnchorLink>
 
-                <Link
+                <AnchorLink
                   href="/#faq"
                   className="text-sm font-semibold text-slate-500 hover:text-brand-navy transition-colors"
                 >
                   FAQ
-                </Link>
+                </AnchorLink>
 
               </div>
             </div>
@@ -1521,26 +1659,30 @@ export default function Home() {
 
               <div className="flex flex-col gap-3">
 
-                <Link
-                  href="/signup"
-                  className="text-sm font-semibold text-slate-500 hover:text-brand-navy transition-colors"
-                >
-                  Sign Up
-                </Link>
+                {signedIn ? (
+                  <Link
+                    href="/dashboard"
+                    className="text-sm font-semibold text-slate-500 hover:text-brand-navy transition-colors"
+                  >
+                    Dashboard
+                  </Link>
+                ) : (
+                  <>
+                    <Link
+                      href="/signup"
+                      className="text-sm font-semibold text-slate-500 hover:text-brand-navy transition-colors"
+                    >
+                      Sign Up
+                    </Link>
 
-                <Link
-                  href="/login"
-                  className="text-sm font-semibold text-slate-500 hover:text-brand-navy transition-colors"
-                >
-                  Log In
-                </Link>
-
-                <Link
-                  href="/dashboard"
-                  className="text-sm font-semibold text-slate-500 hover:text-brand-navy transition-colors"
-                >
-                  Dashboard
-                </Link>
+                    <Link
+                      href="/login"
+                      className="text-sm font-semibold text-slate-500 hover:text-brand-navy transition-colors"
+                    >
+                      Log In
+                    </Link>
+                  </>
+                )}
 
               </div>
             </div>
