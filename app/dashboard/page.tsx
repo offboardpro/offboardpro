@@ -2558,6 +2558,15 @@ export default function DashboardPage() {
   const handleLogout = async () => {
     try {
       await signOut(auth);
+      // Pricing page caches Pro status in localStorage for a snappier first
+      // paint. Left uncleared, the next person to sign in on this browser
+      // (e.g. a shared computer) could briefly see the previous user's plan
+      // status before Firestore corrects it.
+      try {
+        localStorage.removeItem("offboardpro_isPro");
+      } catch {
+        // localStorage unavailable — nothing to clear
+      }
     } catch (error) {
       console.error("Logout error:", error);
     }

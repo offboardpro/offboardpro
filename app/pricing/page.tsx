@@ -10,6 +10,32 @@ import { onAuthStateChanged } from "firebase/auth";
 import { doc, onSnapshot } from "firebase/firestore";
 import confetti from "canvas-confetti"; // Confetti Import
 
+// checkout.js is loaded with strategy="lazyOnload" in the root layout, which
+// can take a few seconds. Without this wait, clicking "Upgrade" right after
+// the page loads throws ("Razorpay is not a constructor") and the payment
+// button just silently fails with a generic error.
+function waitForRazorpay(timeoutMs = 5000): Promise<any> {
+  return new Promise((resolve) => {
+    const existing = (window as any).Razorpay;
+    if (existing) {
+      resolve(existing);
+      return;
+    }
+
+    const start = Date.now();
+    const interval = setInterval(() => {
+      const ctor = (window as any).Razorpay;
+      if (ctor) {
+        clearInterval(interval);
+        resolve(ctor);
+      } else if (Date.now() - start > timeoutMs) {
+        clearInterval(interval);
+        resolve(null);
+      }
+    }, 150);
+  });
+}
+
 export default function PricingPage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
@@ -158,7 +184,15 @@ export default function PricingPage() {
         }
       };
 
-      const rzp = new (window as any).Razorpay(options);
+      const RazorpayCtor = await waitForRazorpay();
+      if (!RazorpayCtor) {
+        alert(
+          "Payment system is still loading. Please wait a moment and try again."
+        );
+        return;
+      }
+
+      const rzp = new RazorpayCtor(options);
       rzp.open();
     } catch (error) {
       console.error("Payment initialization failed:", error);
@@ -215,7 +249,7 @@ export default function PricingPage() {
           UPGRADE SUCCESS OVERLAY
       ========================== */}
       {isUpgrading && (
-        <div className="fixed inset-0 z-[200] bg-white flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-500">
+        <div className="fixed inset-0 z-[200] bg-white flex flex-col items-center justify-center p-6 text-center animate-fade-in">
           <div className="relative w-40 h-40 sm:w-48 sm:h-48 mb-8">
             <div
               style={{ backgroundColor: "#9BCB3B" }}
@@ -309,7 +343,7 @@ export default function PricingPage() {
         {/* =========================
             HERO
         ========================== */}
-        <div className="text-center mb-10 sm:mb-14 md:mb-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div className="text-center mb-10 sm:mb-14 md:mb-16 animate-slide-up">
 
           <h1
             style={{ color: "#243F74" }}
@@ -611,38 +645,146 @@ export default function PricingPage() {
       </main>
 
       {/* =========================
-          FOOTER
+          FOOTER (matches the landing page footer)
       ========================== */}
-      <footer className="border-t border-slate-100 bg-slate-50/40">
+      <footer className="bg-white border-t border-slate-100 pt-14 sm:pt-16 md:pt-20 pb-8">
+        <div className="w-full max-w-7xl mx-auto px-6 sm:px-8 lg:px-10">
 
-        <div className="w-full max-w-7xl mx-auto px-5 sm:px-6 md:px-10 py-10 sm:py-12">
+          {/* Main Footer */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 sm:gap-12 lg:gap-16 pb-12 md:pb-16">
 
-          <div className="flex flex-col md:flex-row items-center justify-between gap-5 sm:gap-6">
+            {/* BRAND */}
+            <div className="sm:col-span-2 lg:col-span-1">
 
-            <div className="text-center md:text-left">
-              <Link href="/" className="inline-block mb-2">
+              <Link href="/" className="inline-block mb-5">
                 <Image
                   src="/logo.png"
                   alt="OffboardPro"
-                  width={120}
-                  height={36}
+                  width={150}
+                  height={48}
+                  sizes="150px"
+                  quality={90}
                   className="object-contain"
                 />
               </Link>
 
-              <p className="text-xs text-slate-400">
+              <p className="text-slate-400 text-sm leading-relaxed max-w-xs">
                 Client offboarding for freelancers, consultants, and agencies.
               </p>
+
             </div>
 
-            <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
 
-              <Link
-                href="/"
-                className="text-xs font-semibold text-slate-400 hover:text-[#243F74] transition-colors"
-              >
-                Home
-              </Link>
+            {/* PRODUCT */}
+            <div>
+              <h4 className="text-sm font-black text-[#243F74] mb-5">
+                Product
+              </h4>
+
+              <div className="flex flex-col gap-3">
+
+                <Link
+                  href="/#how-it-works"
+                  className="text-sm font-semibold text-slate-500 hover:text-[#243F74] transition-colors"
+                >
+                  How It Works
+                </Link>
+
+                <Link
+                  href="/#features"
+                  className="text-sm font-semibold text-slate-500 hover:text-[#243F74] transition-colors"
+                >
+                  Features
+                </Link>
+
+                <Link
+                  href="/pricing"
+                  className="text-sm font-semibold text-slate-500 hover:text-[#243F74] transition-colors"
+                >
+                  Pricing
+                </Link>
+
+                <Link
+                  href="/#faq"
+                  className="text-sm font-semibold text-slate-500 hover:text-[#243F74] transition-colors"
+                >
+                  FAQ
+                </Link>
+
+              </div>
+            </div>
+
+
+            {/* ACCOUNT */}
+            <div>
+              <h4 className="text-sm font-black text-[#243F74] mb-5">
+                Account
+              </h4>
+
+              <div className="flex flex-col gap-3">
+
+                {user ? (
+                  <Link
+                    href="/dashboard"
+                    className="text-sm font-semibold text-slate-500 hover:text-[#243F74] transition-colors"
+                  >
+                    Dashboard
+                  </Link>
+                ) : (
+                  <>
+                    <Link
+                      href="/signup"
+                      className="text-sm font-semibold text-slate-500 hover:text-[#243F74] transition-colors"
+                    >
+                      Sign Up
+                    </Link>
+
+                    <Link
+                      href="/login"
+                      className="text-sm font-semibold text-slate-500 hover:text-[#243F74] transition-colors"
+                    >
+                      Log In
+                    </Link>
+                  </>
+                )}
+
+              </div>
+            </div>
+
+
+            {/* CONTACT */}
+            <div>
+              <h4 className="text-sm font-black text-[#243F74] mb-5">
+                Contact
+              </h4>
+
+              <div className="flex flex-col gap-3">
+
+                <a
+                  href="mailto:offboardpro@gmail.com"
+                  className="text-sm font-semibold text-slate-500 hover:text-[#9BCB3B] transition-colors break-words"
+                >
+                  offboardpro@gmail.com
+                </a>
+
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Have a question or need help? Get in touch with us.
+                </p>
+
+              </div>
+            </div>
+
+          </div>
+
+
+          {/* Bottom Footer */}
+          <div className="pt-7 sm:pt-8 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-5">
+
+            <p className="text-xs text-slate-400 text-center md:text-left">
+              © 2026 OffboardPro. All rights reserved.
+            </p>
+
+            <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
 
               <Link
                 href="/privacy"
@@ -669,16 +811,7 @@ export default function PricingPage() {
 
           </div>
 
-          <div className="border-t border-slate-100 mt-8 pt-6 text-center">
-
-            <p className="text-[11px] text-slate-400">
-              © 2026 OffboardPro. All rights reserved.
-            </p>
-
-          </div>
-
         </div>
-
       </footer>
 
     </div>

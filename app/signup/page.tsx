@@ -99,7 +99,7 @@ export default function SignUpPage() {
 
       await triggerWelcomeEmail(normalizedEmail, trimmedName);
 
-      router.push("/");
+      router.push("/dashboard");
     } catch (error: any) {
       console.error("Signup Error:", error);
 
@@ -151,7 +151,7 @@ export default function SignUpPage() {
         result.user.displayName || "User"
       );
 
-      router.push("/");
+      router.push("/dashboard");
     } catch (error: any) {
       console.error("Google Signup Error:", error);
 
@@ -198,7 +198,7 @@ export default function SignUpPage() {
           />
         </Link>
 
-        <div className="relative z-10 animate-in fade-in slide-in-from-left-6 duration-700">
+        <div className="relative z-10 animate-fade-in">
           <h2
             style={{ color: "#243F74" }}
             className="text-5xl md:text-6xl font-black leading-tight mb-6 tracking-tighter italic"
@@ -219,7 +219,7 @@ export default function SignUpPage() {
 
       {/* Right Side: Sign Up Form (Responsive) */}
       <div className="flex items-center justify-center p-6 md:p-16 bg-white relative">
-        <div className="w-full max-w-md animate-in fade-in zoom-in duration-500">
+        <div className="w-full max-w-md animate-scale-in">
           {/* Mobile Logo Indicator */}
           <div className="mb-12 lg:hidden flex flex-col items-center">
             <Image
@@ -268,10 +268,11 @@ export default function SignUpPage() {
 
             <div className="space-y-4">
               <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-2 ml-1">
+                <label htmlFor="signup-name" className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-2 ml-1">
                   Full Name
                 </label>
                 <input
+                  id="signup-name"
                   type="text"
                   required
                   autoComplete="name"
@@ -283,10 +284,11 @@ export default function SignUpPage() {
               </div>
 
               <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-2 ml-1">
+                <label htmlFor="signup-email" className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-2 ml-1">
                   Email Address
                 </label>
                 <input
+                  id="signup-email"
                   type="email"
                   required
                   autoComplete="email"
@@ -298,10 +300,11 @@ export default function SignUpPage() {
               </div>
 
               <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-2 ml-1">
+                <label htmlFor="signup-password" className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-2 ml-1">
                   Password
                 </label>
                 <input
+                  id="signup-password"
                   type="password"
                   required
                   autoComplete="new-password"

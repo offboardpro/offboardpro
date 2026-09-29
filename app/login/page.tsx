@@ -63,7 +63,7 @@ export default function LoginPage() {
 
       await syncUserToFirestore(userCredential.user);
 
-      router.push("/");
+      router.push("/dashboard");
     } catch (error: any) {
       console.error("Firebase Auth Error:", error);
 
@@ -159,7 +159,7 @@ export default function LoginPage() {
 
       await syncUserToFirestore(result.user);
 
-      router.push("/");
+      router.push("/dashboard");
     } catch (error: any) {
       console.error("Google Login Error:", error);
 
@@ -206,7 +206,7 @@ export default function LoginPage() {
           />
         </Link>
 
-        <div className="relative z-10 animate-in fade-in slide-in-from-left-6 duration-700">
+        <div className="relative z-10 animate-fade-in">
           <h2
             style={{ color: "#243F74" }}
             className="text-5xl md:text-6xl font-black leading-tight mb-6 tracking-tighter italic"
@@ -227,7 +227,7 @@ export default function LoginPage() {
 
       {/* Right Side: Login Form (Fully Responsive) */}
       <div className="flex items-center justify-center p-6 md:p-16 bg-white relative">
-        <div className="w-full max-w-md animate-in fade-in zoom-in duration-500">
+        <div className="w-full max-w-md animate-scale-in">
           {/* Mobile Logo & Brand Indicator */}
           <div className="mb-12 lg:hidden flex flex-col items-center">
             <Image
@@ -276,12 +276,14 @@ export default function LoginPage() {
 
             <div className="space-y-4">
               <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-2 ml-1">
+                <label htmlFor="login-email" className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-2 ml-1">
                   Email Address
                 </label>
                 <input
+                  id="login-email"
                   type="email"
                   required
+                  autoComplete="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@company.com"
@@ -290,12 +292,14 @@ export default function LoginPage() {
               </div>
 
               <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-2 ml-1">
+                <label htmlFor="login-password" className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-2 ml-1">
                   Password
                 </label>
                 <input
+                  id="login-password"
                   type="password"
                   required
+                  autoComplete="current-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
@@ -310,7 +314,7 @@ export default function LoginPage() {
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  style={{ accentColor: "#9BCB3B" }}
+                  style={{ accentColor: "var(--color-brand-green)" }}
                   className="w-4 h-4 rounded-md border-slate-200"
                 />
                 <span className="group-hover:text-slate-600 transition-colors">

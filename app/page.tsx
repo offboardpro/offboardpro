@@ -226,6 +226,11 @@ function Header() {
   const handleLogout = async () => {
     try {
       await signOut(auth);
+      try {
+        localStorage.removeItem("offboardpro_isPro");
+      } catch {
+        // localStorage unavailable — nothing to clear
+      }
       setIsMenuOpen(false);
       window.location.href = "/";
     } catch (error) {
@@ -237,7 +242,7 @@ function Header() {
     { name: "How It Works", href: "#how-it-works" },
     { name: "Features", href: "#features" },
     { name: "Security", href: "#security" },
-    { name: "Pricing", href: "#pricing" },
+    { name: "Pricing", href: "/pricing" },
     { name: "FAQ", href: "#faq" },
   ];
 
@@ -1634,7 +1639,7 @@ export default function Home() {
                 </AnchorLink>
 
                 <AnchorLink
-                  href="/#pricing"
+                  href="/pricing"
                   className="text-sm font-semibold text-slate-500 hover:text-brand-navy transition-colors"
                 >
                   Pricing
