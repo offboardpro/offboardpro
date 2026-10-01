@@ -244,6 +244,7 @@ function Header() {
     { name: "Security", href: "#security" },
     { name: "Pricing", href: "/pricing" },
     { name: "FAQ", href: "#faq" },
+    { name: "Contact", href: "/contact" },
   ];
 
   return (
@@ -1702,11 +1703,18 @@ export default function Home() {
               <div className="flex flex-col gap-3">
 
                 <a
-                  href="mailto:offboardpro@gmail.com"
+                  href="mailto:hello@offboardpro.com"
                   className="text-sm font-semibold text-slate-500 hover:text-brand-green transition-colors break-words"
                 >
-                  offboardpro@gmail.com
+                  hello@offboardpro.com
                 </a>
+
+                <Link
+                  href="/contact"
+                  className="text-sm font-semibold text-slate-500 hover:text-brand-navy transition-colors"
+                >
+                  Contact Form
+                </Link>
 
                 <p className="text-xs text-slate-400 leading-relaxed">
                   Have a question or need help? Get in touch with us.

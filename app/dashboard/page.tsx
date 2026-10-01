@@ -4819,7 +4819,7 @@ export default function DashboardPage() {
                     <div>
                       <span className="text-[10px] font-black uppercase tracking-widest block mb-2 opacity-60 text-slate-400">Help</span>
                       <a
-                        href="mailto:support@offboardpro.com"
+                        href="mailto:hello@offboardpro.com"
                         className={`w-full p-4 rounded-2xl border-2 flex items-center justify-between transition-all ${isDarkMode ? 'bg-slate-800/50 border-slate-700 hover:border-[#9BCB3B]' : 'bg-white border-slate-100 shadow-sm hover:border-[#243F74]'}`}
                       >
                         <span className={`text-sm font-black ${isDarkMode ? 'text-slate-200' : 'text-slate-600'}`}>Contact Support</span>
