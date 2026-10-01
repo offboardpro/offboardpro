@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { auth } from "@/lib/firebase";
@@ -15,6 +15,83 @@ const TOPICS = [
   "Feature request",
   "Something else",
 ];
+
+// Custom-styled replacement for the native <select>, which on mobile opens
+// the browser/OS's own unstyled picker sheet instead of matching the rest
+// of the app — same fix already applied to the dashboard's dropdowns.
+function TopicDropdown({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [open]);
+
+  return (
+    <div ref={containerRef} className="relative">
+      <button
+        type="button"
+        id="contact-topic"
+        onClick={() => setOpen((o) => !o)}
+        className="w-full flex items-center justify-between gap-2 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 text-slate-700 outline-none focus:border-brand-green focus:bg-white transition-all font-bold text-left"
+      >
+        <span>{value}</span>
+        <svg
+          className={`w-4 h-4 shrink-0 text-slate-400 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          strokeWidth={2.5}
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {open && (
+        <div className="absolute z-30 mt-1.5 w-full rounded-2xl border border-slate-100 bg-white shadow-xl overflow-hidden animate-scale-in">
+          {TOPICS.map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => {
+                onChange(t);
+                setOpen(false);
+              }}
+              className={`w-full text-left px-5 py-3 text-sm font-bold transition-colors flex items-center justify-between ${
+                t === value
+                  ? "bg-slate-50 text-brand-navy"
+                  : "text-slate-600 hover:bg-slate-50"
+              }`}
+            >
+              <span>{t}</span>
+              {t === value && <span className="text-brand-green">✓</span>}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function ContactPage() {
   const [user, setUser] = useState<any>(null);
@@ -124,16 +201,29 @@ export default function ContactPage() {
       {/* =========================
           MAIN
       ========================== */}
-      <main className="w-full max-w-5xl mx-auto pt-8 sm:pt-12 md:pt-16 pb-20 sm:pb-28 px-4 sm:px-6">
-        {/* HERO */}
-        <div className="mb-10 sm:mb-14 md:mb-16 max-w-2xl">
-          <span className="text-brand-green text-[10px] font-black uppercase tracking-widest italic block mb-4">
+      <main className="w-full max-w-5xl mx-auto px-4 sm:px-6 pb-20 sm:pb-28">
+        {/* HERO — centered, with the same glow-blob + kicker + bold italic
+            heading rhythm used on the landing page, so this page doesn't
+            feel like a different site. */}
+        <div className="relative pt-2 sm:pt-4 pb-10 sm:pb-14 md:pb-16 text-center">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -top-6 left-1/2 -translate-x-[70%] w-56 h-56 md:w-72 md:h-72 rounded-full bg-brand-green/10 blur-[80px] animate-float-slow"
+          />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute top-4 left-1/2 translate-x-[10%] w-56 h-56 md:w-72 md:h-72 rounded-full bg-brand-navy/10 blur-[80px] animate-float-slow-reverse"
+          />
+
+          <span className="relative block text-brand-green text-xs md:text-sm font-black uppercase tracking-[0.25em] mb-4 italic">
             Support
           </span>
-          <h1 className="text-brand-navy text-3xl sm:text-4xl md:text-5xl font-black tracking-tight mb-4 italic leading-tight">
+
+          <h1 className="relative text-brand-navy text-3xl sm:text-4xl md:text-5xl font-black tracking-tight mb-4 italic leading-tight max-w-2xl mx-auto">
             Stuck offboarding a client, or something else entirely?
           </h1>
-          <p className="text-slate-500 text-base sm:text-lg font-medium leading-relaxed">
+
+          <p className="relative text-slate-500 text-base sm:text-lg font-medium leading-relaxed max-w-xl mx-auto">
             Whether it's a checklist question, a billing issue, or a bug —
             send it over. A real person reads every message.
           </p>
@@ -142,56 +232,84 @@ export default function ContactPage() {
         {/* QUICK ANSWERS — real, specific fixes so common problems don't
             need to wait on an email reply at all. */}
         <div className="mb-12 sm:mb-16">
-          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-4">
+          <span className="block text-center text-[10px] font-black text-slate-400 uppercase tracking-widest mb-5">
             Quick Answers
           </span>
           <div className="grid sm:grid-cols-2 gap-4">
-            <div className="border border-slate-100 rounded-2xl p-5">
-              <p className="text-brand-navy text-sm font-black mb-1">
-                Forgot your password?
-              </p>
-              <p className="text-slate-500 text-sm font-medium leading-relaxed">
-                Head to the{" "}
-                <Link href="/login" className="text-brand-green font-bold hover:underline">
-                  login page
-                </Link>{" "}
-                and click "Forgot password" — no need to wait for us.
-              </p>
+            <div className="border border-slate-100 rounded-2xl p-5 flex gap-4">
+              <div className="w-9 h-9 rounded-xl bg-brand-navy/5 border border-brand-navy/10 flex items-center justify-center shrink-0">
+                <svg className="w-4 h-4 text-brand-navy" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-brand-navy text-sm font-black mb-1">
+                  Forgot your password?
+                </p>
+                <p className="text-slate-500 text-sm font-medium leading-relaxed">
+                  Head to the{" "}
+                  <Link href="/login" className="text-brand-green font-bold hover:underline">
+                    login page
+                  </Link>{" "}
+                  and click "Forgot password" — no need to wait for us.
+                </p>
+              </div>
             </div>
 
-            <div className="border border-slate-100 rounded-2xl p-5">
-              <p className="text-brand-navy text-sm font-black mb-1">
-                Want to change or cancel your plan?
-              </p>
-              <p className="text-slate-500 text-sm font-medium leading-relaxed">
-                Go to Dashboard → Settings → Billing. You can upgrade,
-                downgrade, or cancel yourself, instantly.
-              </p>
+            <div className="border border-slate-100 rounded-2xl p-5 flex gap-4">
+              <div className="w-9 h-9 rounded-xl bg-brand-green/10 border border-brand-green/20 flex items-center justify-center shrink-0">
+                <svg className="w-4 h-4 text-brand-green" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-brand-navy text-sm font-black mb-1">
+                  Want to change or cancel your plan?
+                </p>
+                <p className="text-slate-500 text-sm font-medium leading-relaxed">
+                  Go to Dashboard → Settings → Billing. You can upgrade,
+                  downgrade, or cancel yourself, instantly.
+                </p>
+              </div>
             </div>
 
-            <div className="border border-slate-100 rounded-2xl p-5">
-              <p className="text-brand-navy text-sm font-black mb-1">
-                A client says their portal link isn't working?
-              </p>
-              <p className="text-slate-500 text-sm font-medium leading-relaxed">
-                Open that client in your dashboard and click "Portal" again
-                — it copies a fresh link you can resend right away.
-              </p>
+            <div className="border border-slate-100 rounded-2xl p-5 flex gap-4">
+              <div className="w-9 h-9 rounded-xl bg-brand-navy/5 border border-brand-navy/10 flex items-center justify-center shrink-0">
+                <svg className="w-4 h-4 text-brand-navy" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-brand-navy text-sm font-black mb-1">
+                  A client says their portal link isn't working?
+                </p>
+                <p className="text-slate-500 text-sm font-medium leading-relaxed">
+                  Open that client in your dashboard and click "Portal" again
+                  — it copies a fresh link you can resend right away.
+                </p>
+              </div>
             </div>
 
-            <div className="border border-slate-100 rounded-2xl p-5">
-              <p className="text-brand-navy text-sm font-black mb-1">
-                Not getting email reminders?
-              </p>
-              <p className="text-slate-500 text-sm font-medium leading-relaxed">
-                Check spam for mail from reminders@offboardpro.com, and
-                confirm Email Alerts is switched on for that client.
-              </p>
+            <div className="border border-slate-100 rounded-2xl p-5 flex gap-4">
+              <div className="w-9 h-9 rounded-xl bg-brand-green/10 border border-brand-green/20 flex items-center justify-center shrink-0">
+                <svg className="w-4 h-4 text-brand-green" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-brand-navy text-sm font-black mb-1">
+                  Not getting email reminders?
+                </p>
+                <p className="text-slate-500 text-sm font-medium leading-relaxed">
+                  Check spam for mail from reminders@offboardpro.com, and
+                  confirm Email Alerts is switched on for that client.
+                </p>
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-[1.3fr_1fr] gap-10 lg:gap-16">
+        <div className="grid md:grid-cols-[1.3fr_1fr] gap-10 lg:gap-16">
           {/* FORM */}
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="grid sm:grid-cols-2 gap-5">
@@ -241,18 +359,7 @@ export default function ContactPage() {
               >
                 Topic
               </label>
-              <select
-                id="contact-topic"
-                value={topic}
-                onChange={(e) => setTopic(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 text-slate-700 outline-none focus:border-brand-green focus:bg-white transition-all font-bold"
-              >
-                {TOPICS.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
+              <TopicDropdown value={topic} onChange={setTopic} />
             </div>
 
             <div>

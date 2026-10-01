@@ -527,30 +527,10 @@ export default function Home() {
           width: fit-content;
           animation: marquee 20s linear infinite;
         }
-        @keyframes floatSlow {
-          0%,
-          100% {
-            transform: translate(0, 0);
-          }
-          50% {
-            transform: translate(0, -22px);
-          }
-        }
-        @keyframes floatSlowReverse {
-          0%,
-          100% {
-            transform: translate(0, 0);
-          }
-          50% {
-            transform: translate(0, 18px);
-          }
-        }
-        .animate-float-slow {
-          animation: floatSlow 7s ease-in-out infinite;
-        }
-        .animate-float-slow-reverse {
-          animation: floatSlowReverse 8s ease-in-out infinite;
-        }
+        /* animate-float-slow / animate-float-slow-reverse now come from
+           globals.css (opacity-only — a transform-based version here would
+           override these blobs' static -translate-x positioning classes
+           every animation cycle, snapping them out of place). */
       `}</style>
 
       {/* SCROLL CONTROLS — up appears once you've scrolled down, down
