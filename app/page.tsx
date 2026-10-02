@@ -707,21 +707,64 @@ export default function Home() {
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 md:gap-8 mb-12">
                 {[
-                  { title: "Freelancers", desc: "Manage every client handover without relying on memory." },
-                  { title: "Web Developers", desc: "Track hosting, repositories, CMS, analytics, and other access." },
-                  { title: "Designers", desc: "Keep design tools and project access organized until closure." },
-                  { title: "Marketers & SEO Specialists", desc: "Track advertising, analytics, SEO, and social tools." },
-                  { title: "Consultants", desc: "Keep client access and project closure organized." },
-                  { title: "Agencies", desc: "Give your team a repeatable offboarding process." },
+                  {
+                    title: "Freelancers",
+                    desc: "Manage every client handover without relying on memory.",
+                    icon: (
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    ),
+                  },
+                  {
+                    title: "Web Developers",
+                    desc: "Track hosting, repositories, CMS, analytics, and other access.",
+                    icon: (
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M10 20l4-16M18 8l4 4-4 4M6 16l-4-4 4-4" />
+                    ),
+                  },
+                  {
+                    title: "Designers",
+                    desc: "Keep design tools and project access organized until closure.",
+                    icon: (
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536M9 11l6.232-6.232a2.5 2.5 0 113.536 3.536L12.536 14.5H9V11z M5 19h14" />
+                    ),
+                  },
+                  {
+                    title: "Marketers & SEO Specialists",
+                    desc: "Track advertising, analytics, SEO, and social tools.",
+                    icon: (
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+                    ),
+                  },
+                  {
+                    title: "Consultants",
+                    desc: "Keep client access and project closure organized.",
+                    icon: (
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    ),
+                  },
+                  {
+                    title: "Agencies",
+                    desc: "Give your team a repeatable offboarding process.",
+                    icon: (
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5" />
+                    ),
+                  },
                 ].map((role, i) => (
                   <RevealItem key={role.title} delay={i * 70}>
                     <div className="bg-slate-50 border border-slate-100 p-6 sm:p-8 rounded-[2rem] flex flex-col justify-between h-full hover:border-brand-green/30 hover:bg-white hover:shadow-xl transition-all duration-300">
-                      <h3 className="text-brand-navy font-black text-lg sm:text-xl mb-2 italic">
-                        {role.title}
-                      </h3>
-                      <p className="text-slate-500 text-sm leading-relaxed font-medium">
-                        {role.desc}
-                      </p>
+                      <div>
+                        <div className="w-10 h-10 rounded-xl bg-brand-navy/5 text-brand-navy flex items-center justify-center mb-4">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                            {role.icon}
+                          </svg>
+                        </div>
+                        <h3 className="text-brand-navy font-black text-lg sm:text-xl mb-2 italic">
+                          {role.title}
+                        </h3>
+                        <p className="text-slate-500 text-sm leading-relaxed font-medium">
+                          {role.desc}
+                        </p>
+                      </div>
                     </div>
                   </RevealItem>
                 ))}
@@ -766,18 +809,32 @@ export default function Home() {
                     {
                       t: "Forgotten access",
                       d: "You finish the project and move on — but some client access is still active.",
+                      icon: (
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                      ),
                     },
                     {
                       t: "Scattered information",
                       d: "Tools, accounts, deadlines, and handover tasks can live across messages, notes, and memory.",
+                      icon: (
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                      ),
                     },
                     {
                       t: "Missed follow-ups",
                       d: "Without a clear process, important access-removal tasks can easily be forgotten.",
+                      icon: (
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      ),
                     },
                   ].map((card, idx) => (
                     <RevealItem key={card.t} delay={idx * 100}>
                       <div className="bg-white/5 p-5 sm:p-6 md:p-8 rounded-[2rem] border border-white/10 h-full hover:bg-white/10 hover:border-brand-green/30 hover:-translate-y-1 transition-all duration-300">
+                        <div className="w-10 h-10 rounded-xl bg-brand-green/10 text-brand-green flex items-center justify-center mb-4">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                            {card.icon}
+                          </svg>
+                        </div>
                         <h3 className="text-white font-black text-lg mb-2 italic">
                           {card.t}
                         </h3>
@@ -1227,7 +1284,7 @@ export default function Home() {
               <h2
                 className="text-brand-navy text-3xl sm:text-4xl md:text-5xl font-black tracking-normal mb-12 md:mb-16 text-center italic"
               >
-                Built for secure client handovers.
+                Security that asks for less, not more.
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6 md:gap-8">
                 {[
