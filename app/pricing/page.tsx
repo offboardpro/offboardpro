@@ -334,19 +334,18 @@ export default function PricingPage() {
       {/* =========================
           MAIN
       ========================== */}
-      <main className="w-full max-w-6xl mx-auto pt-8 sm:pt-12 md:pt-16 pb-16 sm:pb-24 md:pb-28 px-4 sm:px-6">
+      <main className="w-full max-w-6xl mx-auto pt-2 sm:pt-4 pb-16 sm:pb-24 md:pb-28 px-4 sm:px-6">
 
         {/* =========================
             HERO
         ========================== */}
         <div className="text-center mb-10 sm:mb-14 md:mb-16 animate-slide-up">
 
-          <h1
-                        className="text-brand-navy text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight mb-4 sm:mb-6 italic leading-tight"
-          >
-            Simple pricing.
-            <br />
-            <span className="text-brand-green">
+          <h1 className="font-black tracking-tight mb-4 sm:mb-6 italic leading-tight">
+            <span className="block text-brand-green text-xl sm:text-2xl md:text-3xl lg:text-4xl">
+              Simple pricing.
+            </span>
+            <span className="block text-brand-navy text-4xl sm:text-5xl md:text-6xl lg:text-7xl mt-1">
               Built around your workflow.
             </span>
           </h1>

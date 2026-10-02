@@ -241,10 +241,8 @@ function Header() {
   const navLinks = [
     { name: "How It Works", href: "#how-it-works" },
     { name: "Features", href: "#features" },
-    { name: "Security", href: "#security" },
     { name: "Pricing", href: "/pricing" },
     { name: "FAQ", href: "#faq" },
-    { name: "Contact", href: "/contact" },
   ];
 
   return (
