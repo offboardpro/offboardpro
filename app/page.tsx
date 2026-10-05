@@ -471,9 +471,20 @@ export default function Home() {
   const [canScrollUp, setCanScrollUp] = useState(false);
   const [canScrollDown, setCanScrollDown] = useState(true);
   const { signedIn, isPro } = useAuthPro();
+  const [isIndia, setIsIndia] = useState(true);
 
   useEffect(() => {
     setIsVisible(true);
+
+    fetch("/api/visitor-country")
+      .then((res) => res.json())
+      .then((data) => {
+        setIsIndia(data.isIndia);
+      })
+      .catch((error) => {
+        console.error("Country detection failed:", error);
+        setIsIndia(true);
+      });
 
     const updateScrollButtons = () => {
       const scrolled = window.scrollY;
@@ -1428,7 +1439,7 @@ export default function Home() {
                       <span
                         className="text-brand-navy text-5xl sm:text-6xl font-black italic"
                       >
-                        ₹199
+                        {isIndia ? "₹199" : "$5"}
                       </span>
 
                       <span className="text-slate-400 font-bold text-sm">
