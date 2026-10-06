@@ -1,207 +1,83 @@
 import { NextResponse } from "next/server";
-import DodoPayments from "dodopayments";
+import crypto from "crypto";
 import { db } from "@/lib/firebase-admin";
-
-const dodo = new DodoPayments({
-  bearerToken: process.env.DODO_PAYMENTS_API_KEY!,
-  webhookKey: process.env.DODO_PAYMENTS_WEBHOOK_KEY!,
-  environment: "test_mode",
-});
-
-const PRODUCTS = {
-  monthly: "pdt_0Np5jTgjrkQWHLIcAfQCD",
-  yearly: "pdt_0Np5jvO2ADVKM4G1GDWp0",
-} as const;
 
 export async function POST(req: Request) {
   try {
-    // 1. Read the raw request body
     const rawBody = await req.text();
+    const signature = req.headers.get("webhook-signature");
 
-    // 2. Verify Dodo webhook signature
-    const event = dodo.webhooks.unwrap(rawBody, {
-      headers: {
-        "webhook-id": req.headers.get("webhook-id") || "",
-        "webhook-signature":
-          req.headers.get("webhook-signature") || "",
-        "webhook-timestamp":
-          req.headers.get("webhook-timestamp") || "",
-      },
-    });
+    const webhookSecret = process.env.DODO_WEBHOOK_SECRET || "";
 
-    console.log("Dodo webhook received:", event.type);
+    if (webhookSecret) {
+      const computedSignature = crypto
+        .createHmac("sha256", webhookSecret)
+        .update(rawBody)
+        .digest("hex");
 
-    // We only subscribed to these three events.
-    if (
-      event.type !== "subscription.active" &&
-      event.type !== "subscription.renewed" &&
-      event.type !== "subscription.expired"
-    ) {
+      if (signature !== computedSignature) {
+        return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+      }
+    }
+
+    const event = JSON.parse(rawBody);
+    const eventType = event.type;
+    const subscription = event.data;
+
+    if (!subscription || !subscription.customer_id) {
       return NextResponse.json({ received: true });
     }
 
-    const subscription = event.data;
-
-    // 3. Get our Firebase user ID from checkout metadata
-    const userId = subscription.metadata?.app_user_id;
-    if (typeof userId !== "string" || !userId) {
-      console.error(
-        "Dodo webhook missing valid app_user_id:",
-        subscription.subscription_id
-      );
-
-      return NextResponse.json(
-        { error: "Missing or invalid user ID" },
-        { status: 400 }
-      );
-    }
-
-    // 4. Verify that this is one of our OffboardPro products
+    const customerId = subscription.customer_id;
     const productId = subscription.product_id;
 
-    if (
-      productId !== PRODUCTS.monthly &&
-      productId !== PRODUCTS.yearly
-    ) {
-      console.error(
-        "Unknown OffboardPro Dodo product:",
-        productId
-      );
+    const usersRef = db.collection("users");
+    const snapshot = await usersRef.where("dodoCustomerId", "==", customerId).limit(1).get();
 
-      return NextResponse.json(
-        { error: "Unknown product" },
-        { status: 400 }
-      );
+    if (snapshot.empty) {
+      console.warn(`No user found for Dodo customer ID: ${customerId}`);
+      return NextResponse.json({ received: true });
     }
 
-    const billingCycle =
-      subscription.metadata?.billing_cycle === "yearly"
-        ? "yearly"
-        : subscription.metadata?.billing_cycle === "monthly"
-          ? "monthly"
-          : productId === PRODUCTS.yearly
-            ? "yearly"
-            : "monthly";
+    const userDoc = snapshot.docs[0];
+    const userRef = userDoc.ref;
 
-    const userRef = db.collection("users").doc(userId);
+    if (eventType === "subscription.active" || eventType === "subscription.renewed") {
+      const billingCycle = subscription.billing_frequency === "year" ? "yearly" : "monthly";
 
-    // 5. Activate / renew Pro
-    if (
-      event.type === "subscription.active" ||
-      event.type === "subscription.renewed"
-    ) {
       const expiresAt =
         typeof subscription.expires_at === "string" ||
         typeof subscription.expires_at === "number"
           ? new Date(subscription.expires_at)
           : null;
 
-      if (!expiresAt || Number.isNaN(expiresAt.getTime())) {
-        console.error(
-          "Invalid Dodo subscription expiry:",
-          subscription.expires_at
-        );
-
-        return NextResponse.json(
-          { error: "Invalid subscription expiry" },
-          { status: 400 }
-        );
-      }
-
-      await userRef.set(
-        {
-          isPro: true,
-          plan: "Professional",
-          billingCycle,
-          upgradedAt: new Date(),
-          expiresAt,
-          dodoSubscriptionId: subscription.subscription_id,
-          dodoProductId: productId,
-          dodoUpdatedAt: new Date(),
-        },
-        { merge: true }
-      );
-
-      console.log(
-        `OffboardPro Pro activated/renewed for ${userId}`
-      );
-
-      return NextResponse.json({
-        success: true,
-        event: event.type,
-        subscriptionId: subscription.subscription_id,
-      });
-    }
-
-    // 6. Expire Pro access
-    if (event.type === "subscription.expired") {
-      const userSnapshot = await userRef.get();
-
-      if (!userSnapshot.exists) {
-        return NextResponse.json({
-          success: true,
-          message: "User already missing",
-        });
-      }
-
-      const currentData = userSnapshot.data() || {};
-      const currentExpiry = currentData.expiresAt?.toDate
-        ? currentData.expiresAt.toDate()
-        : null;
-
-      const dodoExpiry =
-        typeof subscription.expires_at === "string" ||
-        typeof subscription.expires_at === "number"
-          ? new Date(subscription.expires_at)
+      const nextBillingDate =
+        typeof subscription.next_billing_date === "string" ||
+        typeof subscription.next_billing_date === "number"
+          ? new Date(subscription.next_billing_date)
           : null;
 
-      // Do not let an old expired event revoke a newer subscription.
-      if (
-        currentExpiry &&
-        dodoExpiry &&
-        !Number.isNaN(dodoExpiry.getTime()) &&
-        currentExpiry > dodoExpiry
-      ) {
-        console.log(
-          "Ignoring stale Dodo expiration event:",
-          subscription.subscription_id
-        );
-
-        return NextResponse.json({
-          success: true,
-          stale: true,
-        });
-      }
-
-      await userRef.set(
-        {
-          isPro: false,
-          wasPro: true,
-          dodoSubscriptionId: subscription.subscription_id,
-          dodoProductId: productId,
-          dodoUpdatedAt: new Date(),
-        },
-        { merge: true }
-      );
-
-      console.log(
-        `OffboardPro Pro expired for ${userId}`
-      );
-
-      return NextResponse.json({
-        success: true,
-        event: event.type,
-        subscriptionId: subscription.subscription_id,
-      });
+      await userRef.set({
+        isPro: true,
+        plan: "Professional",
+        billingCycle,
+        upgradedAt: new Date(),
+        expiresAt,
+        nextBillingDate,
+        dodoSubscriptionId: subscription.subscription_id,
+        dodoProductId: productId,
+        dodoUpdatedAt: new Date(),
+      }, { merge: true });
+    } else if (eventType === "subscription.cancelled" || eventType === "subscription.expired") {
+      await userRef.set({
+        isPro: false,
+        dodoUpdatedAt: new Date(),
+      }, { merge: true });
     }
 
-    return NextResponse.json({ received: true });
-  } catch (error) {
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
     console.error("Dodo Webhook Error:", error);
-
-    return NextResponse.json(
-      { error: "Invalid webhook" },
-      { status: 401 }
-    );
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

@@ -66,7 +66,7 @@ const productId = PRODUCTS[billingCycle];
       customer: {
         email,
       },
-      return_url: `${process.env.NEXT_PUBLIC_APP_URL}/pricing`,
+      return_url: `${process.env.NEXT_PUBLIC_APP_URL}/success`,
       metadata: {
         app_user_id: uid,
         billing_cycle: billingCycle,

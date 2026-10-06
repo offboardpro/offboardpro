@@ -2004,7 +2004,7 @@ export default function DashboardPage() {
           if (docSnap.exists()) {
             const data = docSnap.data();
             const firestoreIsPro = data.isPro || false;
-            const expiryDate = data.expiresAt?.toDate(); 
+            const expiryDate = data.nextBillingDate?.toDate(); 
             
             setSubscriptionData({
                 expiry: expiryDate ? expiryDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : "N/A",
