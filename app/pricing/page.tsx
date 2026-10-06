@@ -128,8 +128,6 @@ export default function PricingPage() {
 
       if (!isIndia) {
         try {
-          setIsUpgrading(true);
-
           const res = await fetch("/api/dodo-checkout", {
             method: "POST",
             headers: {
