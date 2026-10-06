@@ -10,6 +10,32 @@ import { onAuthStateChanged } from "firebase/auth";
 import { doc, onSnapshot } from "firebase/firestore";
 import confetti from "canvas-confetti"; // Confetti Import
 
+// checkout.js is loaded with strategy="lazyOnload" in the root layout, which
+// can take a few seconds. Without this wait, clicking "Upgrade" right after
+// the page loads throws ("Razorpay is not a constructor") and the payment
+// button just silently fails with a generic error.
+function waitForRazorpay(timeoutMs = 5000): Promise<any> {
+  return new Promise((resolve) => {
+    const existing = (window as any).Razorpay;
+    if (existing) {
+      resolve(existing);
+      return;
+    }
+
+    const start = Date.now();
+    const interval = setInterval(() => {
+      const ctor = (window as any).Razorpay;
+      if (ctor) {
+        clearInterval(interval);
+        resolve(ctor);
+      } else if (Date.now() - start > timeoutMs) {
+        clearInterval(interval);
+        resolve(null);
+      }
+    }, 150);
+  });
+}
+
 export default function PricingPage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
@@ -23,7 +49,6 @@ export default function PricingPage() {
 
   // Load Auth and Real-time Pro Status from Firestore
   useEffect(() => {
-    // Detect visitor country automatically
     fetch("/api/visitor-country")
       .then((res) => res.json())
       .then((data) => {
@@ -98,44 +123,42 @@ export default function PricingPage() {
       return;
     }
 
-    if (!isIndia) {
-      try {
-        setIsUpgrading(true);
+    try {
+      const idToken = await user.getIdToken();
 
-        const idToken = await user.getIdToken();
+      if (!isIndia) {
+        try {
+          setIsUpgrading(true);
 
-        const res = await fetch("/api/dodo-checkout", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${idToken}`,
-          },
-          body: JSON.stringify({
-            billingCycle,
-          }),
-        });
+          const res = await fetch("/api/dodo-checkout", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${idToken}`,
+            },
+            body: JSON.stringify({
+              billingCycle,
+            }),
+          });
 
-        const data = await res.json();
+          const data = await res.json();
 
-        if (!res.ok || !data.checkoutUrl) {
-          console.error("Dodo checkout failed:", data);
+          if (!res.ok || !data.checkoutUrl) {
+            console.error("Dodo checkout failed:", data);
+            alert("Could not start payment. Please try again.");
+            setIsUpgrading(false);
+            return;
+          }
+
+          window.location.href = data.checkoutUrl;
+          return;
+        } catch (error) {
+          console.error("Dodo payment initialization failed:", error);
           alert("Could not start payment. Please try again.");
           setIsUpgrading(false);
           return;
         }
-
-        window.location.href = data.checkoutUrl;
-        return;
-      } catch (error) {
-        console.error("Dodo payment initialization failed:", error);
-        alert("Could not start payment. Please try again.");
-        setIsUpgrading(false);
-        return;
       }
-    }
-
-    try {
-      const idToken = await user.getIdToken();
 
       const res = await fetch("/api/razorpay", {
         method: "POST",
@@ -206,7 +229,15 @@ export default function PricingPage() {
         }
       };
 
-      const rzp = new (window as any).Razorpay(options);
+      const RazorpayCtor = await waitForRazorpay();
+      if (!RazorpayCtor) {
+        alert(
+          "Payment system is still loading. Please wait a moment and try again."
+        );
+        return;
+      }
+
+      const rzp = new RazorpayCtor(options);
       rzp.open();
     } catch (error) {
       console.error("Payment initialization failed:", error);
@@ -252,27 +283,26 @@ export default function PricingPage() {
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-white">
-      <div className="w-12 h-12 border-4 border-slate-100 border-t-[#243F74] rounded-full animate-spin"></div>
+      <div className="w-12 h-12 border-4 border-slate-100 border-t-brand-navy rounded-full animate-spin"></div>
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-white relative font-sans selection:bg-[#9BCB3B]/20">
+    <div className="min-h-screen bg-white relative font-sans selection:bg-brand-green/20">
 
       {/* =========================
           UPGRADE SUCCESS OVERLAY
       ========================== */}
       {isUpgrading && (
-        <div className="fixed inset-0 z-[200] bg-white flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-500">
+        <div className="fixed inset-0 z-[200] bg-white flex flex-col items-center justify-center p-6 text-center animate-fade-in">
           <div className="relative w-40 h-40 sm:w-48 sm:h-48 mb-8">
             <div
-              style={{ backgroundColor: "#9BCB3B" }}
-              className="absolute inset-0 rounded-full opacity-20 animate-ping"
+              className="bg-brand-green absolute inset-0 rounded-full opacity-20 animate-ping"
             />
 
-            <div className="relative bg-white border-4 border-[#9BCB3B] w-full h-full rounded-full flex items-center justify-center shadow-2xl shadow-[#9BCB3B]/20">
+            <div className="relative bg-white border-4 border-brand-green w-full h-full rounded-full flex items-center justify-center shadow-2xl shadow-brand-green/20">
               <svg
-                className="w-16 h-16 sm:w-20 sm:h-20 text-[#9BCB3B]"
+                className="w-16 h-16 sm:w-20 sm:h-20 text-brand-green"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -288,8 +318,7 @@ export default function PricingPage() {
           </div>
 
           <h2
-            style={{ color: "#243F74" }}
-            className="text-3xl sm:text-4xl font-black italic mb-2 tracking-tight"
+            className="text-brand-navy text-3xl sm:text-4xl font-black italic mb-2 tracking-tight"
           >
             Welcome to Pro.
           </h2>
@@ -300,8 +329,7 @@ export default function PricingPage() {
 
           <button
             disabled
-            style={{ backgroundColor: "#243F74" }}
-            className="px-8 sm:px-10 py-4 rounded-xl text-white font-black text-xs uppercase tracking-widest shadow-xl animate-pulse"
+            className="bg-brand-navy px-8 sm:px-10 py-4 rounded-xl text-white font-black text-xs uppercase tracking-widest shadow-xl animate-pulse"
           >
             Finalizing your account...
           </button>
@@ -333,8 +361,7 @@ export default function PricingPage() {
             </span>
 
             <span
-              style={{ color: isPro ? "#9BCB3B" : "#243F74" }}
-              className="text-[10px] font-black tracking-widest italic"
+              className={`text-[10px] font-black tracking-widest italic ${isPro ? "text-brand-green" : "text-brand-navy"}`}
             >
               {isPro ? "✓ Pro Member" : "Free Plan"}
             </span>
@@ -342,7 +369,7 @@ export default function PricingPage() {
 
           <Link
             href="/dashboard"
-            className="text-slate-400 font-bold text-sm hover:text-[#243F74] transition-colors border-l pl-3 sm:pl-5 md:pl-6 border-slate-100"
+            className="text-slate-400 font-bold text-sm hover:text-brand-navy transition-colors border-l pl-3 sm:pl-5 md:pl-6 border-slate-100"
           >
             Dashboard
           </Link>
@@ -352,20 +379,18 @@ export default function PricingPage() {
       {/* =========================
           MAIN
       ========================== */}
-      <main className="w-full max-w-6xl mx-auto pt-8 sm:pt-12 md:pt-16 pb-16 sm:pb-24 md:pb-28 px-4 sm:px-6">
+      <main className="w-full max-w-6xl mx-auto pt-2 sm:pt-4 pb-16 sm:pb-24 md:pb-28 px-4 sm:px-6">
 
         {/* =========================
             HERO
         ========================== */}
-        <div className="text-center mb-10 sm:mb-14 md:mb-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div className="text-center mb-10 sm:mb-14 md:mb-16 animate-slide-up">
 
-          <h1
-            style={{ color: "#243F74" }}
-            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight mb-4 sm:mb-6 italic leading-tight"
-          >
-            Simple pricing.
-            <br />
-            <span style={{ color: "#9BCB3B" }}>
+          <h1 className="font-black tracking-tight mb-4 sm:mb-6 italic leading-tight">
+            <span className="block text-brand-green text-xl sm:text-2xl md:text-3xl lg:text-4xl">
+              Simple pricing.
+            </span>
+            <span className="block text-brand-navy text-4xl sm:text-5xl md:text-6xl lg:text-7xl mt-1">
               Built around your workflow.
             </span>
           </h1>
@@ -385,7 +410,7 @@ export default function PricingPage() {
               onClick={() => setBillingCycle("monthly")}
               className={`px-4 sm:px-6 py-2.5 rounded-full text-[10px] font-black tracking-widest transition-all ${
                 billingCycle === "monthly"
-                  ? "bg-white text-[#243F74] shadow-sm"
+                  ? "bg-white text-brand-navy shadow-sm"
                   : "text-slate-400"
               }`}
             >
@@ -397,13 +422,13 @@ export default function PricingPage() {
               onClick={() => setBillingCycle("yearly")}
               className={`px-4 sm:px-6 py-2.5 rounded-full text-[10px] font-black tracking-widest transition-all flex items-center gap-2 ${
                 billingCycle === "yearly"
-                  ? "bg-white text-[#243F74] shadow-sm"
+                  ? "bg-white text-brand-navy shadow-sm"
                   : "text-slate-400"
               }`}
             >
               Yearly
 
-              <span className="bg-[#9BCB3B] text-white text-[8px] px-2 py-0.5 rounded-full tracking-tight">
+              <span className="bg-brand-green text-white text-[8px] px-2 py-0.5 rounded-full tracking-tight">
                 Save 15%
               </span>
             </button>
@@ -432,8 +457,7 @@ export default function PricingPage() {
 
               <div className="flex items-baseline gap-2">
                 <span
-                  style={{ color: "#243F74" }}
-                  className="text-5xl sm:text-6xl font-black italic"
+                  className="text-brand-navy text-5xl sm:text-6xl font-black italic"
                 >
                   ₹0
                 </span>
@@ -464,7 +488,7 @@ export default function PricingPage() {
                   key={feature}
                   className="flex items-start gap-3 text-sm leading-relaxed text-slate-600 font-semibold"
                 >
-                  <span className="text-[#9BCB3B] font-black shrink-0 mt-0.5">
+                  <span className="text-brand-green font-black shrink-0 mt-0.5">
                     ✓
                   </span>
 
@@ -487,15 +511,13 @@ export default function PricingPage() {
               PRO PLAN
           ========================== */}
           <div
-            style={{ borderColor: "#9BCB3B" }}
-            className="border-2 p-6 sm:p-8 md:p-10 lg:p-12 rounded-[2rem] sm:rounded-[2.5rem] shadow-xl shadow-[#9BCB3B]/10 flex flex-col relative bg-white overflow-hidden transition-all duration-500 hover:-translate-y-1"
+            className="border-brand-green border-2 p-6 sm:p-8 md:p-10 lg:p-12 rounded-[2rem] sm:rounded-[2.5rem] shadow-xl shadow-brand-green/10 flex flex-col relative bg-white overflow-hidden transition-all duration-500 hover:-translate-y-1"
           >
 
             {/* Badge */}
             {!isPro && (
               <div
-                style={{ backgroundColor: "#9BCB3B" }}
-                className="absolute top-0 right-0 px-4 sm:px-6 py-2 text-white text-[10px] font-black rounded-bl-2xl tracking-widest"
+                className="bg-brand-green absolute top-0 right-0 px-4 sm:px-6 py-2 text-white text-[10px] font-black rounded-bl-2xl tracking-widest"
               >
                 PRO
               </div>
@@ -503,8 +525,7 @@ export default function PricingPage() {
 
             {isPro && (
               <div
-                style={{ backgroundColor: "#243F74" }}
-                className="absolute top-0 right-0 px-4 sm:px-6 py-2 text-white text-[10px] font-black rounded-bl-2xl tracking-widest"
+                className="bg-brand-navy absolute top-0 right-0 px-4 sm:px-6 py-2 text-white text-[10px] font-black rounded-bl-2xl tracking-widest"
               >
                 ACTIVE
               </div>
@@ -512,14 +533,13 @@ export default function PricingPage() {
 
             <div className="mb-7 sm:mb-8">
 
-              <p className="text-[#243F74] font-black text-xs tracking-[0.2em] mb-3">
+              <p className="text-brand-navy font-black text-xs tracking-[0.2em] mb-3">
                 PRO
               </p>
 
               <div className="flex items-baseline gap-2">
                 <span
-                  style={{ color: "#243F74" }}
-                  className="text-5xl sm:text-6xl font-black italic"
+                  className="text-brand-navy text-5xl sm:text-6xl font-black italic"
                 >
                   {isIndia
                     ? billingCycle === "monthly"
@@ -536,7 +556,7 @@ export default function PricingPage() {
               </div>
 
               {billingCycle === "yearly" && (
-                <p className="text-[10px] font-black text-[#9BCB3B] tracking-widest mt-3">
+                <p className="text-[10px] font-black text-brand-green tracking-widest mt-3">
                   {isIndia
                     ? "₹165 per month, billed annually"
                     : "$4.08 per month, billed annually"}
@@ -551,7 +571,7 @@ export default function PricingPage() {
 
             <div className="h-px bg-slate-100 mb-7 sm:mb-8" />
 
-            <p className="text-[10px] font-black tracking-[0.2em] text-[#243F74] mb-4">
+            <p className="text-[10px] font-black tracking-[0.2em] text-brand-navy mb-4">
               EVERYTHING IN FREE, PLUS
             </p>
 
@@ -568,7 +588,7 @@ export default function PricingPage() {
                   key={feature}
                   className="flex items-start gap-3 text-sm leading-relaxed text-slate-700 font-bold"
                 >
-                  <span className="text-[#9BCB3B] font-black shrink-0 mt-0.5">
+                  <span className="text-brand-green font-black shrink-0 mt-0.5">
                     ✓
                   </span>
 
@@ -587,8 +607,7 @@ export default function PricingPage() {
                 <button
                   type="button"
                   onClick={handleUpgrade}
-                  style={{ backgroundColor: "#243F74" }}
-                  className="w-full py-4 sm:py-5 rounded-2xl text-white font-black text-xs tracking-[0.15em] shadow-xl shadow-[#243F74]/20 hover:scale-[1.01] active:scale-95 transition-all flex items-center justify-center gap-2"
+                  className="bg-brand-navy w-full py-4 sm:py-5 rounded-2xl text-white font-black text-xs tracking-[0.15em] shadow-xl shadow-brand-navy/20 hover:scale-[1.01] active:scale-95 transition-all flex items-center justify-center gap-2"
                 >
                   <svg
                     className="w-4 h-4"
@@ -609,7 +628,7 @@ export default function PricingPage() {
               ) : (
                 <div className="flex flex-col gap-3">
 
-                  <div className="w-full py-4 sm:py-5 rounded-2xl bg-[#9BCB3B]/10 text-[#6d941f] border border-[#9BCB3B]/20 text-center font-black text-xs tracking-widest flex items-center justify-center gap-2">
+                  <div className="w-full py-4 sm:py-5 rounded-2xl bg-brand-green/10 text-[#6d941f] border border-brand-green/20 text-center font-black text-xs tracking-widest flex items-center justify-center gap-2">
                     <svg
                       className="w-4 h-4"
                       fill="currentColor"
@@ -627,8 +646,7 @@ export default function PricingPage() {
 
                   <Link
                     href="/dashboard"
-                    style={{ backgroundColor: "#243F74" }}
-                    className="w-full py-4 rounded-2xl text-white text-center font-black text-xs tracking-widest hover:scale-[1.01] active:scale-95 transition-all shadow-lg"
+                    className="bg-brand-navy w-full py-4 rounded-2xl text-white text-center font-black text-xs tracking-widest hover:scale-[1.01] active:scale-95 transition-all shadow-lg"
                   >
                     Go to Dashboard →
                   </Link>
@@ -647,7 +665,7 @@ export default function PricingPage() {
 
           <div className="rounded-2xl sm:rounded-3xl border border-slate-100 bg-slate-50/50 p-5 sm:p-7 text-center">
 
-            <p className="text-sm font-bold text-[#243F74] mb-2">
+            <p className="text-sm font-bold text-brand-navy mb-2">
               Start free. Upgrade when you need more.
             </p>
 
@@ -663,56 +681,171 @@ export default function PricingPage() {
       </main>
 
       {/* =========================
-          FOOTER
+          FOOTER (matches the landing page footer)
       ========================== */}
-      <footer className="border-t border-slate-100 bg-slate-50/40">
+      <footer className="bg-white border-t border-slate-100 pt-14 sm:pt-16 md:pt-20 pb-8">
+        <div className="w-full max-w-7xl mx-auto px-6 sm:px-8 lg:px-10">
 
-        <div className="w-full max-w-7xl mx-auto px-5 sm:px-6 md:px-10 py-10 sm:py-12">
+          {/* Main Footer */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 sm:gap-12 lg:gap-16 pb-12 md:pb-16">
 
-          <div className="flex flex-col md:flex-row items-center justify-between gap-5 sm:gap-6">
+            {/* BRAND */}
+            <div className="sm:col-span-2 lg:col-span-1">
 
-            <div className="text-center md:text-left">
-              <Link href="/" className="inline-block mb-2">
+              <Link href="/" className="inline-block mb-5">
                 <Image
                   src="/logo.png"
                   alt="OffboardPro"
-                  width={120}
-                  height={36}
+                  width={150}
+                  height={48}
+                  sizes="150px"
+                  quality={90}
                   className="object-contain"
                 />
               </Link>
 
-              <p className="text-xs text-slate-400">
+              <p className="text-slate-400 text-sm leading-relaxed max-w-xs">
                 Client offboarding for freelancers, consultants, and agencies.
               </p>
+
             </div>
 
-            <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
 
-              <Link
-                href="/"
-                className="text-xs font-semibold text-slate-400 hover:text-[#243F74] transition-colors"
-              >
-                Home
-              </Link>
+            {/* PRODUCT */}
+            <div>
+              <h4 className="text-sm font-black text-brand-navy mb-5">
+                Product
+              </h4>
+
+              <div className="flex flex-col gap-3">
+
+                <Link
+                  href="/#how-it-works"
+                  className="text-sm font-semibold text-slate-500 hover:text-brand-navy transition-colors"
+                >
+                  How It Works
+                </Link>
+
+                <Link
+                  href="/#features"
+                  className="text-sm font-semibold text-slate-500 hover:text-brand-navy transition-colors"
+                >
+                  Features
+                </Link>
+
+                <Link
+                  href="/pricing"
+                  className="text-sm font-semibold text-slate-500 hover:text-brand-navy transition-colors"
+                >
+                  Pricing
+                </Link>
+
+                <Link
+                  href="/#faq"
+                  className="text-sm font-semibold text-slate-500 hover:text-brand-navy transition-colors"
+                >
+                  FAQ
+                </Link>
+
+              </div>
+            </div>
+
+
+            {/* ACCOUNT */}
+            <div>
+              <h4 className="text-sm font-black text-brand-navy mb-5">
+                Account
+              </h4>
+
+              <div className="flex flex-col gap-3">
+
+                {user ? (
+                  <Link
+                    href="/dashboard"
+                    className="text-sm font-semibold text-slate-500 hover:text-brand-navy transition-colors"
+                  >
+                    Dashboard
+                  </Link>
+                ) : (
+                  <>
+                    <Link
+                      href="/signup"
+                      className="text-sm font-semibold text-slate-500 hover:text-brand-navy transition-colors"
+                    >
+                      Sign Up
+                    </Link>
+
+                    <Link
+                      href="/login"
+                      className="text-sm font-semibold text-slate-500 hover:text-brand-navy transition-colors"
+                    >
+                      Log In
+                    </Link>
+                  </>
+                )}
+
+              </div>
+            </div>
+
+
+            {/* CONTACT */}
+            <div>
+              <h4 className="text-sm font-black text-brand-navy mb-5">
+                Contact
+              </h4>
+
+              <div className="flex flex-col gap-3">
+
+                <a
+                  href="mailto:hello@offboardpro.com"
+                  className="text-sm font-semibold text-slate-500 hover:text-brand-green transition-colors break-words"
+                >
+                  hello@offboardpro.com
+                </a>
+
+                <Link
+                  href="/contact"
+                  className="text-sm font-semibold text-slate-500 hover:text-brand-navy transition-colors"
+                >
+                  Contact Form
+                </Link>
+
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Have a question or need help? Get in touch with us.
+                </p>
+
+              </div>
+            </div>
+
+          </div>
+
+
+          {/* Bottom Footer */}
+          <div className="pt-7 sm:pt-8 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-5">
+
+            <p className="text-xs text-slate-400 text-center md:text-left">
+              © 2026 OffboardPro. All rights reserved.
+            </p>
+
+            <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
 
               <Link
                 href="/privacy"
-                className="text-xs font-semibold text-slate-400 hover:text-[#243F74] transition-colors"
+                className="text-xs font-semibold text-slate-400 hover:text-brand-navy transition-colors"
               >
                 Privacy
               </Link>
 
               <Link
                 href="/terms"
-                className="text-xs font-semibold text-slate-400 hover:text-[#243F74] transition-colors"
+                className="text-xs font-semibold text-slate-400 hover:text-brand-navy transition-colors"
               >
                 Terms
               </Link>
 
               <Link
                 href="/refund-policy"
-                className="text-xs font-semibold text-slate-400 hover:text-[#243F74] transition-colors"
+                className="text-xs font-semibold text-slate-400 hover:text-brand-navy transition-colors"
               >
                 Refund Policy
               </Link>
@@ -721,16 +854,7 @@ export default function PricingPage() {
 
           </div>
 
-          <div className="border-t border-slate-100 mt-8 pt-6 text-center">
-
-            <p className="text-[11px] text-slate-400">
-              © 2026 OffboardPro. All rights reserved.
-            </p>
-
-          </div>
-
         </div>
-
       </footer>
 
     </div>
