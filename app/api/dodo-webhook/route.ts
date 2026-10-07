@@ -24,23 +24,19 @@ export async function POST(req: Request) {
     const eventType = event.type;
     const subscription = event.data;
 
-    if (!subscription || !subscription.customer_id) {
+    if (!subscription) {
       return NextResponse.json({ received: true });
     }
 
-    const customerId = subscription.customer_id;
     const productId = subscription.product_id;
+    const userId = subscription.metadata?.app_user_id;
 
-    const usersRef = db.collection("users");
-    const snapshot = await usersRef.where("dodoCustomerId", "==", customerId).limit(1).get();
-
-    if (snapshot.empty) {
-      console.warn(`No user found for Dodo customer ID: ${customerId}`);
+    if (typeof userId !== "string" || !userId) {
+      console.warn("No app_user_id found in Dodo webhook metadata");
       return NextResponse.json({ received: true });
     }
 
-    const userDoc = snapshot.docs[0];
-    const userRef = userDoc.ref;
+    const userRef = db.collection("users").doc(userId);
 
    if (
   eventType === "subscription.active" ||
