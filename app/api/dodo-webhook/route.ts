@@ -42,7 +42,11 @@ export async function POST(req: Request) {
     const userDoc = snapshot.docs[0];
     const userRef = userDoc.ref;
 
-    if (eventType === "subscription.active" || eventType === "subscription.renewed") {
+   if (
+  eventType === "subscription.active" ||
+  eventType === "subscription.renewed" ||
+  eventType === "payment.succeeded"
+) {
       const billingCycle = subscription.billing_frequency === "year" ? "yearly" : "monthly";
 
       const expiresAt =
