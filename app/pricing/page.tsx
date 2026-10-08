@@ -40,6 +40,7 @@ export default function PricingPage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [isUpgrading, setIsUpgrading] = useState(false);
+  const [dodoPaymentSuccess, setDodoPaymentSuccess] = useState(false);
   const [isPro, setIsPro] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -116,6 +117,26 @@ export default function PricingPage() {
       clearTimeout(timer);
     };
   }, []);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const payment = new URLSearchParams(window.location.search).get("payment");
+
+      if (payment === "success" && isPro) {
+        setDodoPaymentSuccess(true);
+      }
+    }
+  }, [isPro]);
+
+  useEffect(() => {
+    if (dodoPaymentSuccess) {
+      const timer = setTimeout(() => {
+        router.push("/dashboard");
+      }, 2500);
+
+      return () => clearTimeout(timer);
+    }
+  }, [dodoPaymentSuccess, router]);
 
   const handleUpgrade = async () => {
     if (!user) {
@@ -269,7 +290,7 @@ export default function PricingPage() {
       setTimeout(() => {
         window.removeEventListener("beforeunload", preventClose);
         setIsUpgrading(false);
-        router.push("/success");
+        router.push("/dashboard");
       }, 2500);
     } catch (error) {
       console.error("Upgrade finalization failed:", error);
@@ -291,16 +312,13 @@ export default function PricingPage() {
       {/* =========================
           UPGRADE SUCCESS OVERLAY
       ========================== */}
-      {isUpgrading && (
-        <div className="fixed inset-0 z-[200] bg-white flex flex-col items-center justify-center p-6 text-center animate-fade-in">
-          <div className="relative w-40 h-40 sm:w-48 sm:h-48 mb-8">
-            <div
-              className="bg-brand-green absolute inset-0 rounded-full opacity-20 animate-ping"
-            />
+      {(isUpgrading || dodoPaymentSuccess) && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-white">
+          <div className="w-full max-w-md px-6 text-center">
 
-            <div className="relative bg-white border-4 border-brand-green w-full h-full rounded-full flex items-center justify-center shadow-2xl shadow-brand-green/20">
+            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-green-100">
               <svg
-                className="w-16 h-16 sm:w-20 sm:h-20 text-brand-green"
+                className="h-10 w-10 text-green-600"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -308,29 +326,35 @@ export default function PricingPage() {
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  strokeWidth="3"
+                  strokeWidth="2"
                   d="M5 13l4 4L19 7"
                 />
               </svg>
             </div>
+
+            <h1 className="text-3xl font-bold text-gray-900">
+              Upgrade Successful!
+            </h1>
+
+            <p className="mt-4 text-gray-600">
+              Welcome to the Pro family. You now have unlimited clients,
+              PDF reports, and automatic email reminders unlocked.
+            </p>
+
+            <div className="mt-8">
+              <button
+                disabled
+                className="w-full rounded-xl bg-gray-100 px-6 py-3 font-semibold text-gray-500"
+              >
+                Finalizing your account...
+              </button>
+            </div>
+
+            <p className="mt-4 text-sm text-gray-500">
+              Your Pro account is being finalized. You'll be redirected shortly.
+            </p>
+
           </div>
-
-          <h2
-            className="text-brand-navy text-3xl sm:text-4xl font-black italic mb-2 tracking-tight"
-          >
-            Welcome to Pro.
-          </h2>
-
-          <p className="text-slate-400 font-bold uppercase text-[10px] tracking-[0.2em] sm:tracking-[0.3em] mb-8 text-center">
-            Unlocking your premium features...
-          </p>
-
-          <button
-            disabled
-            className="bg-brand-navy px-8 sm:px-10 py-4 rounded-xl text-white font-black text-xs uppercase tracking-widest shadow-xl animate-pulse"
-          >
-            Finalizing your account...
-          </button>
         </div>
       )}
 
