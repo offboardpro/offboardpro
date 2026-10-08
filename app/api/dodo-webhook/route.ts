@@ -65,7 +65,7 @@ export async function POST(req: Request) {
         expiresAt,
         nextBillingDate,
         dodoSubscriptionId: subscription.subscription_id,
-        dodoProductId: productId,
+        dodoProductId: productId ?? null,
         dodoUpdatedAt: new Date(),
       }, { merge: true });
     } else if (eventType === "subscription.cancelled" || eventType === "subscription.expired") {
