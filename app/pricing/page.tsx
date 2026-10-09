@@ -313,47 +313,79 @@ export default function PricingPage() {
           UPGRADE SUCCESS OVERLAY
       ========================== */}
       {(isUpgrading || dodoPaymentSuccess) && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-white">
-          <div className="w-full max-w-md px-6 text-center">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden bg-gradient-to-br from-[#101D38] via-[#243F74] to-[#142747] px-4">
+          
+          {/* Background decorations */}
+          <div className="absolute -left-24 -top-24 h-72 w-72 rounded-full bg-[#9BCB3B]/20 blur-3xl" />
+          <div className="absolute -bottom-24 -right-24 h-80 w-80 rounded-full bg-blue-400/20 blur-3xl" />
 
-            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-green-100">
-              <svg
-                className="h-10 w-10 text-green-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
+          <div className="relative w-full max-w-md overflow-hidden rounded-[2rem] border border-white/20 bg-white p-8 text-center shadow-2xl sm:p-10">
+            
+            {/* Brand accent */}
+            <div className="absolute left-0 top-0 h-2 w-full bg-gradient-to-r from-[#243F74] via-[#9BCB3B] to-[#243F74]" />
+
+            {/* Success icon */}
+            <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-[#9BCB3B]/15 ring-8 ring-[#9BCB3B]/5">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#9BCB3B] shadow-lg shadow-[#9BCB3B]/30">
+                <svg
+                  className="h-9 w-9 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="3"
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              </div>
             </div>
 
-            <h1 className="text-3xl font-bold text-gray-900">
+            <span className="inline-flex items-center gap-2 rounded-full bg-[#9BCB3B]/15 px-4 py-2 text-xs font-black uppercase tracking-[0.2em] text-[#648D20]">
+              <span className="h-2 w-2 rounded-full bg-[#9BCB3B]" />
+              Payment Confirmed
+            </span>
+
+            <h1 className="mt-5 text-3xl font-black tracking-tight text-[#243F74] sm:text-4xl">
               Upgrade Successful!
             </h1>
 
-            <p className="mt-4 text-gray-600">
-              Welcome to the Pro family. You now have unlimited clients,
-              PDF reports, and automatic email reminders unlocked.
+            <p className="mt-4 text-sm leading-7 text-slate-600 sm:text-base">
+              Welcome to the <span className="font-bold text-[#243F74]">OffboardPro Pro family!</span>
+              {" "}Your premium features are being activated.
             </p>
 
-            <div className="mt-8">
-              <button
-                disabled
-                className="w-full rounded-xl bg-gray-100 px-6 py-3 font-semibold text-gray-500"
-              >
-                Finalizing your account...
-              </button>
+            <div className="mt-7 rounded-2xl border border-[#9BCB3B]/25 bg-[#9BCB3B]/10 p-4 text-left">
+              <p className="mb-3 text-xs font-black uppercase tracking-widest text-[#243F74]">
+                Your Pro benefits
+              </p>
+
+              {[
+                "Unlimited clients",
+                "Automatic email reminders",
+                "PDF reports and premium features",
+              ].map((feature) => (
+                <div key={feature} className="mb-2 flex items-center gap-3 last:mb-0">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#9BCB3B] text-xs font-black text-white">
+                    ✓
+                  </span>
+                  <span className="text-sm font-semibold text-slate-700">
+                    {feature}
+                  </span>
+                </div>
+              ))}
             </div>
 
-            <p className="mt-4 text-sm text-gray-500">
-              Your Pro account is being finalized. You'll be redirected shortly.
-            </p>
+            <div className="mt-7 flex items-center justify-center gap-3 rounded-xl bg-[#243F74] px-5 py-4 text-sm font-bold text-white shadow-lg shadow-[#243F74]/20">
+              <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+              Taking you to your dashboard...
+            </div>
 
+            <p className="mt-5 text-xs text-slate-400">
+              Thank you for choosing OffboardPro.
+            </p>
           </div>
         </div>
       )}
