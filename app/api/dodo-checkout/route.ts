@@ -4,12 +4,12 @@ import { auth } from "@/lib/firebase-admin";
 
 const dodo = new DodoPayments({
   bearerToken: process.env.DODO_PAYMENTS_API_KEY!,
-  environment: "test_mode",
+  environment: "live_mode",
 });
 
 const PRODUCTS = {
-  monthly: "pdt_0Np5jTgjrkQWHLIcAfQCD",
-  yearly: "pdt_0Np5jvO2ADVKM4G1GDWp0",
+  monthly: "pdt_0NpID1RpeWaORM18v1BNs",
+  yearly: "pdt_0NpID2FwAVDI0I7cgZNVN",
 } as const;
 
 export async function POST(req: Request) {
