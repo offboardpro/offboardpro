@@ -1,376 +1,438 @@
 "use client";
 
-import { useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-// 1. Import Firebase Auth, DB, and Firestore methods
-import { auth, db } from "@/lib/firebase";
-import {
-  signInWithEmailAndPassword,
-  GoogleAuthProvider,
-  signInWithPopup,
-  setPersistence,
-  browserLocalPersistence,
-  browserSessionPersistence,
-} from "firebase/auth";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import Image from "next/image";
 
-export default function LoginPage() {
-  const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [resetMessage, setResetMessage] = useState("");
-  const [rememberMe, setRememberMe] = useState(true);
+const NAVY = "#243F74";
+const GREEN = "#9BCB3B";
 
-  // Helper function to sync user data to Firestore
-  const syncUserToFirestore = async (user: any) => {
-    const userRef = doc(db, "users", user.uid);
-    await setDoc(
-      userRef,
-      {
-        uid: user.uid,
-        email: user.email,
-        displayName: user.displayName || "User",
-        photoURL: user.photoURL || null,
-        lastLogin: serverTimestamp(),
-      },
-      { merge: true }
-    );
-  };
+const sections = [
+  {
+    title: "1. Acceptance of Terms",
+    paragraphs: [
+      "Welcome to OffboardPro. These Terms of Service govern your access to and use of the OffboardPro website, application, and related services.",
+      "By creating an account, accessing the application, or purchasing a subscription, you agree to these terms. If you do not agree, please do not use the service.",
+    ],
+  },
+  {
+    title: "2. Description of the Service",
+    paragraphs: [
+      "OffboardPro helps freelancers, consultants, and agencies organize client offboarding. Depending on your plan, features may include client and project management, tool tracking, offboarding checklists, task progress, activity history, and email reminders.",
+      "The availability of particular features depends on your subscription plan and the functionality currently offered in the application. We may introduce, improve, modify, or discontinue features as the service evolves.",
+    ],
+  },
+  {
+    title: "3. Account Registration and Security",
+    paragraphs: [
+      "You are responsible for providing accurate account information, maintaining the security of your login credentials, and protecting access to your account.",
+      "You are responsible for activities performed through your account. If you suspect unauthorized access, contact us promptly at hello@offboardpro.com.",
+      "Do not share your account credentials with unauthorized individuals or use the service in a way that compromises another person's account or information.",
+    ],
+  },
+  {
+    title: "4. Your Responsibilities",
+    paragraphs: [
+      "You are responsible for ensuring that the information you enter into OffboardPro is accurate and kept up to date, including client details, project dates, tracked tools, deadlines, and offboarding tasks.",
+      "You must have appropriate authorization to enter and manage information relating to your clients, projects, and third-party services.",
+      "You are responsible for reviewing your offboarding checklists, completing tasks, verifying that access has actually been removed, and following any security requirements that apply to your work.",
+    ],
+  },
+  {
+    title: "5. Third-Party Tools and Access Removal",
+    paragraphs: [
+      "OffboardPro is a tracking, checklist, and reminder service. It does not automatically revoke, disable, or remove access to third-party accounts, platforms, websites, or client systems.",
+      "You must manually remove or change access through the relevant third-party service and independently verify that the action has been completed.",
+      "OffboardPro does not control third-party services and cannot guarantee their availability, security, permissions, or behavior. You are responsible for complying with the terms and security requirements of those services.",
+    ],
+  },
+  {
+    title: "6. Free and Paid Plans",
+    paragraphs: [
+      "OffboardPro may offer Free and paid subscription plans. The features, limits, and prices applicable to each plan are described on our pricing page or at checkout.",
+      "We may change plan features or pricing prospectively. Where required by applicable law, we will provide notice of material changes before they take effect.",
+      "Your access to particular features may change if you upgrade, downgrade, cancel, or allow a paid subscription to expire.",
+    ],
+  },
+  {
+    title: "7. Payments, Billing, and Cancellation",
+    paragraphs: [
+      "Paid subscriptions must be purchased through the payment options presented during checkout. Depending on your location and checkout option, payments may be processed by Razorpay or Dodo Payments.",
+      "Your subscription may renew according to the billing frequency and terms displayed at checkout. You are responsible for reviewing the amount, billing period, and applicable terms before completing a purchase.",
+      "You may request cancellation using the cancellation options available for your subscription or by contacting our support team. Cancellation is intended to stop future renewals; the timing and process depend on the applicable subscription and payment provider.",
+      "Cancelling a subscription does not automatically entitle you to a refund. Subscription payments are generally non-refundable except where a refund or other remedy is required by applicable law or where a payment issue is reviewed and resolved under our policy.",
+      "Please review our Refund & Cancellation Policy for further details.",
+    ],
+  },
+  {
+    title: "8. Acceptable Use",
+    paragraphs: [
+      "You agree not to use OffboardPro for unlawful activities, to violate another person's rights, to access information without authorization, or to interfere with the operation or security of the service.",
+      "You must not attempt to disrupt the service, circumvent plan restrictions, exploit vulnerabilities, distribute malicious code, or access systems or data that you are not authorized to access.",
+      "We may restrict or suspend access where we reasonably believe an account violates these terms, creates a security risk, or is being used unlawfully, subject to applicable law.",
+    ],
+  },
+  {
+    title: "9. Data and Privacy",
+    paragraphs: [
+      "Your use of OffboardPro is also governed by our Privacy Policy, which explains how information is collected, used, stored, and handled.",
+      "You should avoid entering passwords, secret keys, authentication tokens, or other sensitive access credentials into OffboardPro. The service is intended to track offboarding activities, not to serve as a password manager.",
+      "You are responsible for ensuring that you have the necessary rights and permissions to submit information about clients, projects, and other individuals.",
+    ],
+  },
+  {
+    title: "10. Service Availability and Changes",
+    paragraphs: [
+      "We aim to keep OffboardPro useful and available, but we do not guarantee uninterrupted or error-free operation. Maintenance, technical problems, third-party outages, or circumstances beyond our control may temporarily affect the service.",
+      "We may update, improve, or modify the application over time. We will handle material changes, suspensions, or discontinuation in accordance with applicable law.",
+    ],
+  },
+  {
+    title: "11. Disclaimer of Warranties",
+    paragraphs: [
+      "To the extent permitted by applicable law, OffboardPro is provided on an \"as is\" and \"as available\" basis. We do not guarantee that the service will meet every requirement, prevent every offboarding mistake, or identify every access-related risk.",
+      "OffboardPro provides organizational tools and reminders. You remain responsible for your own security procedures, project decisions, task completion, and verification of access removal.",
+    ],
+  },
+  {
+    title: "12. Limitation of Liability",
+    paragraphs: [
+      "To the extent permitted by applicable law, OffboardPro will not be liable for indirect, incidental, special, consequential, or punitive losses arising from your use of, or inability to use, the service.",
+      "We are not responsible for access that remains active because a task was not completed, information was inaccurate, a reminder was missed, or a third-party service did not perform as expected.",
+      "Nothing in these terms excludes or limits liability that cannot lawfully be excluded or limited, or any rights or remedies that applicable law requires us to preserve.",
+    ],
+  },
+  {
+    title: "13. Suspension and Termination",
+    paragraphs: [
+      "You may stop using OffboardPro at any time. If you have a paid subscription, cancellation and billing will be handled according to the subscription terms and our Refund & Cancellation Policy.",
+      "We may suspend or terminate access where reasonably necessary for security, suspected fraud, unlawful activity, material violations of these terms, or other legitimate operational reasons, subject to applicable law.",
+      "If you stop using the service, you should export or save any information you need where the relevant functionality is available. Data retention and deletion are subject to our Privacy Policy and applicable law.",
+    ],
+  },
+  {
+    title: "14. Changes to These Terms",
+    paragraphs: [
+      "We may update these Terms of Service to reflect changes to OffboardPro, our practices, or applicable legal requirements.",
+      "When we update these terms, we will revise the date shown on this page. Where required by law, we will provide additional notice or obtain any necessary consent.",
+      "Your continued use of OffboardPro after updated terms take effect is subject to those terms to the extent permitted by applicable law.",
+    ],
+  },
+];
 
-  // 2. Real Email/Password Login
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    setLoading(true);
-    setErrorMessage("");
-    setResetMessage("");
-
-    try {
-      await setPersistence(
-        auth,
-        rememberMe ? browserLocalPersistence : browserSessionPersistence
-      );
-
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
-        email.trim().toLowerCase(),
-        password
-      );
-
-      await syncUserToFirestore(userCredential.user);
-
-      router.push("/dashboard");
-    } catch (error: any) {
-      console.error("Firebase Auth Error:", error);
-
-      switch (error.code) {
-        case "auth/invalid-credential":
-        case "auth/wrong-password":
-          setErrorMessage("Incorrect email or password. Please try again.");
-          break;
-
-        case "auth/user-not-found":
-          setErrorMessage("No account was found with this email.");
-          break;
-
-        case "auth/invalid-email":
-          setErrorMessage("Please enter a valid email address.");
-          break;
-
-        case "auth/too-many-requests":
-          setErrorMessage(
-            "Too many failed attempts. Please wait a moment and try again."
-          );
-          break;
-
-        case "auth/network-request-failed":
-          setErrorMessage(
-            "Network error. Please check your internet connection and try again."
-          );
-          break;
-
-        default:
-          setErrorMessage("Unable to sign in right now. Please try again.");
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleForgotPassword = async () => {
-    setErrorMessage("");
-    setResetMessage("");
-
-    const normalizedEmail = email.trim().toLowerCase();
-
-    if (!normalizedEmail) {
-      setErrorMessage(
-        "Enter your email address first, then click Forgot password."
-      );
-      return;
-    }
-
-    try {
-      const response = await fetch("/api/password-reset", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: normalizedEmail,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Password reset request failed.");
-      }
-
-      setResetMessage(
-        "If an account exists for this email, you'll receive a password reset link shortly."
-      );
-    } catch (error) {
-      console.error("Password Reset Error:", error);
-
-      setErrorMessage(
-        "Unable to send the reset email right now. Please try again."
-      );
-    }
-  };
-
-  // 3. Real Google Login
-  const handleGoogleLogin = async () => {
-    setErrorMessage("");
-    setResetMessage("");
-    setLoading(true);
-
-    const provider = new GoogleAuthProvider();
-
-    try {
-      await setPersistence(
-        auth,
-        rememberMe ? browserLocalPersistence : browserSessionPersistence
-      );
-
-      const result = await signInWithPopup(auth, provider);
-
-      await syncUserToFirestore(result.user);
-
-      router.push("/dashboard");
-    } catch (error: any) {
-      console.error("Google Login Error:", error);
-
-      switch (error.code) {
-        case "auth/popup-closed-by-user":
-          setErrorMessage("Google sign-in was cancelled.");
-          break;
-
-        case "auth/popup-blocked":
-          setErrorMessage(
-            "Your browser blocked the Google sign-in popup. Please allow popups and try again."
-          );
-          break;
-
-        case "auth/network-request-failed":
-          setErrorMessage(
-            "Network error. Please check your connection and try again."
-          );
-          break;
-
-        default:
-          setErrorMessage("Unable to sign in with Google. Please try again.");
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
+export default function TermsOfService() {
   return (
-    <div className="min-h-screen grid lg:grid-cols-2 bg-white font-sans selection:bg-[#9BCB3B]/20">
-      {/* Left Side: Branded High-Contrast Panel (Desktop Only) */}
-      <div className="hidden lg:flex flex-col justify-between p-16 bg-slate-50 border-r border-slate-100 relative overflow-hidden">
-        {/* Decorative background glow */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-[#9BCB3B]/10 rounded-full -mr-48 -mt-48 blur-3xl animate-pulse" />
-
-        <Link href="/" className="flex items-center relative z-10">
-          <Image
-            src="/logo.png"
-            alt="OffboardPro"
-            width={180}
-            height={60}
-            className="object-contain"
-            priority
-          />
-        </Link>
-
-        <div className="relative z-10 animate-fade-in">
-          <h2
-            style={{ color: "#243F74" }}
-            className="text-5xl md:text-6xl font-black leading-tight mb-6 tracking-tighter italic"
+    <div className="min-h-screen bg-white font-sans text-slate-700 selection:bg-[#9BCB3B]/20">
+      {/* HEADER */}
+      <header className="sticky top-0 z-50 border-b border-slate-100 bg-white/90 backdrop-blur-md">
+        <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5 sm:px-8 lg:px-10">
+          <Link
+            href="/"
+            aria-label="OffboardPro home"
+            className="transition-transform hover:scale-[1.02]"
           >
-            Secure your <br />
-            <span style={{ color: "#9BCB3B" }}>freelance exit.</span>
-          </h2>
-          <p className="text-slate-500 text-lg max-w-md leading-relaxed font-medium">
-            Join 2,000+ freelancers who use OffboardPro to manage client
-            transitions with total confidence and security.
-          </p>
-        </div>
-
-        <div className="text-slate-400 text-[10px] font-black uppercase tracking-[0.3em] relative z-10">
-          &copy; 2026 OffboardPro — Security First
-        </div>
-      </div>
-
-      {/* Right Side: Login Form (Fully Responsive) */}
-      <div className="flex items-center justify-center p-6 md:p-16 bg-white relative">
-        <div className="w-full max-w-md animate-scale-in">
-          {/* Mobile Logo & Brand Indicator */}
-          <div className="mb-12 lg:hidden flex flex-col items-center">
             <Image
               src="/logo.png"
-              alt="Logo"
-              width={140}
-              height={50}
-              className="mb-4 object-contain"
+              alt="OffboardPro"
+              width={150}
+              height={40}
+              priority
+              unoptimized
+              className="h-auto object-contain"
             />
-            <div className="h-1 w-10 bg-[#9BCB3B] rounded-full" />
+          </Link>
+
+          <Link
+            href="/"
+            className="rounded-full border border-slate-200 px-4 py-2.5 text-[10px] font-black uppercase tracking-[0.15em] text-[#243F74] transition-all hover:border-[#9BCB3B] hover:bg-[#9BCB3B]/10 sm:px-5"
+          >
+            Back to Home
+          </Link>
+        </nav>
+      </header>
+
+      {/* MAIN CONTENT */}
+      <main className="mx-auto max-w-4xl px-6 py-14 sm:px-8 sm:py-16 md:py-24">
+        {/* PAGE HEADING */}
+        <div className="mb-14 md:mb-16">
+          <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#9BCB3B]/30 bg-[#9BCB3B]/10 px-4 py-2">
+            <span className="h-2 w-2 rounded-full bg-[#9BCB3B]" />
+            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-[#243F74]">
+              Legal Information
+            </span>
           </div>
 
           <h1
-            style={{ color: "#243F74" }}
-            className="text-4xl font-black tracking-tight mb-2 italic"
+            style={{ color: NAVY }}
+            className="mb-5 text-4xl font-black italic leading-tight tracking-tight sm:text-5xl md:text-6xl"
           >
-            Welcome back
+            Terms of Service
           </h1>
-          <p className="text-slate-400 font-medium mb-10 text-sm md:text-base">
-            Enter your details to access your dashboard.
+
+          <p className="max-w-2xl text-sm leading-7 text-slate-500 sm:text-base">
+            These terms explain the rules for using OffboardPro, your
+            responsibilities, and the conditions that apply to our service
+            and subscriptions.
           </p>
 
-          <form onSubmit={handleLogin} className="space-y-6">
-            {/* REAL GOOGLE LOGIN BUTTON */}
-            <button
-              type="button"
-              onClick={handleGoogleLogin}
-              disabled={loading}
-              className="w-full py-4 px-6 border border-slate-200 rounded-2xl flex items-center justify-center gap-3 text-slate-600 font-bold text-sm hover:bg-slate-50 hover:border-slate-400 transition-all active:scale-[0.98] shadow-sm group disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <img
-                src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png"
-                alt="Google"
-                className="w-5 h-5 object-contain group-hover:rotate-12 transition-transform"
-              />
-              Continue with Google
-            </button>
+          <div className="mt-7 flex flex-wrap items-center gap-3">
+            <span className="h-[2px] w-8 rounded-full bg-[#9BCB3B]" />
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+              Last Updated: October 11, 2026
+            </p>
+          </div>
+        </div>
 
-            <div className="relative py-2 flex items-center gap-4">
-              <div className="flex-grow border-t border-slate-100"></div>
-              <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest whitespace-nowrap">
-                or use email
-              </span>
-              <div className="flex-grow border-t border-slate-100"></div>
+        {/* IMPORTANT NOTICE */}
+        <div className="mb-12 rounded-3xl border border-slate-100 bg-slate-50 p-6 sm:p-8">
+          <div className="mb-4 flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#243F74] text-lg text-white">
+              !
             </div>
 
-            <div className="space-y-4">
-              <div>
-                <label htmlFor="login-email" className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-2 ml-1">
-                  Email Address
-                </label>
-                <input
-                  id="login-email"
-                  type="email"
-                  required
-                  autoComplete="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@company.com"
-                  className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 text-slate-700 outline-none focus:border-[#9BCB3B] focus:bg-white transition-all font-bold placeholder:text-slate-300 shadow-inner"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="login-password" className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-2 ml-1">
-                  Password
-                </label>
-                <input
-                  id="login-password"
-                  type="password"
-                  required
-                  autoComplete="current-password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 text-slate-700 outline-none focus:border-[#9BCB3B] focus:bg-white transition-all font-bold placeholder:text-slate-300 shadow-inner"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between text-[11px] font-bold">
-              <label className="flex items-center gap-2 text-slate-400 cursor-pointer group">
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  style={{ accentColor: "var(--color-brand-green)" }}
-                  className="w-4 h-4 rounded-md border-slate-200"
-                />
-                <span className="group-hover:text-slate-600 transition-colors">
-                  Remember me
-                </span>
-              </label>
-              <button
-                type="button"
-                onClick={handleForgotPassword}
-                style={{ color: "#9BCB3B" }}
-                className="hover:text-[#243F74] transition-colors"
-              >
-                Forgot password?
-              </button>
-            </div>
-
-            {errorMessage && (
-              <div
-                role="alert"
-                className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600"
-              >
-                {errorMessage}
-              </div>
-            )}
-
-            {resetMessage && (
-              <div
-                role="status"
-                className="rounded-2xl border border-[#9BCB3B]/20 bg-[#9BCB3B]/10 px-4 py-3 text-sm font-semibold text-[#5f8318]"
-              >
-                {resetMessage}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              style={{ backgroundColor: "#243F74" }}
-              className="w-full py-5 rounded-2xl text-white font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-[#243F74]/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            <h2
+              style={{ color: NAVY }}
+              className="text-lg font-black sm:text-xl"
             >
-              {loading ? "Authenticating..." : "Sign In"}
-            </button>
-          </form>
+              Important: You control access removal
+            </h2>
+          </div>
 
-          <p className="text-center mt-12 text-sm font-bold text-slate-400">
-            Don't have an account?{" "}
-            <Link
-              href="/signup"
-              style={{ color: "#9BCB3B" }}
-              className="hover:text-[#243F74] transition-colors font-black ml-1"
-            >
-              Create one for free
-            </Link>
+          <p className="text-sm leading-7 text-slate-600 sm:text-base">
+            OffboardPro helps you track client offboarding tasks and deadlines.
+            It does not automatically remove access from third-party tools.
+            You remain responsible for carrying out and verifying each access
+            removal.
           </p>
         </div>
-      </div>
+
+        {/* TERMS SECTIONS */}
+        <div className="space-y-12 sm:space-y-14">
+          {sections.map((section) => (
+            <section key={section.title} className="group">
+              <div className="mb-5 flex items-start gap-3">
+                <span className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full bg-slate-200 transition-colors group-hover:bg-[#9BCB3B]" />
+
+                <h2
+                  style={{ color: NAVY }}
+                  className="text-xs font-black uppercase leading-6 tracking-[0.16em] sm:text-sm sm:tracking-[0.2em]"
+                >
+                  {section.title}
+                </h2>
+              </div>
+
+              <div className="space-y-4 pl-5 sm:pl-6">
+                {section.paragraphs.map((paragraph, index) => (
+                  <p
+                    key={index}
+                    className="text-sm leading-7 text-slate-600 sm:text-base sm:leading-8"
+                  >
+                    {paragraph}
+                  </p>
+                ))}
+
+                {section.title.startsWith("7.") && (
+                  <Link
+                    href="/refund-policy"
+                    className="inline-flex items-center gap-2 text-sm font-bold text-[#243F74] underline decoration-[#9BCB3B] decoration-2 underline-offset-4 transition-colors hover:text-[#587F1C]"
+                  >
+                    Read our Refund & Cancellation Policy
+                    <span aria-hidden="true">→</span>
+                  </Link>
+                )}
+
+                {section.title.startsWith("9.") && (
+                  <Link
+                    href="/privacy"
+                    className="inline-flex items-center gap-2 text-sm font-bold text-[#243F74] underline decoration-[#9BCB3B] decoration-2 underline-offset-4 transition-colors hover:text-[#587F1C]"
+                  >
+                    Read our Privacy Policy
+                    <span aria-hidden="true">→</span>
+                  </Link>
+                )}
+              </div>
+            </section>
+          ))}
+        </div>
+
+        {/* CONTACT SUPPORT */}
+        <section className="mt-16 rounded-3xl border border-slate-100 bg-slate-50 p-6 sm:mt-20 sm:p-8">
+          <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="mb-2 text-[10px] font-black uppercase tracking-[0.2em] text-[#9BCB3B]">
+                We're Here to Help
+              </p>
+
+              <h2
+                style={{ color: NAVY }}
+                className="mb-2 text-xl font-black sm:text-2xl"
+              >
+                Questions about these terms?
+              </h2>
+
+              <p className="text-sm leading-6 text-slate-500">
+                Contact our team if you need clarification about using
+                OffboardPro or your subscription.
+              </p>
+            </div>
+
+            <a
+              href="mailto:hello@offboardpro.com"
+              className="inline-flex w-fit shrink-0 items-center justify-center gap-2 rounded-xl bg-[#243F74] px-6 py-4 text-[10px] font-black uppercase tracking-[0.12em] text-white shadow-lg shadow-[#243F74]/10 transition-all hover:-translate-y-0.5 hover:bg-[#1c315b]"
+            >
+              Contact Support <span aria-hidden="true">→</span>
+            </a>
+          </div>
+        </section>
+      </main>
+
+      {/* FOOTER — MATCHING THE OTHER LEGAL PAGES */}
+      <footer className="border-t border-slate-100 bg-white pb-8 pt-14 sm:pt-16 md:pt-20">
+        <div className="mx-auto w-full max-w-7xl px-6 sm:px-8 lg:px-10">
+          <div className="grid grid-cols-1 gap-10 pb-12 sm:grid-cols-2 sm:gap-12 md:pb-16 lg:grid-cols-4 lg:gap-16">
+            {/* BRAND */}
+            <div className="sm:col-span-2 lg:col-span-1">
+              <Link href="/" className="mb-5 inline-block">
+                <Image
+                  src="/logo.png"
+                  alt="OffboardPro"
+                  width={150}
+                  height={40}
+                  unoptimized
+                  className="object-contain"
+                />
+              </Link>
+
+              <p className="max-w-xs text-sm leading-relaxed text-slate-400">
+                Client offboarding for freelancers, consultants, and agencies.
+              </p>
+            </div>
+
+            {/* PRODUCT */}
+            <div>
+              <h4 className="mb-5 text-sm font-black text-[#243F74]">
+                Product
+              </h4>
+
+              <div className="flex flex-col gap-3">
+                <Link
+                  href="/#how-it-works"
+                  className="text-sm font-semibold text-slate-500 transition-colors hover:text-[#243F74]"
+                >
+                  How It Works
+                </Link>
+
+                <Link
+                  href="/#features"
+                  className="text-sm font-semibold text-slate-500 transition-colors hover:text-[#243F74]"
+                >
+                  Features
+                </Link>
+
+                <Link
+                  href="/pricing"
+                  className="text-sm font-semibold text-slate-500 transition-colors hover:text-[#243F74]"
+                >
+                  Pricing
+                </Link>
+
+                <Link
+                  href="/#faq"
+                  className="text-sm font-semibold text-slate-500 transition-colors hover:text-[#243F74]"
+                >
+                  FAQ
+                </Link>
+              </div>
+            </div>
+
+            {/* ACCOUNT */}
+            <div>
+              <h4 className="mb-5 text-sm font-black text-[#243F74]">
+                Account
+              </h4>
+
+              <div className="flex flex-col gap-3">
+                <Link
+                  href="/signup"
+                  className="text-sm font-semibold text-slate-500 transition-colors hover:text-[#243F74]"
+                >
+                  Sign Up
+                </Link>
+
+                <Link
+                  href="/login"
+                  className="text-sm font-semibold text-slate-500 transition-colors hover:text-[#243F74]"
+                >
+                  Log In
+                </Link>
+
+                <Link
+                  href="/dashboard"
+                  className="text-sm font-semibold text-slate-500 transition-colors hover:text-[#243F74]"
+                >
+                  Dashboard
+                </Link>
+              </div>
+            </div>
+
+            {/* CONTACT */}
+            <div>
+              <h4 className="mb-5 text-sm font-black text-[#243F74]">
+                Contact
+              </h4>
+
+              <div className="flex flex-col gap-3">
+                <a
+                  href="mailto:hello@offboardpro.com"
+                  className="break-words text-sm font-semibold text-slate-500 transition-colors hover:text-[#9BCB3B]"
+                >
+                  hello@offboardpro.com
+                </a>
+
+                <p className="text-xs leading-relaxed text-slate-400">
+                  Have a question or need help? Get in touch with us.
+                </p>
+
+                <Link
+                  href="/contact"
+                  className="text-sm font-semibold text-slate-500 transition-colors hover:text-[#9BCB3B]"
+                >
+                  Contact Us →
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          {/* BOTTOM FOOTER */}
+          <div className="flex flex-col items-center justify-between gap-5 border-t border-slate-100 pt-7 sm:pt-8 md:flex-row">
+            <p className="text-center text-xs text-slate-400 md:text-left">
+              © 2026 OffboardPro. All rights reserved.
+            </p>
+
+            <div className="flex flex-wrap justify-center gap-x-6 gap-y-3">
+              <Link
+                href="/privacy"
+                className="text-xs font-semibold text-slate-400 transition-colors hover:text-[#243F74]"
+              >
+                Privacy
+              </Link>
+
+              <Link
+                href="/terms"
+                className="text-xs font-semibold text-slate-400 transition-colors hover:text-[#243F74]"
+              >
+                Terms
+              </Link>
+
+              <Link
+                href="/refund-policy"
+                className="text-xs font-semibold text-slate-400 transition-colors hover:text-[#243F74]"
+              >
+                Refund Policy
+              </Link>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
